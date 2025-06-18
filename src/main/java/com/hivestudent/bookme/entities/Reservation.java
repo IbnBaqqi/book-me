@@ -1,7 +1,6 @@
 package com.hivestudent.bookme.entities;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -17,12 +16,10 @@ public class Reservation {
     @Column(name = "id")
     private Long id;
 
-    @NotNull
     @ManyToOne
     @JoinColumn(name = "user_id")
     private User user;
 
-    @NotNull
     @ManyToOne
     @JoinColumn(name = "room_id")
     private Room room;
@@ -34,6 +31,6 @@ public class Reservation {
     private Instant endTime;
 
     @Column(name = "status")
-    private String status;
+    private ReservationStatus status;
 
 }
