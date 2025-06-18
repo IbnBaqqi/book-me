@@ -1,0 +1,8 @@
+spring:
+  application:
+    name: book-me
+  datasource:
+    url: jdbc:mysql://localhost:3306/bookMe?createDatabaseIfNotExist=true
+    username: root
+    password: mysqldb132*
+
