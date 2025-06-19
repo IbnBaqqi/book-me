@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 
 @Getter
 @Setter
@@ -18,17 +18,17 @@ public class Reservation {
 
     @ManyToOne
     @JoinColumn(name = "user_id")
-    private User user;
+    private User createdBy;
 
     @ManyToOne
     @JoinColumn(name = "room_id")
     private Room room;
 
     @Column(name = "start_time")
-    private Instant startTime;
+    private LocalDateTime startTime;
 
     @Column(name = "end_time")
-    private Instant endTime;
+    private LocalDateTime endTime;
 
     @Column(name = "status")
     private ReservationStatus status;
