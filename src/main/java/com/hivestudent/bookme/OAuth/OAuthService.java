@@ -9,6 +9,7 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.web.client.RestTemplate;
@@ -85,7 +86,8 @@ public class OAuthService {
         String name = (String) userData.get("displayname");
 
 //        @Todo check if user is staff and make role to be staff
-        User user = userRepository.findByEmail(email)
+        // default role
+        return userRepository.findByEmail(email)
                 .orElseGet(() -> {
                     User newUser = new User();
                     newUser.setEmail(email);
@@ -93,6 +95,13 @@ public class OAuthService {
                     newUser.setRole(Role.STUDENT); // default role
                     return userRepository.save(newUser);
                 });
-        return user;
+    }
+
+    //overloaded method, get user from App Context
+    public User getCurrentUser() {
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+        var email = (String) authentication.getPrincipal();
+
+        return userRepository.findByEmail(email).orElse(null);
     }
 }
