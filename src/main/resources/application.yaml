@@ -22,5 +22,7 @@ spring:
             token-uri:  ${FORTY_TWO.OAUTH_TOKEN_URI}
   jpa:
     show-sql: true
+  Jwt:
+    secret: ${JWT_SECRET}
 
 
