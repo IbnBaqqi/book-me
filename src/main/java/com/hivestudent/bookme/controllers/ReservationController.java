@@ -1,7 +1,9 @@
 package com.hivestudent.bookme.controllers;
 
+import com.hivestudent.bookme.OAuth.OAuthService;
 import com.hivestudent.bookme.dtos.CreateReservationRequest;
 import com.hivestudent.bookme.dtos.ReservationDto;
+import com.hivestudent.bookme.entities.User;
 import com.hivestudent.bookme.services.ReservationService;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
@@ -17,6 +19,7 @@ import java.util.Map;
 public class ReservationController {
 
     private final ReservationService reservationService;
+    private final OAuthService oAuthService;
 
     //create reservation
     //authenticated
@@ -24,9 +27,9 @@ public class ReservationController {
     @PostMapping
     public ResponseEntity<ReservationDto> create(@RequestBody @Valid CreateReservationRequest request ) {
 
-//        User currentUser = userService.getCurrentUser(); // based on OAuth2 email
+        User currentUser = oAuthService.getCurrentUser(); // based on OAuth2 email
 
-        var reserved = reservationService.createReservation(request);
+        var reserved = reservationService.createReservation(request, currentUser);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(reserved);
     }

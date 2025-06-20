@@ -22,7 +22,7 @@ public class ReservationService {
     private final ReservationMapper reservationMapper;
 
     //get current User
-    public ReservationDto createReservation(CreateReservationRequest request) {
+    public ReservationDto createReservation(CreateReservationRequest request, User currentUser) {
 
         var room = roomRepository.findById(request.getRoomId()).orElseThrow();
 
@@ -41,7 +41,7 @@ public class ReservationService {
 
         Reservation reservation = new Reservation();
         reservation.setRoom(room);
-        reservation.setCreatedBy(new User()); // @Todo replace with current user later
+        reservation.setCreatedBy(currentUser); // @Todo replace with current user later
         reservation.setStartTime(start);
         reservation.setEndTime(end);
         reservation.setStatus(ReservationStatus.RESERVED); // handled in Java, VARCHAR in DB
