@@ -13,7 +13,7 @@ public class OAuthController {
 
     @GetMapping("/callback")
     public ResponseEntity<String> callback(@RequestParam String code, @RequestParam(required = false) String state) {
-        oAuthService.processOAuthCallback(code);
-        return ResponseEntity.ok("Login successful. You can close this tab.");
+        var token = oAuthService.processOAuthCallback(code);
+        return ResponseEntity.ok(token);
     }
 }
