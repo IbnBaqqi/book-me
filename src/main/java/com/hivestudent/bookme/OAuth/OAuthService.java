@@ -83,7 +83,7 @@ public class OAuthService {
 
         // Step 3: Find or create user
         String email = (String) userData.get("email");
-        String name = (String) userData.get("displayname");
+        String name = (String) userData.get("login");
 
 //        @Todo check if user is staff and make role to be staff
         // default role
