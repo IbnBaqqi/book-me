@@ -53,4 +53,7 @@ public class JwtService {
         return getClaims(token).getSubject();
     }
 
+    public boolean isExpired(String token) {
+        return getClaims(token).getExpiration().before(new Date());
+    }
 }
