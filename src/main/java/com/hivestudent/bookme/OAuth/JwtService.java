@@ -18,7 +18,7 @@ public class JwtService {
 
     public String generateToken(User user) {
 
-        final long tokenExpiration = 86400;
+        final long tokenExpiration = 3600; //@Todo move to yaml
 
         return Jwts.builder()
                 .subject(user.getEmail())
