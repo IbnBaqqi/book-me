@@ -33,7 +33,7 @@ public class ReservationService {
             throw new IllegalArgumentException("You can't book past times");
         }
 
-        var overlap = reservationRepository.existsOverlapping(room.getId(), end, start) == 1;
+        var overlap = reservationRepository.existsOverlapping(room.getId(), start, end) > 0;
 
         if (overlap) {
             throw new IllegalArgumentException("This time slot is already booked");

@@ -19,7 +19,7 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
       AND end_time > :startTime
   )
 """, nativeQuery = true)
-  int existsOverlapping(@Param("roomId") Long roomId,
+  long existsOverlapping(@Param("roomId") Long roomId,
                             @Param("startTime") LocalDateTime startTime,
                             @Param("endTime") LocalDateTime endTime);
 
