@@ -21,6 +21,7 @@ public class SecurityConfig {
                 .csrf(c -> c.disable())
                 .authorizeHttpRequests(request -> request
                         .requestMatchers(HttpMethod.POST, "/reservation").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/reservation").authenticated()
                         .anyRequest().permitAll())
 //                .oauth2Login(Customizer.withDefaults());
         .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
