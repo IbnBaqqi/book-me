@@ -60,7 +60,6 @@ public class OAuthService {
 
 //        Get accessToken from the Map
         String accessToken = (String) tokenResponse.getBody().get("access_token");
-        System.out.println(accessToken);
 
 //        Stage 2 Fetch Current User from
         var user = getCurrentUser(accessToken);
