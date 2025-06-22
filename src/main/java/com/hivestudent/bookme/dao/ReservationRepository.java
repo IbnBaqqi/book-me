@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 public interface ReservationRepository extends JpaRepository<Reservation, Long> {
 
@@ -22,5 +23,16 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
   long existsOverlapping(@Param("roomId") Long roomId,
                             @Param("startTime") LocalDateTime startTime,
                             @Param("endTime") LocalDateTime endTime);
+
+  @Query("""
+SELECT r FROM Reservation r
+WHERE r.startTime >= :startDate
+  AND r.endTime <= :endDate
+""")
+  List<Reservation> findAllBetweenDates(
+          @Param("startDate") LocalDateTime startDate,
+          @Param("endDate") LocalDateTime endDate
+  );
+
 
 }
