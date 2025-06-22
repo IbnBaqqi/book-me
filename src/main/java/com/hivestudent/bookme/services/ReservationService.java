@@ -73,12 +73,17 @@ public class ReservationService {
 
         for (var entry : grouped.entrySet()) {
             List<ReservedDto.Slot> slots = entry.getValue().stream()
-                    .map(r -> new ReservedDto.Slot(
-                            r.getStartTime(),
-                            r.getEndTime(),
-                            isStaff ? r.getCreatedBy().getName() : null
-                    ))
-                    .toList();
+                    .map(r -> {
+
+                        boolean isOwner = r.getCreatedBy().getEmail().equals(authentication.getPrincipal());
+                        String bookedBy = (isStaff || isOwner) ? r.getCreatedBy().getName() : null;
+
+                                return new ReservedDto.Slot(
+                                        r.getStartTime(),
+                                        r.getEndTime(),
+                                        bookedBy
+                                );
+                    }).toList();
 
             result.add(new ReservedDto(entry.getKey(), slots));
         }
