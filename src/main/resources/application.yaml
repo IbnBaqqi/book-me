@@ -24,5 +24,3 @@ spring:
     show-sql: true
   Jwt:
     secret: ${JWT_SECRET}
-
-
