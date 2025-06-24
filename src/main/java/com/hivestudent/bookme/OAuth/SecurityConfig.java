@@ -1,5 +1,6 @@
 package com.hivestudent.bookme.OAuth;
 
+import com.hivestudent.bookme.entities.Role;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -22,6 +23,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(request -> request
                         .requestMatchers(HttpMethod.POST, "/reservation").authenticated()
                         .requestMatchers(HttpMethod.GET, "/reservation").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/reservation/cancel/**").authenticated()
+//                        .requestMatchers(HttpMethod.DELETE, "/reservation/cancel/**").hasRole(Role.STAFF.name())
                         .anyRequest().permitAll())
 //                .oauth2Login(Customizer.withDefaults());
         .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
