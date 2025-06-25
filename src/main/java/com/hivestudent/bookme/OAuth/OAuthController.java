@@ -22,7 +22,7 @@ public class OAuthController {
     private String redirectUri;
 
     //expose a route
-    @GetMapping("/oauth/redirect")
+    @GetMapping("/oauth/login")
     public ResponseEntity<Void> redirectTo42() {
         String url = "https://api.intra.42.fr/oauth/authorize"
                 + "?client_id=" + clientId
