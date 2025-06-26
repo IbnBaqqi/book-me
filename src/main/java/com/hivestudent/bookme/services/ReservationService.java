@@ -1,13 +1,16 @@
 package com.hivestudent.bookme.services;
 
+import com.hivestudent.bookme.OAuth.OAuthService;
 import com.hivestudent.bookme.ReservationMapper;
 import com.hivestudent.bookme.dao.ReservationRepository;
 import com.hivestudent.bookme.dao.RoomRepository;
 import com.hivestudent.bookme.dtos.CreateReservationRequest;
 import com.hivestudent.bookme.dtos.ReservationDto;
 import com.hivestudent.bookme.dtos.ReservedDto;
+import com.hivestudent.bookme.dtos.UpdateReservationRequest;
 import com.hivestudent.bookme.entities.Reservation;
 import com.hivestudent.bookme.entities.ReservationStatus;
+import com.hivestudent.bookme.entities.Role;
 import com.hivestudent.bookme.entities.User;
 import lombok.AllArgsConstructor;
 import org.springframework.security.core.Authentication;
@@ -26,14 +29,15 @@ public class ReservationService {
     private final ReservationRepository reservationRepository;
     private final RoomRepository roomRepository;
     private final ReservationMapper reservationMapper;
+    private final OAuthService oAuthService;
 
     //get current User
     public ReservationDto createReservation(CreateReservationRequest request, User currentUser) {
 
         var room = roomRepository.findById(request.getRoomId()).orElseThrow();
 
-        LocalDateTime start = LocalDateTime.of(request.getDate(), request.getStartTime());
-        LocalDateTime end = LocalDateTime.of(request.getDate(), request.getEndTime());
+        var start = request.getStartTime();
+        var end = request.getEndTime();
 
         if (start.isBefore(LocalDateTime.now())) {
             throw new IllegalArgumentException("You can't book past times");
@@ -89,5 +93,36 @@ public class ReservationService {
         }
 
         return result;
+    }
+
+    public void cancelReservation(Long id) {
+        var reserved = reservationRepository.findById(id).orElse(null);
+        if (reserved == null)
+            throw new IllegalArgumentException("Reservation doesn't exist");
+        var user = oAuthService.getCurrentUser();
+        boolean isStaff = user.getRole().equals(Role.STAFF);
+        boolean isOwner = reserved.getCreatedBy().getEmail().equals(user.getEmail());
+        if (isStaff || isOwner) {
+            reservationRepository.delete(reserved);
+            reserved.setCreatedBy(null);
+            reserved.setRoom(null);
+        }else
+            throw new IllegalArgumentException("You didn't book this slot");
+    }
+
+    public ReservationDto updateReservation(Long id, UpdateReservationRequest request) {
+        var reserved = reservationRepository.findById(id).orElse(null);
+        if (reserved == null)
+            throw new IllegalArgumentException("Reservation doesn't exist");
+        var user = oAuthService.getCurrentUser();
+        boolean isOwner = reserved.getCreatedBy().getEmail().equals(user.getEmail());
+        var overlap = reservationRepository.existsOverlapping(request.getRoomId(), request.getStartTime(), request.getEndTime()) > 0;
+        if (overlap)
+            throw new IllegalArgumentException("This time slot is already booked");
+        if (isOwner) {
+            reservationMapper.update(request, reserved);
+            reservationRepository.save(reserved);
+        }
+        return reservationMapper.toDto(reserved);
     }
 }

@@ -4,6 +4,7 @@ import com.hivestudent.bookme.OAuth.OAuthService;
 import com.hivestudent.bookme.dtos.CreateReservationRequest;
 import com.hivestudent.bookme.dtos.ReservationDto;
 import com.hivestudent.bookme.dtos.ReservedDto;
+import com.hivestudent.bookme.dtos.UpdateReservationRequest;
 import com.hivestudent.bookme.entities.User;
 import com.hivestudent.bookme.services.ReservationService;
 import jakarta.validation.Valid;
@@ -47,6 +48,18 @@ public class ReservationController {
     ) {
         var reserved = reservationService.getUnavailableSlots(start, end, authentication);
         return ResponseEntity.ok(reserved);
+    }
+
+    @PutMapping("/update/{id}")
+    public ResponseEntity<ReservationDto> update(@PathVariable Long id, @Valid @RequestBody UpdateReservationRequest request) {
+        var reservation = reservationService.updateReservation(id, request);
+        return ResponseEntity.ok(reservation);
+    }
+
+    @DeleteMapping("/cancel/{id}")
+    public ResponseEntity<Void> cancelReservation(@PathVariable Long id) {
+        reservationService.cancelReservation(id);
+        return ResponseEntity.noContent().build();
     }
 
     @ExceptionHandler(IllegalArgumentException.class)

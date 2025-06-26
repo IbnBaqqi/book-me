@@ -7,9 +7,8 @@ import org.springframework.format.annotation.DateTimeFormat;
 import java.time.LocalDateTime;
 
 @Data
-public class CreateReservationRequest {
-
-//    @Todo change room id to byte
+public class UpdateReservationRequest {
+    @NotNull(message = "Room id required")
     private Long roomId;
 
     @NotNull(message = "Start time required")
@@ -19,6 +18,4 @@ public class CreateReservationRequest {
     @NotNull(message = "End time required")
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
     private LocalDateTime endTime; // e.g. 07:00
-
-
 }
