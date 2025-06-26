@@ -10,7 +10,7 @@ import java.net.URI;
 
 @RequiredArgsConstructor
 @RestController
-@RequestMapping
+@RequestMapping("/oauth")
 public class OAuthController {
 
     private final OAuthService oAuthService;
@@ -22,7 +22,7 @@ public class OAuthController {
     private String redirectUri;
 
     //expose a route
-    @GetMapping("/oauth/login")
+    @GetMapping("/login")
     public ResponseEntity<Void> redirectTo42() {
         String url = "https://api.intra.42.fr/oauth/authorize"
                 + "?client_id=" + clientId
@@ -35,7 +35,7 @@ public class OAuthController {
     }
 
     @GetMapping("/callback")
-    public ResponseEntity<String> callback(@RequestParam String code, @RequestParam(required = false) String state) {
+    public ResponseEntity<String> callback(@RequestParam String code, @RequestParam(required = false) String state) { //@Todo use state
         var token = oAuthService.processOAuthCallback(code);
         return ResponseEntity.ok(token);
     }
