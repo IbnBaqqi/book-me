@@ -1,11 +1,13 @@
 package com.hivestudent.bookme.OAuth;
 
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.net.URI;
 
 @RequiredArgsConstructor
@@ -35,8 +37,8 @@ public class OAuthController {
     }
 
     @GetMapping("/callback")
-    public ResponseEntity<String> callback(@RequestParam String code, @RequestParam(required = false) String state) { //@Todo use state
+    public void callback(@RequestParam String code, HttpServletResponse response, @RequestParam(required = false) String state) throws IOException { //@Todo use state
         var token = oAuthService.processOAuthCallback(code);
-        return ResponseEntity.ok(token);
+        response.sendRedirect("http://localhost:8080/home/?token=" + token);
     }
 }
