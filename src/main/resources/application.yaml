@@ -24,3 +24,4 @@ spring:
     show-sql: true
   Jwt:
     secret: ${JWT_SECRET}
+    refreshToken: 3600
