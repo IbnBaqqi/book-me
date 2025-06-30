@@ -20,6 +20,7 @@ public class SecurityConfig {
         http
                 .sessionManagement(c -> c.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .csrf(c -> c.disable())
+                .cors(cors -> cors.disable())
                 .authorizeHttpRequests(request -> request
                         .requestMatchers(HttpMethod.POST, "/reservation").authenticated()
                         .requestMatchers(HttpMethod.GET, "/reservation").authenticated()
