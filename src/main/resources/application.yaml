@@ -3,10 +3,6 @@ spring:
     name: book-me
   config:
     import: optional:file:.env.yaml
-  datasource:
-    url: jdbc:mysql://localhost:3306/bookMe?createDatabaseIfNotExist=true
-    username: root
-    password: mysqldb
   security:
     oauth2:
       client:
@@ -20,8 +16,8 @@ spring:
           42-intra:
             authorization-uri: ${FORTY_TWO.OAUTH_AUTH_URI}
             token-uri:  ${FORTY_TWO.OAUTH_TOKEN_URI}
-  jpa:
-    show-sql: true
   Jwt:
     secret: ${JWT_SECRET}
     refreshToken: 3600
+  profiles:
+    active: dev
