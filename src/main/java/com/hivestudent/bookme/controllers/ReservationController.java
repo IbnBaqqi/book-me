@@ -27,9 +27,6 @@ public class ReservationController {
     private final ReservationService reservationService;
     private final OAuthService oAuthService;
 
-    //create reservation
-    //authenticated
-    //must not overlap
     @PostMapping
     public ResponseEntity<ReservationDto> create(@RequestBody @Valid CreateReservationRequest request ) {
 
@@ -50,13 +47,13 @@ public class ReservationController {
         return ResponseEntity.ok(reserved);
     }
 
-    @PutMapping("/update/{id}")
+    @PutMapping("/{id}")
     public ResponseEntity<ReservationDto> update(@PathVariable Long id, @Valid @RequestBody UpdateReservationRequest request) {
         var reservation = reservationService.updateReservation(id, request);
         return ResponseEntity.ok(reservation);
     }
 
-    @DeleteMapping("/cancel/{id}")
+    @DeleteMapping("/{id}")
     public ResponseEntity<Void> cancelReservation(@PathVariable Long id) {
         reservationService.cancelReservation(id);
         return ResponseEntity.noContent().build();
