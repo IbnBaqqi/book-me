@@ -16,9 +16,10 @@ public class JwtService {
     @Value("${spring.Jwt.secret}")
     private String secret;
 
-    public String generateToken(User user) {
+    @Value("${spring.Jwt.refreshToken}")
+    private long tokenExpiration;
 
-        final long tokenExpiration = 3600; //@Todo move to yaml
+    public String generateToken(User user) {
 
         return Jwts.builder()
                 .subject(user.getEmail())
