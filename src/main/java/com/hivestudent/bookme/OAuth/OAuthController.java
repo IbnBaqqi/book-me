@@ -39,6 +39,6 @@ public class OAuthController {
     @GetMapping("/callback")
     public void callback(@RequestParam String code, HttpServletResponse response, @RequestParam(required = false) String state) throws IOException { //@Todo use state
         var token = oAuthService.processOAuthCallback(code);
-        response.sendRedirect("http://localhost:8080/home/?token=" + token);
+        response.sendRedirect("http://localhost:5173/?token=" + token);
     }
 }
