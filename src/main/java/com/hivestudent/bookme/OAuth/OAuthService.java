@@ -84,14 +84,17 @@ public class OAuthService {
         String email = (String) userData.get("email");
         String name = (String) userData.get("login");
 
-//        @Todo check if user is staff and make role to be staff
-        // default role
+//        check if user is staff and make role to be staff
         return userRepository.findByEmail(email)
                 .orElseGet(() -> {
                     User newUser = new User();
                     newUser.setEmail(email);
                     newUser.setName(name);
-                    newUser.setRole(Role.STUDENT); // default role
+                    Boolean isStaff = (Boolean) userData.get("staff?");
+                    if (Boolean.TRUE.equals(isStaff)) {
+                        newUser.setRole(Role.STAFF);
+                    }else
+                        newUser.setRole(Role.STUDENT); // default role
                     return userRepository.save(newUser);
                 });
     }
