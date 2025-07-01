@@ -71,11 +71,16 @@ public class ReservationService {
         var reservations = reservationRepository.findAllBetweenDates(startDateTime, endDateTime);
 
         var grouped = reservations.stream()
-                .collect(Collectors.groupingBy(res -> res.getRoom().getName()));
+                .collect(Collectors.groupingBy(res -> res.getRoom().getId()));
 
         List<ReservedDto> result = new ArrayList<>();
 
         for (var entry : grouped.entrySet()) {
+
+            Long roomId = entry.getKey();
+            List<Reservation> roomReservations = entry.getValue();
+            String roomName = roomReservations.get(0).getRoom().getName();
+
             List<ReservedDto.Slot> slots = entry.getValue().stream()
                     .map(r -> {
 
@@ -83,13 +88,14 @@ public class ReservationService {
                         String bookedBy = (isStaff || isOwner) ? r.getCreatedBy().getName() : null;
 
                                 return new ReservedDto.Slot(
+                                        r.getId(),
                                         r.getStartTime(),
                                         r.getEndTime(),
                                         bookedBy
                                 );
                     }).toList();
 
-            result.add(new ReservedDto(entry.getKey(), slots));
+            result.add(new ReservedDto(roomId, roomName, slots));
         }
 
         return result;
