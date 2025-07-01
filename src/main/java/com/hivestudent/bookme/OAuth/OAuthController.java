@@ -23,6 +23,9 @@ public class OAuthController {
     @Value("${spring.security.oauth2.client.registration.42-intra.redirect-uri}")
     private String redirectUri;
 
+    @Value("${spring.redirect.token_url}")
+    private String tokenRedirect;
+
     //expose a route
     @GetMapping("/login")
     public ResponseEntity<Void> redirectTo42() {
@@ -39,6 +42,6 @@ public class OAuthController {
     @GetMapping("/callback")
     public void callback(@RequestParam String code, HttpServletResponse response, @RequestParam(required = false) String state) throws IOException { //@Todo use state
         var token = oAuthService.processOAuthCallback(code);
-        response.sendRedirect("http://localhost:5173/?token=" + token);
+        response.sendRedirect(tokenRedirect + token);
     }
 }

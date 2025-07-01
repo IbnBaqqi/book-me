@@ -21,3 +21,5 @@ spring:
     refreshToken: 3600
   profiles:
     active: dev
+  redirect:
+    token_url: ${REDIRECT_TOKEN_URI}
