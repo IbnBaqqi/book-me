@@ -1,6 +1,6 @@
-package com.hivestudent.bookme.OAuth;
+package com.hivestudent.bookme.Config;
 
-import com.hivestudent.bookme.entities.Role;
+import com.hivestudent.bookme.Auth.JwtFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;

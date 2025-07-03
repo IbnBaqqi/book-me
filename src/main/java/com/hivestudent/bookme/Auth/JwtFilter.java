@@ -1,4 +1,4 @@
-package com.hivestudent.bookme.OAuth;
+package com.hivestudent.bookme.Auth;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

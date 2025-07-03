@@ -1,6 +1,6 @@
 package com.hivestudent.bookme.controllers;
 
-import com.hivestudent.bookme.OAuth.OAuthService;
+import com.hivestudent.bookme.Auth.OAuthService;
 import com.hivestudent.bookme.dtos.CreateReservationRequest;
 import com.hivestudent.bookme.dtos.ReservationDto;
 import com.hivestudent.bookme.dtos.ReservedDto;

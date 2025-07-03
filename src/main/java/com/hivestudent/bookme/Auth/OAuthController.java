@@ -1,4 +1,4 @@
-package com.hivestudent.bookme.OAuth;
+package com.hivestudent.bookme.Auth;
 
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;

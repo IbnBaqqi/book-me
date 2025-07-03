@@ -1,4 +1,4 @@
-package com.hivestudent.bookme;
+package com.hivestudent.bookme.mapper;
 
 import com.hivestudent.bookme.dtos.ReservationDto;
 import com.hivestudent.bookme.dtos.UpdateReservationRequest;

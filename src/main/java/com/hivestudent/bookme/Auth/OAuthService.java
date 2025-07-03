@@ -1,4 +1,4 @@
-package com.hivestudent.bookme.OAuth;
+package com.hivestudent.bookme.Auth;
 
 import com.hivestudent.bookme.dao.UserRepository;
 import com.hivestudent.bookme.entities.Role;
