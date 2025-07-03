@@ -1,7 +1,7 @@
 package com.hivestudent.bookme.services;
 
-import com.hivestudent.bookme.OAuth.OAuthService;
-import com.hivestudent.bookme.ReservationMapper;
+import com.hivestudent.bookme.Auth.OAuthService;
+import com.hivestudent.bookme.mapper.ReservationMapper;
 import com.hivestudent.bookme.dao.ReservationRepository;
 import com.hivestudent.bookme.dao.RoomRepository;
 import com.hivestudent.bookme.dtos.CreateReservationRequest;

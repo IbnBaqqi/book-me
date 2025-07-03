@@ -1,4 +1,4 @@
-package com.hivestudent.bookme;
+package com.hivestudent.bookme.exceptions;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
