@@ -51,10 +51,10 @@ public class ReservationService {
 
         Reservation reservation = new Reservation();
         reservation.setRoom(room);
-        reservation.setCreatedBy(currentUser); // @Todo replace with current user later
+        reservation.setCreatedBy(currentUser);
         reservation.setStartTime(start);
         reservation.setEndTime(end);
-        reservation.setStatus(ReservationStatus.RESERVED); // handled in Java, VARCHAR in DB
+        reservation.setStatus(ReservationStatus.RESERVED);
 
         reservationRepository.save(reservation);
 
