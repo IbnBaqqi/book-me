@@ -1,6 +1,8 @@
 package com.hivestudent.bookme.Auth;
 
 import com.hivestudent.bookme.dao.UserRepository;
+import com.hivestudent.bookme.dtos.FortyTwoTokenResponse;
+import com.hivestudent.bookme.dtos.IntraUserDto;
 import com.hivestudent.bookme.entities.Role;
 import com.hivestudent.bookme.entities.User;
 import lombok.RequiredArgsConstructor;
@@ -14,7 +16,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.Map;
+import java.util.Objects;
+
 
 @Service
 @RequiredArgsConstructor
@@ -54,17 +57,18 @@ public class OAuthService {
 //        Wrap into HttpEntity (a request Object)
         var request = new HttpEntity<>(params, headers);
 
-//        Send a http post request and parse the json into a generic Map
-        // @Todo change Map.class to tokenResponseDto later
-        var tokenResponse = restTemplate.postForEntity(tokenUrl, request, Map.class);
+//        Send a http post request and parse the json into a ResponseDto
+        var tokenResponse = restTemplate.postForEntity(tokenUrl, request, FortyTwoTokenResponse.class);
 
-//        Get accessToken from the Map
-        String accessToken = (String) tokenResponse.getBody().get("access_token");
+//        Get accessToken from the Response
+        var token = tokenResponse.getBody();
+        assert token != null;
+        var accessToken = token.getAccessToken();
 
 //        Stage 2 Fetch Current User from
         var user = getCurrentUser(accessToken);
 
-//
+//        Generate jwt
         return jwtService.generateToken(user);
     }
 
@@ -76,25 +80,21 @@ public class OAuthService {
 
         var userRequest = new HttpEntity<>(userHeaders);
 
-        // @Todo change Map.class to IntraUserDto later
-        var userResponse = restTemplate.exchange(userInfoUrl, HttpMethod.GET, userRequest, Map.class);
-        Map<String, Object> userData = userResponse.getBody();
+        // Extract User Data
+        var userResponse = restTemplate.exchange(userInfoUrl, HttpMethod.GET, userRequest, IntraUserDto.class);
+        var userData = Objects.requireNonNull(userResponse.getBody(), "Failed to get user info");
 
         // Step 3: Find or create user
-        String email = (String) userData.get("email");
-        String name = (String) userData.get("login");
+        String email = userData.getEmail();
+        String name = userData.getName();
 
-//        check if user is staff and make role to be staff
+//        check if user is already in db, if not create new user, assign role & slap it on db
         return userRepository.findByEmail(email)
                 .orElseGet(() -> {
                     User newUser = new User();
                     newUser.setEmail(email);
                     newUser.setName(name);
-                    Boolean isStaff = (Boolean) userData.get("staff?");
-                    if (Boolean.TRUE.equals(isStaff)) {
-                        newUser.setRole(Role.STAFF);
-                    }else
-                        newUser.setRole(Role.STUDENT); // default role
+                    newUser.setRole(userData.isStaff() ? Role.STAFF : Role.STUDENT);
                     return userRepository.save(newUser);
                 });
     }
