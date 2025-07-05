@@ -6,14 +6,12 @@ import jakarta.servlet.*;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.AllArgsConstructor;
-import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-@Component
 @AllArgsConstructor
 public class RateLimitFilter implements Filter {
 
@@ -22,6 +20,7 @@ public class RateLimitFilter implements Filter {
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain filterChain) throws IOException, ServletException {
 
+//        Get ip address from request, create a bucket, try to consume token or else return error
         HttpServletRequest httpRequest = (HttpServletRequest) request;
         String ipAddress = httpRequest.getRemoteAddr();
         Bucket bucket = buckets.computeIfAbsent(ipAddress, this::newBucket);
@@ -35,6 +34,7 @@ public class RateLimitFilter implements Filter {
     }
 
     private Bucket newBucket(String key) {
+//        Bucket builder with capacity & refilling rate
         return Bucket.builder()
                 .addLimit(limit -> limit
                         .capacity(1)
