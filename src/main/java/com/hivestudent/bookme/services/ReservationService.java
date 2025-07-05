@@ -12,6 +12,7 @@ import com.hivestudent.bookme.entities.Reservation;
 import com.hivestudent.bookme.entities.ReservationStatus;
 import com.hivestudent.bookme.entities.Role;
 import com.hivestudent.bookme.entities.User;
+import jakarta.mail.MessagingException;
 import lombok.AllArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
@@ -30,9 +31,10 @@ public class ReservationService {
     private final RoomRepository roomRepository;
     private final ReservationMapper reservationMapper;
     private final OAuthService oAuthService;
+    private final EmailServiceImpl emailServiceImpl;
 
-    //get current User
-    public ReservationDto createReservation(CreateReservationRequest request, User currentUser) {
+
+    public ReservationDto createReservation(CreateReservationRequest request, User currentUser) throws MessagingException {
 
         var room = roomRepository.findById(request.getRoomId()).orElseThrow();
 
@@ -57,6 +59,8 @@ public class ReservationService {
         reservation.setStatus(ReservationStatus.RESERVED);
 
         reservationRepository.save(reservation);
+
+        emailServiceImpl.sendEmail(currentUser.getEmail());
 
         return reservationMapper.toDto(reservation);
     }

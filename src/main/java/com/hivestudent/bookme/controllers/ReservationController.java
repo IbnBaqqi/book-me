@@ -7,6 +7,7 @@ import com.hivestudent.bookme.dtos.ReservedDto;
 import com.hivestudent.bookme.dtos.UpdateReservationRequest;
 import com.hivestudent.bookme.entities.User;
 import com.hivestudent.bookme.services.ReservationService;
+import jakarta.mail.MessagingException;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -28,7 +29,7 @@ public class ReservationController {
     private final OAuthService oAuthService;
 
     @PostMapping
-    public ResponseEntity<ReservationDto> create(@RequestBody @Valid CreateReservationRequest request ) {
+    public ResponseEntity<ReservationDto> create(@RequestBody @Valid CreateReservationRequest request ) throws MessagingException {
 
         User currentUser = oAuthService.getCurrentUser(); // based on OAuth2 email
 

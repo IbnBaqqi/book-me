@@ -23,3 +23,16 @@ spring:
     active: dev
   redirect:
     token_url: ${REDIRECT_TOKEN_URI}
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${SMTP_MAIL_USERNAME}
+    password: ${SMTP_MAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+  from: #Email Sender
+    email: ${FROM_EMAIL}
