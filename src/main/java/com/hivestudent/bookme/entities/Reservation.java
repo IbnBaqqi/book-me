@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 @Getter
 @Setter
@@ -33,5 +34,14 @@ public class Reservation {
     @Column(name = "status")
     @Enumerated(EnumType.STRING)
     private ReservationStatus status;
+
+    public String dateToEmailFormat() {
+
+        var day = startTime.getDayOfMonth();
+        var month = startTime.getMonth().toString().toLowerCase();
+        var year = startTime.getYear();
+
+        return month + " " + day + "," + " " + year + " " + startTime.format(DateTimeFormatter.ofPattern("HH:mm"));
+    }
 
 }

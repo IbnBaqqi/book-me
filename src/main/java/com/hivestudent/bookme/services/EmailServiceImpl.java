@@ -6,9 +6,13 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
 @Service
 @RequiredArgsConstructor
@@ -20,7 +24,8 @@ public class EmailServiceImpl implements EmailService{
     private String fromEmail;
 
     @Override
-    public void sendEmail(String email) throws MessagingException {
+    @Async
+    public void sendEmail(String email, String room, String date) throws MessagingException, IOException {
 
         MimeMessage mimeMessage = emailSender.createMimeMessage();
         MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
@@ -30,10 +35,22 @@ public class EmailServiceImpl implements EmailService{
         } catch (UnsupportedEncodingException e) {
             throw new RuntimeException("Failed to set Sender Name");
         }
+
+        var htmlContent = getBookingEmailBody(room, date);
+
         helper.setTo(email);
         helper.setSubject("Meeting Room Confirmation");
-        helper.setText("Your Meeting Reservation has been booked");
+        helper.setText(htmlContent, true);
 
         emailSender.send(mimeMessage);
+    }
+
+    public static String getBookingEmailBody(String roomSize, String dateTime) throws IOException {
+        String templatePath = "src/main/resources/booking_email_template.html";
+        String template = Files.readString(Paths.get(templatePath));
+
+        return template
+                .replace("${roomSize}", roomSize)
+                .replace("${dateTime}", dateTime);
     }
 }

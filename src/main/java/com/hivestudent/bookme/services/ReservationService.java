@@ -17,6 +17,7 @@ import lombok.AllArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -31,10 +32,10 @@ public class ReservationService {
     private final RoomRepository roomRepository;
     private final ReservationMapper reservationMapper;
     private final OAuthService oAuthService;
-    private final EmailServiceImpl emailServiceImpl;
+    private final EmailService emailService;
 
 
-    public ReservationDto createReservation(CreateReservationRequest request, User currentUser) throws MessagingException {
+    public ReservationDto createReservation(CreateReservationRequest request, User currentUser) throws MessagingException, IOException {
 
         var room = roomRepository.findById(request.getRoomId()).orElseThrow();
 
@@ -60,7 +61,9 @@ public class ReservationService {
 
         reservationRepository.save(reservation);
 
-        emailServiceImpl.sendEmail(currentUser.getEmail());
+        var date = reservation.dateToEmailFormat();
+
+        emailService.sendEmail(currentUser.getEmail(), room.getName(), date);
 
         return reservationMapper.toDto(reservation);
     }

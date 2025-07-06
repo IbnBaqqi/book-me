@@ -16,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
@@ -29,7 +30,7 @@ public class ReservationController {
     private final OAuthService oAuthService;
 
     @PostMapping
-    public ResponseEntity<ReservationDto> create(@RequestBody @Valid CreateReservationRequest request ) throws MessagingException {
+    public ResponseEntity<ReservationDto> create(@RequestBody @Valid CreateReservationRequest request ) throws MessagingException, IOException {
 
         User currentUser = oAuthService.getCurrentUser(); // based on OAuth2 email
 
