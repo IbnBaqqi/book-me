@@ -11,6 +11,7 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
@@ -57,7 +58,7 @@ public class OAuthService {
 //        Wrap into HttpEntity (a request Object)
         var request = new HttpEntity<>(params, headers);
 
-//        Send a http post request and parse the json into a ResponseDto
+//        Send an http post request and parse the json into a ResponseDto
         var tokenResponse = restTemplate.postForEntity(tokenUrl, request, FortyTwoTokenResponse.class);
 
 //        Get accessToken from the Response
@@ -87,6 +88,9 @@ public class OAuthService {
         // Step 3: Find or create user
         String email = userData.getEmail();
         String name = userData.getName();
+        String campus = userData.getCampus().get(0).getName();
+        if (!campus.equals("Helsinki"))
+            throw new AccessDeniedException("Only Helsinki Campus Student Allowed");
 
 //        check if user is already in db, if not create new user, assign role & slap it on db
         return userRepository.findByEmail(email)
