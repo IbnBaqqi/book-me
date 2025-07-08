@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.List;
 import java.util.Objects;
 
 
@@ -88,8 +89,14 @@ public class OAuthService {
         // Step 3: Find or create user
         String email = userData.getEmail();
         String name = userData.getName();
-        String campus = userData.getCampus().get(0).getName();
-        if (!campus.equals("Helsinki"))
+        List<IntraUserDto.Campus> campus = userData.getCampus();
+
+        // Check if account belongs to Hive campus
+        var hive = campus.stream()
+                .filter(camp -> camp.getName().equals("Helsinki"))
+                .findFirst()
+                .orElse(null);
+        if (hive == null)
             throw new AccessDeniedException("Only Helsinki Campus Student Allowed");
 
 //        check if user is already in db, if not create new user, assign role & slap it on db
