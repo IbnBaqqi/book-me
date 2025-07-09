@@ -16,12 +16,16 @@ public class IntraUserDto {
     @JsonProperty("staff?")
     private boolean staff;
 
-    @JsonProperty("campus")
-    private List<Campus> campus;
+    @JsonProperty("campus_users")
+    private List<CampusUsers> campus;
 
     @Data
-    public static class Campus {
+    public static class CampusUsers {
+
+        @JsonProperty("campus_id")
         private int id;
-        private String name;
+
+        @JsonProperty("is_primary")
+        private boolean primary;
     }
 }

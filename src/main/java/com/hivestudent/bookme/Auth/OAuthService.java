@@ -91,11 +91,11 @@ public class OAuthService {
         // Step 3: Find or create user
         String email = userData.getEmail();
         String name = userData.getName();
-        List<IntraUserDto.Campus> campus = userData.getCampus();
+        List<IntraUserDto.CampusUsers> campus = userData.getCampus();
 
-        // Check if account belongs to Hive campus
+        // Check if account primarily belongs to Hive campus
         var hive = campus.stream()
-                .filter(camp -> camp.getName().equals("Helsinki"))
+                .filter(camp -> camp.getId() == 13 && camp.isPrimary())
                 .findFirst()
                 .orElse(null);
         if (hive == null)
