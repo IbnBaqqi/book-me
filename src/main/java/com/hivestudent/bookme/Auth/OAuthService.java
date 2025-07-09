@@ -35,6 +35,9 @@ public class OAuthService {
     @Value("${spring.security.oauth2.client.registration.42-intra.client-secret}")
     private String clientSecret;
 
+    @Value("${spring.security.oauth2.client.provider.42-intra.user-info-uri}")
+    private String userInfoUrl;
+
     @Value("${spring.security.oauth2.client.registration.42-intra.redirect-uri}")
     private String redirectUri;
 
@@ -76,7 +79,6 @@ public class OAuthService {
 
 //    move to userService later
     public User getCurrentUser(String accessToken) {
-        var userInfoUrl = "https://api.intra.42.fr/v2/me";
         var userHeaders = new HttpHeaders();
         userHeaders.setBearerAuth(accessToken);
 
@@ -89,11 +91,11 @@ public class OAuthService {
         // Step 3: Find or create user
         String email = userData.getEmail();
         String name = userData.getName();
-        List<IntraUserDto.Campus> campus = userData.getCampus();
+        List<IntraUserDto.CampusUsers> campus = userData.getCampus();
 
-        // Check if account belongs to Hive campus
+        // Check if account primarily belongs to Hive campus
         var hive = campus.stream()
-                .filter(camp -> camp.getName().equals("Helsinki"))
+                .filter(camp -> camp.getId() == 13 && camp.isPrimary())
                 .findFirst()
                 .orElse(null);
         if (hive == null)
