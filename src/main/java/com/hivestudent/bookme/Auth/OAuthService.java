@@ -35,6 +35,9 @@ public class OAuthService {
     @Value("${spring.security.oauth2.client.registration.42-intra.client-secret}")
     private String clientSecret;
 
+    @Value("${spring.security.oauth2.client.provider.42-intra.user-info-uri}")
+    private String userInfoUrl;
+
     @Value("${spring.security.oauth2.client.registration.42-intra.redirect-uri}")
     private String redirectUri;
 
@@ -76,7 +79,6 @@ public class OAuthService {
 
 //    move to userService later
     public User getCurrentUser(String accessToken) {
-        var userInfoUrl = "https://api.intra.42.fr/v2/me";
         var userHeaders = new HttpHeaders();
         userHeaders.setBearerAuth(accessToken);
 

@@ -15,6 +15,7 @@ spring:
         provider:
           42-intra:
             authorization-uri: ${FORTY_TWO.OAUTH_AUTH_URI}
+            user-info-uri: ${FORTY_TWO.USER_INFO_URL}
             token-uri:  ${FORTY_TWO.OAUTH_TOKEN_URI}
   Jwt:
     secret: ${JWT_SECRET}
