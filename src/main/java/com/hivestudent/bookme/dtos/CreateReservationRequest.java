@@ -14,11 +14,11 @@ public class CreateReservationRequest {
 
     @NotNull(message = "Start time required")
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
-    private LocalDateTime startTime; // e.g. 06:00
+    private LocalDateTime startTime;
 
     @NotNull(message = "End time required")
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
-    private LocalDateTime endTime; // e.g. 07:00
+    private LocalDateTime endTime;
 
 
 }
