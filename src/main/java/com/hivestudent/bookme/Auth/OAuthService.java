@@ -5,16 +5,16 @@ import com.hivestudent.bookme.dtos.FortyTwoTokenResponse;
 import com.hivestudent.bookme.dtos.IntraUserDto;
 import com.hivestudent.bookme.entities.Role;
 import com.hivestudent.bookme.entities.User;
+import com.hivestudent.bookme.exceptions.RestTemplateErrorHandler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.MediaType;
+import org.springframework.http.*;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
@@ -27,7 +27,7 @@ public class OAuthService {
 
     private final UserRepository userRepository;
     private final JwtService jwtService;
-    RestTemplate restTemplate = new RestTemplate();
+    private final RestTemplate restTemplate; //manual bean in appConfig
 
     @Value("${spring.security.oauth2.client.registration.42-intra.client-id}")
     private String clientId;
@@ -46,7 +46,7 @@ public class OAuthService {
 
     public String processOAuthCallback(String code) {
 //        Step 1: Exchange code for accessToken
-
+        restTemplate.setErrorHandler(new RestTemplateErrorHandler());
 //        create request body parameters
         var params = new LinkedMultiValueMap<String, String>();
         params.add("grant_type", "authorization_code");
@@ -63,7 +63,12 @@ public class OAuthService {
         var request = new HttpEntity<>(params, headers);
 
 //        Send an http post request and parse the json into a ResponseDto
-        var tokenResponse = restTemplate.postForEntity(tokenUrl, request, FortyTwoTokenResponse.class);
+        ResponseEntity<FortyTwoTokenResponse> tokenResponse;
+        try {
+            tokenResponse = restTemplate.postForEntity(tokenUrl, request, FortyTwoTokenResponse.class);
+        } catch (HttpClientErrorException e) {
+            throw new RestClientException("Error " + e.getStatusCode() + " : " + e.getMessage());
+        }
 
 //        Get accessToken from the Response
         var token = tokenResponse.getBody();
@@ -85,7 +90,13 @@ public class OAuthService {
         var userRequest = new HttpEntity<>(userHeaders);
 
         // Extract User Data
-        var userResponse = restTemplate.exchange(userInfoUrl, HttpMethod.GET, userRequest, IntraUserDto.class);
+        ResponseEntity<IntraUserDto> userResponse;
+        try {
+            userResponse = restTemplate.exchange(userInfoUrl, HttpMethod.GET, userRequest, IntraUserDto.class);
+        } catch (HttpClientErrorException e) {
+            throw new RestClientException("Error " + e.getStatusCode() + " : " + e.getMessage());
+        }
+
         var userData = Objects.requireNonNull(userResponse.getBody(), "Failed to get user info");
 
         // Step 3: Find or create user
