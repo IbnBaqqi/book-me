@@ -25,7 +25,7 @@ public class EmailServiceImpl implements EmailService{
 
     @Override
     @Async
-    public void sendEmail(String email, String room, String date) throws MessagingException, IOException {
+    public void sendConfirmation(String email, String room, String date) throws MessagingException, IOException {
 
         MimeMessage mimeMessage = emailSender.createMimeMessage();
         MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");

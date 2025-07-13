@@ -69,7 +69,7 @@ public class ReservationService {
 
         var date = reservation.dateToEmailFormat();
 
-        emailService.sendEmail(currentUser.getEmail(), room.getName(), date);
+        emailService.sendConfirmation(currentUser.getEmail(), room.getName(), date);
 
         return reservationMapper.toDto(reservation);
     }
