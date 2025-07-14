@@ -3,6 +3,7 @@ package com.hivestudent.bookme.Auth;
 import com.hivestudent.bookme.dao.UserRepository;
 import com.hivestudent.bookme.dtos.FortyTwoTokenResponse;
 import com.hivestudent.bookme.dtos.IntraUserDto;
+import com.hivestudent.bookme.dtos.TokenRedirectDto;
 import com.hivestudent.bookme.entities.Role;
 import com.hivestudent.bookme.entities.User;
 import com.hivestudent.bookme.exceptions.RestTemplateErrorHandler;
@@ -44,7 +45,7 @@ public class OAuthService {
     @Value("${spring.security.oauth2.client.provider.42-intra.token-uri}")
     private String tokenUrl;
 
-    public String processOAuthCallback(String code) {
+    public TokenRedirectDto processOAuthCallback(String code) {
 //        Step 1: Exchange code for accessToken
         restTemplate.setErrorHandler(new RestTemplateErrorHandler());
 //        create request body parameters
@@ -79,7 +80,10 @@ public class OAuthService {
         var user = getCurrentUser(accessToken);
 
 //        Generate jwt
-        return jwtService.generateToken(user);
+        var jwtToken = jwtService.generateToken(user);
+        var intraName = jwtService.extractName(jwtToken);
+        var role = jwtService.extractRole(jwtToken);
+        return new TokenRedirectDto(jwtToken, intraName, role);
     }
 
 //    move to userService later
