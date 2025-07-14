@@ -18,6 +18,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -52,6 +53,11 @@ public class ReservationService {
             throw new IllegalArgumentException("This time slot is already booked");
         }
 
+        var maxTime = 240; // 4 hours
+        var duration = Duration.between(start, end);
+        if (duration.toMinutes() > maxTime)
+            throw new IllegalArgumentException("Reservation exceeds maximum allowed duration of 4 hour");
+
         Reservation reservation = new Reservation();
         reservation.setRoom(room);
         reservation.setCreatedBy(currentUser);
@@ -63,7 +69,7 @@ public class ReservationService {
 
         var date = reservation.dateToEmailFormat();
 
-        emailService.sendEmail(currentUser.getEmail(), room.getName(), date);
+        emailService.sendConfirmation(currentUser.getEmail(), room.getName(), date);
 
         return reservationMapper.toDto(reservation);
     }

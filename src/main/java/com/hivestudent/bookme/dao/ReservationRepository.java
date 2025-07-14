@@ -26,8 +26,11 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
 
   @Query("""
 SELECT r FROM Reservation r
+JOIN FETCH r.room
+JOIN FETCH r.createdBy
 WHERE r.startTime >= :startDate
   AND r.endTime <= :endDate
+ORDER BY r.room.id, r.startTime
 """)
   List<Reservation> findAllBetweenDates(
           @Param("startDate") LocalDateTime startDate,
