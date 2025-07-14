@@ -58,7 +58,9 @@ public class OAuthController {
 
         session.removeAttribute("oauth_state");
 
-        var token = oAuthService.processOAuthCallback(code);
-        response.sendRedirect(tokenRedirect + token);
+        var redirectResponse = oAuthService.processOAuthCallback(code);
+        response.sendRedirect(tokenRedirect + redirectResponse.getToken()
+                + "&intra=" + redirectResponse.getIntra()
+                + "&role=" + redirectResponse.getRole().toLowerCase());
     }
 }
