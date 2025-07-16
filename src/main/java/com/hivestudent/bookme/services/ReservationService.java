@@ -53,9 +53,10 @@ public class ReservationService {
             throw new IllegalArgumentException("This time slot is already booked");
         }
 
+//        Set max Booking Time for Student
         var maxTime = 240; // 4 hours
         var duration = Duration.between(start, end);
-        if (duration.toMinutes() > maxTime)
+        if (duration.toMinutes() > maxTime && currentUser.getRole().equals(Role.STUDENT))
             throw new IllegalArgumentException("Reservation exceeds maximum allowed duration of 4 hour");
 
         Reservation reservation = new Reservation();
@@ -115,12 +116,15 @@ public class ReservationService {
     }
 
     public void cancelReservation(Long id) {
+
         var reserved = reservationRepository.findById(id).orElse(null);
         if (reserved == null)
             throw new IllegalArgumentException("Reservation doesn't exist");
+
         var user = oAuthService.getCurrentUser();
         boolean isStaff = user.getRole().equals(Role.STAFF);
         boolean isOwner = reserved.getCreatedBy().getEmail().equals(user.getEmail());
+
         if (isStaff || isOwner) {
             reservationRepository.delete(reserved);
             reserved.setCreatedBy(null);
@@ -130,18 +134,23 @@ public class ReservationService {
     }
 
     public ReservationDto updateReservation(Long id, UpdateReservationRequest request) {
+
         var reserved = reservationRepository.findById(id).orElse(null);
         if (reserved == null)
             throw new IllegalArgumentException("Reservation doesn't exist");
+
         var user = oAuthService.getCurrentUser();
         boolean isOwner = reserved.getCreatedBy().getEmail().equals(user.getEmail());
+
         var overlap = reservationRepository.existsOverlapping(request.getRoomId(), request.getStartTime(), request.getEndTime()) > 0;
         if (overlap)
             throw new IllegalArgumentException("This time slot is already booked");
+
         if (isOwner) {
             reservationMapper.update(request, reserved);
             reservationRepository.save(reserved);
         }
+
         return reservationMapper.toDto(reserved);
     }
 }
