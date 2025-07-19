@@ -1,5 +1,3 @@
 spring:
-  config:
-    import: optional:file:.env.yaml
   datasource:
     url: ${SPRING_DATASOURCE_URL}

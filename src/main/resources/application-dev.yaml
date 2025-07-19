@@ -1,6 +1,4 @@
 spring:
-  config:
-    import: optional:file:.env.yaml
   datasource:
     url: jdbc:mysql://localhost:3306/bookMe?createDatabaseIfNotExist=true
     username: root
