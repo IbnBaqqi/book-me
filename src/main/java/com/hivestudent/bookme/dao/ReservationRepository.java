@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -37,5 +38,14 @@ ORDER BY r.room.id, r.startTime
           @Param("endDate") LocalDateTime endDate
   );
 
+  @Query(value = """
+SELECT SUM(TIMESTAMPDIFF(MINUTE, r.start_time, r.end_time))
+FROM reservations r
+WHERE r.user_id = :userId
+  AND DATE(r.start_time) = :date
+  AND r.status = 'RESERVED'
+""", nativeQuery = true)
+  Integer getTotalReservedMinutesForDate(@Param("userId") Long userId,
+                                         @Param("date") LocalDate date);
 
 }

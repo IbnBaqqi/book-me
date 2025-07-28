@@ -59,6 +59,8 @@ public class ReservationService {
         if (duration.toMinutes() > maxTime && currentUser.getRole().equals(Role.STUDENT))
             throw new IllegalArgumentException("Reservation exceeds maximum allowed duration of 4 hour");
 
+//        Validate max daily Allowed booking using sql query getTotalReservedMinutesForDate @Todo
+
         Reservation reservation = new Reservation();
         reservation.setRoom(room);
         reservation.setCreatedBy(currentUser);
