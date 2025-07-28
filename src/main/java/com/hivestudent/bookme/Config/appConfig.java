@@ -3,6 +3,7 @@ package com.hivestudent.bookme.Config;
 import com.hivestudent.bookme.exceptions.RestTemplateErrorHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestTemplate;
 
 @Configuration
@@ -13,5 +14,10 @@ public class appConfig {
         RestTemplate restTemplate= new RestTemplate();
         restTemplate.setErrorHandler(new RestTemplateErrorHandler());
         return restTemplate;
+    }
+
+    @Bean
+    public RestClient restClient() {
+        return RestClient.create();
     }
 }
