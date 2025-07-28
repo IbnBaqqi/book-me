@@ -1,6 +1,7 @@
 package com.hivestudent.bookme.services;
 
 import com.hivestudent.bookme.Auth.OAuthService;
+import com.hivestudent.bookme.Google.GoogleCalenderService;
 import com.hivestudent.bookme.mapper.ReservationMapper;
 import com.hivestudent.bookme.dao.ReservationRepository;
 import com.hivestudent.bookme.dao.RoomRepository;
@@ -34,6 +35,7 @@ public class ReservationService {
     private final ReservationMapper reservationMapper;
     private final OAuthService oAuthService;
     private final EmailService emailService;
+    private final GoogleCalenderService googleCalenderService;
 
 
     public ReservationDto createReservation(CreateReservationRequest request, User currentUser) throws MessagingException, IOException {
@@ -69,6 +71,8 @@ public class ReservationService {
         reservation.setStatus(ReservationStatus.RESERVED);
 
         reservationRepository.save(reservation);
+
+        googleCalenderService.createGoogleEvent(reservation);
 
         var date = reservation.dateToEmailFormat();
 

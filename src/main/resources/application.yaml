@@ -19,6 +19,8 @@ spring:
           google:
             authorization-uri: ${GOOGLE_AUTH_URI}
             token-uri: ${GOOGLE_TOKEN_URI}
+            calendar-uri: ${GOOGLE_CALENDER_URI}
+            calendar-id: ${GOOGLE_CALENDER_ID}
           42-intra:
             authorization-uri: ${OAUTH_AUTH_URI}
             user-info-uri: ${USER_INFO_URL}

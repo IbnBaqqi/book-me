@@ -1,4 +1,4 @@
-package com.hivestudent.bookme.services;
+package com.hivestudent.bookme.Google;
 
 import io.jsonwebtoken.Jwts;
 import lombok.RequiredArgsConstructor;
@@ -15,6 +15,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
+import java.time.Instant;
 import java.util.Base64;
 import java.util.Date;
 
@@ -22,7 +23,7 @@ import static java.net.URLEncoder.encode;
 
 @Service
 @RequiredArgsConstructor
-public class GoogleService {
+public class GoogleAuthService {
 
     private final RestClient restClient;
 
@@ -41,7 +42,7 @@ public class GoogleService {
     @Value("${spring.security.oauth2.client.provider.google.token-uri}")
     private String tokenUri;
 
-    public void processGoogleToken() {
+    public GoogleAccessToken processGoogleToken() {
 
         var jwt = generateGoogleJwtToken();
 
@@ -53,12 +54,15 @@ public class GoogleService {
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                 .body(params)
                 .retrieve()
-                .body(new ParameterizedTypeReference<>() {});
+                .body(new ParameterizedTypeReference<GoogleAccessToken>() {});
 
+        assert googleAccessToken != null;
+        googleAccessToken.setCreatedAt(Instant.now());
+        return googleAccessToken;
     }
 
 //    Decode the private key from the initial PEM format & encode into base64
-    public PrivateKey loadPrivateKeyFromPem(String pem) throws InvalidKeySpecException, NoSuchAlgorithmException {
+    public PrivateKey loadPrivateKeyFromPem() throws InvalidKeySpecException, NoSuchAlgorithmException {
 
 //        clean up into a clean base-64 key string
         var privateKeyPem = privateKey
@@ -80,7 +84,7 @@ public class GoogleService {
     @SneakyThrows //First time using @Todo check usage
     public String generateGoogleJwtToken(){
 
-        var newPrivateKey = loadPrivateKeyFromPem(privateKey);
+        var newPrivateKey = loadPrivateKeyFromPem();
 
         return Jwts.builder()
                 .claim("iss", serviceAccountEmail)
