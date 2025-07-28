@@ -7,7 +7,7 @@ spring:
         registration:
           google:
             client-id: ${GOOGLE_CLIENT_EMAIL}
-            client-secret: ${GOOGLE_SECRET_KEY}
+            client-secret: ${GOOGLE_PRIVATE_KEY}
             scope:
               - https://www.googleapis.com/auth/calendar
           42-intra:
