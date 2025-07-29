@@ -71,4 +71,16 @@ public class GoogleCalenderService {
 //            throw new RuntimeException(e);
         }
     }
+
+    @Async
+    public void deleteGoogleEvent(String eventId) {
+
+        var token = googleTokenManager.getAccessToken();
+
+        restClient.delete()
+                .uri(calendarUri + "/calendars/{calendarId}/events/{eventId}", calendarId, eventId)
+                .header("Authorization", "Bearer " + token)
+                .retrieve()
+                .toBodilessEntity();
+    }
 }

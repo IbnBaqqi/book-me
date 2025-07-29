@@ -139,6 +139,7 @@ public class ReservationService {
 
         if (isStaff || isOwner) {
             reservationRepository.delete(reserved);
+            googleCalenderService.deleteGoogleEvent(reserved.getGoogleCalendarEventId());
             reserved.setCreatedBy(null);
             reserved.setRoom(null);
         }else
