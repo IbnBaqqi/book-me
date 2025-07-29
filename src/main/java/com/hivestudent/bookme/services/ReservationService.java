@@ -70,9 +70,15 @@ public class ReservationService {
         reservation.setEndTime(end);
         reservation.setStatus(ReservationStatus.RESERVED);
 
-        reservationRepository.save(reservation);
+        var savedReservation = reservationRepository.save(reservation);
 
-        googleCalenderService.createGoogleEvent(reservation);
+        googleCalenderService.createGoogleEvent(reservation) // chain eventId to be saved later
+                .thenAccept(eventId -> {
+                    if (eventId != null) {
+                        savedReservation.setGoogleCalendarEventId(eventId);
+                        reservationRepository.save(savedReservation);
+                    }
+                });
 
         var date = reservation.dateToEmailFormat();
 
