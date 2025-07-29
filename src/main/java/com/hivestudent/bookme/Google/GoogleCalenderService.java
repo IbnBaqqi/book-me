@@ -45,7 +45,7 @@ public class GoogleCalenderService {
                     .format(formatter);
 
             var event = GoogleEventRequest.builder()
-                    .summary(reservation.getRoom().getName() + " Room")
+                    .summary("[" + reservation.getCreatedBy().getName() + "] " + reservation.getRoom().getName() + " meeting room")
                     .description("Created via BookMe")
                     .start(new GoogleEventRequest.DateTimeObject(start))
                     .end(new GoogleEventRequest.DateTimeObject(end))
