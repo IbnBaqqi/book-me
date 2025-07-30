@@ -1,6 +1,7 @@
 package com.hivestudent.bookme.services;
 
 import com.hivestudent.bookme.Auth.OAuthService;
+import com.hivestudent.bookme.Google.GoogleCalenderService;
 import com.hivestudent.bookme.mapper.ReservationMapper;
 import com.hivestudent.bookme.dao.ReservationRepository;
 import com.hivestudent.bookme.dao.RoomRepository;
@@ -34,6 +35,7 @@ public class ReservationService {
     private final ReservationMapper reservationMapper;
     private final OAuthService oAuthService;
     private final EmailService emailService;
+    private final GoogleCalenderService googleCalenderService;
 
 
     public ReservationDto createReservation(CreateReservationRequest request, User currentUser) throws MessagingException, IOException {
@@ -59,6 +61,8 @@ public class ReservationService {
         if (duration.toMinutes() > maxTime && currentUser.getRole().equals(Role.STUDENT))
             throw new IllegalArgumentException("Reservation exceeds maximum allowed duration of 4 hour");
 
+//        Validate max daily Allowed booking using sql query getTotalReservedMinutesForDate @Todo
+
         Reservation reservation = new Reservation();
         reservation.setRoom(room);
         reservation.setCreatedBy(currentUser);
@@ -66,7 +70,15 @@ public class ReservationService {
         reservation.setEndTime(end);
         reservation.setStatus(ReservationStatus.RESERVED);
 
-        reservationRepository.save(reservation);
+        var savedReservation = reservationRepository.save(reservation);
+
+        googleCalenderService.createGoogleEvent(reservation) // chain eventId to be saved later
+                .thenAccept(eventId -> {
+                    if (eventId != null) {
+                        savedReservation.setGoogleCalendarEventId(eventId);
+                        reservationRepository.save(savedReservation);
+                    }
+                });
 
         var date = reservation.dateToEmailFormat();
 
@@ -127,6 +139,7 @@ public class ReservationService {
 
         if (isStaff || isOwner) {
             reservationRepository.delete(reserved);
+            googleCalenderService.deleteGoogleEvent(reserved.getGoogleCalendarEventId());
             reserved.setCreatedBy(null);
             reserved.setRoom(null);
         }else

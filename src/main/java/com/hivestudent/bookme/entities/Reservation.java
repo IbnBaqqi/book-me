@@ -35,6 +35,9 @@ public class Reservation {
     @Enumerated(EnumType.STRING)
     private ReservationStatus status;
 
+    @Column(name = "gcal_event_id")
+    private String googleCalendarEventId;
+
     public String dateToEmailFormat() {
 
         var day = startTime.getDayOfMonth();
