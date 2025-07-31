@@ -70,10 +70,9 @@ public class GoogleAuthService {
         var privateKeyPem = privateKey
                 .replace("-----BEGIN PRIVATE KEY-----", "")
                 .replace("-----END PRIVATE KEY-----", "")
+                .replace("\\\\n", "")
                 .replace("\\n", "")
-                .replace("\n", "")
-                .replace("\r", "")
-                .replaceAll("\\s", "");
+                .replace("\n", "");
 
         System.out.println("Private key PEM: " + privateKeyPem);
 
