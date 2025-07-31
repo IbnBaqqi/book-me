@@ -5,12 +5,22 @@ spring:
     oauth2:
       client:
         registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_EMAIL}
+            client-secret: ${GOOGLE_PRIVATE_KEY}
+            scope:
+              - https://www.googleapis.com/auth/calendar
           42-intra:
             client-id: ${CLIENT_ID}
             client-secret: ${SECRET}
             authorization-grant-type: authorization_code
             redirect-uri: ${REDIRECT_URI}
         provider:
+          google:
+            authorization-uri: ${GOOGLE_AUTH_URI}
+            token-uri: ${GOOGLE_TOKEN_URI}
+            calendar-uri: ${GOOGLE_CALENDER_URI}
+            calendar-id: ${GOOGLE_CALENDER_ID}
           42-intra:
             authorization-uri: ${OAUTH_AUTH_URI}
             user-info-uri: ${USER_INFO_URL}
@@ -18,6 +28,8 @@ spring:
   Jwt:
     secret: ${JWT_SECRET}
     refreshToken: 3600
+  GoogleJwt:
+    tokenExpiration: 3600
   profiles:
     active: dev
   redirect:
