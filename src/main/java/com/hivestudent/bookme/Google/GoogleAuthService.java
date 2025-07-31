@@ -69,6 +69,9 @@ public class GoogleAuthService {
                 .replace("-----BEGIN PRIVATE KEY-----", "")
                 .replace("-----END PRIVATE KEY-----", "")
                 .replace("\\n", "");
+                .replace("\n", "")
+                .replace("\r", "")
+                .replaceAll("\\s", "");
 
 //        Decodes the cleaned key string into raw binary
 //        private key was base64-encoded, and this gives you the actual byte representation.
