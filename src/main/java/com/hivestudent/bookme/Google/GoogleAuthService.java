@@ -64,11 +64,16 @@ public class GoogleAuthService {
 //    Decode the private key from the initial PEM format & encode into base64
     public PrivateKey loadPrivateKeyFromPem() throws InvalidKeySpecException, NoSuchAlgorithmException {
 
+
+        
 //        clean up into a clean base-64 key string
         var privateKeyPem = privateKey
                 .replace("-----BEGIN PRIVATE KEY-----", "")
                 .replace("-----END PRIVATE KEY-----", "")
-                .replace("\\n", "");
+                .replace("\\\\n", "")
+                .replace("\\n", "")
+                .replace("\n", "");
+
 
 //        Decodes the cleaned key string into raw binary
 //        private key was base64-encoded, and this gives you the actual byte representation.
