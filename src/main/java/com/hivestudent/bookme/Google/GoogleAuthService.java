@@ -68,7 +68,7 @@ public class GoogleAuthService {
         var privateKeyPem = privateKey
                 .replace("-----BEGIN PRIVATE KEY-----", "")
                 .replace("-----END PRIVATE KEY-----", "")
-                .replace("\\n", "");
+                .replace("\\n", "")
                 .replace("\n", "")
                 .replace("\r", "")
                 .replaceAll("\\s", "");
