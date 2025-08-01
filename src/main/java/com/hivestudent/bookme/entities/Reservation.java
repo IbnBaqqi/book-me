@@ -6,6 +6,8 @@ import lombok.Setter;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.format.TextStyle;
+import java.util.Locale;
 
 @Getter
 @Setter
@@ -41,10 +43,10 @@ public class Reservation {
     public String dateToEmailFormat() {
 
         var day = startTime.getDayOfMonth();
-        var month = startTime.getMonth().toString().toLowerCase();
+        var month = startTime.getMonth().getDisplayName(TextStyle.FULL, Locale.ENGLISH);
         var year = startTime.getYear();
 
-        return month + " " + day + "," + " " + year + " " + startTime.format(DateTimeFormatter.ofPattern("HH:mm"));
+        return month + " " + day + ", " + year + " " + startTime.format(DateTimeFormatter.ofPattern("HH:mm"));
     }
 
 }
