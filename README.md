@@ -135,4 +135,3 @@ MIT License
 - [ ] Google Calendar Integration
 
 ---
-<!--  -->
