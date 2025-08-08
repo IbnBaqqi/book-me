@@ -1,11 +1,9 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta charset='iso-8859-1' content='text/html' http-equiv='Content-Type'>
+    <meta charset='utf-8' content='text/html' http-equiv='Content-Type'>
     <link href="https://use.typekit.net/bzd7hlb.css" media="screen" rel="stylesheet"/>
-    <title>
-        Information
-    </title>
+    <title>Booking Confirmation</title>
 </head>
 <body bgcolor='#fff' style='background-color: #FFFFFF'>
 <div style="background-color: #FFFFFF; font-family: 'Noto Sans', sans-serif; color: #333;">
@@ -34,7 +32,7 @@
                     <tr>
                         <td width='20'></td>
                         <td style="font-family: 'Noto Sans', sans-serif; font-size: 28px; font-weight: normal; color: #777; text-align: center; padding: 30px 0px 10px;"
-                            width='560'>You have a new booking
+                            width='560'>Your room is booked
                         </td>
                         <td width='20'></td>
                     </tr>
@@ -62,13 +60,32 @@
                                 </tr>
                                 <tr>
                                     <td width='15'></td>
-                                    <td style="text-align: justify; font-family: 'Noto Sans', sans-serif; font-size: 14px; color: #333"
-                                        width='500'>
-                                        <p>Hi,
-                                            The <strong>${roomSize}</strong> meeting room has been reserved for you from
-                                            <strong>${dateTime}</strong>.
+                                    <td style="text-align: left; font-family: 'Noto Sans', sans-serif; font-size: 14px; color: #333" width='500'>
+                                        <p>Hi,</p>
+                                        <p>
+                                            The <strong>__ROOM_NAME__</strong> meeting room has been reserved for you.
                                         </p>
-
+                                        <table width="100%" cellpadding="0" cellspacing="0" style="font-size: 14px; color: #333;">
+                                            <tr>
+                                                <td style="padding: 6px 0; width: 120px; color: #777;">Room</td>
+                                                <td style="padding: 6px 0;"><strong>__ROOM_NAME__</strong></td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding: 6px 0; width: 120px; color: #777;">Starts</td>
+                                                <td style="padding: 6px 0;"><strong>__START_TIME__</strong></td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding: 6px 0; width: 120px; color: #777;">Ends</td>
+                                                <td style="padding: 6px 0;"><strong>__END_TIME__</strong></td>
+                                            </tr>
+                                        </table>
+                                        <div style="margin-top: 18px;">
+                                            <p style="margin: 0 0 6px; color: #555; font-weight: 600;">Recommendations</p>
+                                            <ul style="margin: 0 0 12px 18px; padding: 0;">
+                                                <li>Please leave the room clean and tidy for the next person.</li>
+                                                <li>Try to wrap up a few minutes before the end so the room is ready on time.</li>
+                                            </ul>
+                                        </div>
                                     </td>
                                     <td width='15'></td>
                                 </tr>

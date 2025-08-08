@@ -4,14 +4,16 @@ import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.nio.charset.StandardCharsets;
 
 @Service
 @RequiredArgsConstructor
@@ -35,9 +37,7 @@ public class EmailServiceImpl implements EmailService{
             throw new RuntimeException("Failed to set Sender Name");
         }
 
-//        var htmlContent = getBookingEmailBody(room, date);
-
-        var msgContent = createMessage(room, startTime, endTime);
+        var msgContent = getBookingEmailBody(room, startTime, endTime);
 
         helper.setTo(email);
         helper.setSubject("Meeting Room Confirmation");
@@ -46,16 +46,18 @@ public class EmailServiceImpl implements EmailService{
         emailSender.send(mimeMessage);
     }
 
-//    public static String getBookingEmailBody(String roomSize, String dateTime) throws IOException {
-//        String templatePath = "src/main/resources/booking_email_template.html";
-//        String template = Files.readString(Paths.get(templatePath));
-//
-//        return template
-//                .replace("${roomSize}", roomSize)
-//                .replace("${dateTime}", dateTime);
-//    }
-
-    private static String createMessage(String roomSize, String startTime, String endTime) {
-        return String.format("Hi, the %s meeting room has been reserved for you from %s to %s.", roomSize, startTime, endTime);
+    private static String getBookingEmailBody(String roomName, String startTime, String endTime) {
+        try {
+            ClassPathResource resource = new ClassPathResource("booking_email_template.html");
+            try (InputStream inputStream = resource.getInputStream()) {
+                String template = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
+                return template
+                        .replace("__ROOM_NAME__", roomName)
+                        .replace("__START_TIME__", startTime)
+                        .replace("__END_TIME__", endTime);
+            }
+        } catch (IOException e) {
+            return String.format("Hi, the %s meeting room has been reserved for you from %s to %s.", roomName, startTime, endTime);
+        }
     }
 }
