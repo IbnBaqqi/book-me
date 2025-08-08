@@ -40,13 +40,13 @@ public class Reservation {
     @Column(name = "gcal_event_id")
     private String googleCalendarEventId;
 
-    public String dateToEmailFormat() {
+    public String dateToEmailFormat(LocalDateTime dateTime) {
 
-        var day = startTime.getDayOfMonth();
-        var month = startTime.getMonth().getDisplayName(TextStyle.FULL, Locale.ENGLISH);
-        var year = startTime.getYear();
+        var day = dateTime.getDayOfMonth();
+        var month = dateTime.getMonth().getDisplayName(TextStyle.FULL, Locale.ENGLISH);
+        var year = dateTime.getYear();
 
-        return month + " " + day + ", " + year + " " + startTime.format(DateTimeFormatter.ofPattern("HH:mm"));
+        return month + " " + day + ", " + year + " " + dateTime.format(DateTimeFormatter.ofPattern("HH:mm"));
     }
 
 }

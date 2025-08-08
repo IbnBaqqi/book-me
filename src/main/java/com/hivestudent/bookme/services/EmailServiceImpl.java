@@ -24,7 +24,7 @@ public class EmailServiceImpl implements EmailService{
 
     @Override
     @Async
-    public void sendConfirmation(String email, String room, String date) throws MessagingException{
+    public void sendConfirmation(String email, String room, String startTime, String endTime) throws MessagingException{
 
         MimeMessage mimeMessage = emailSender.createMimeMessage();
         MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
@@ -37,7 +37,7 @@ public class EmailServiceImpl implements EmailService{
 
 //        var htmlContent = getBookingEmailBody(room, date);
 
-        var msgContent = createMessage(room, date);
+        var msgContent = createMessage(room, startTime, endTime);
 
         helper.setTo(email);
         helper.setSubject("Meeting Room Confirmation");
@@ -55,7 +55,7 @@ public class EmailServiceImpl implements EmailService{
 //                .replace("${dateTime}", dateTime);
 //    }
 
-    private static String createMessage(String roomSize, String dateTime) {
-        return String.format("Hi, the %s meeting room has been reserved for you from %s.", roomSize, dateTime);
+    private static String createMessage(String roomSize, String startTime, String endTime) {
+        return String.format("Hi, the %s meeting room has been reserved for you from %s to %s.", roomSize, startTime, endTime);
     }
 }
