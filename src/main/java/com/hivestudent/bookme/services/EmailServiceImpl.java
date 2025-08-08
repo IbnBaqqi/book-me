@@ -40,7 +40,7 @@ public class EmailServiceImpl implements EmailService{
         var msgContent = getBookingEmailBody(room, startTime, endTime);
 
         helper.setTo(email);
-        helper.setSubject("Meeting Room Confirmation");
+        helper.setSubject("Hive / Meeting Room Confirmation");
         helper.setText(msgContent, true);
 
         emailSender.send(mimeMessage);
