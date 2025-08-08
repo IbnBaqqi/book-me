@@ -80,9 +80,10 @@ public class ReservationService {
                     }
                 });
 
-        var date = reservation.dateToEmailFormat();
+        var startTime = reservation.dateToEmailFormat(start);
+        var endTime = reservation.dateToEmailFormat(end);
 
-        emailService.sendConfirmation(currentUser.getEmail(), room.getName(), date);
+        emailService.sendConfirmation(currentUser.getEmail(), room.getName(), startTime, endTime);
 
         return reservationMapper.toDto(reservation);
     }
