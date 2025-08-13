@@ -4,8 +4,8 @@
 Book-me is a backend API that allows students and staff to book meeting rooms at Hive Helsinki.
 It supports calendar-based views, role-based access control (students & staff), and 42 Intra OAuth2 authentication.
 
-- **Live Preview:** [booking-calendar-chi.vercel.app](https://booking-calendar-chi.vercel.app)
-- **Frontend:** [https://github.com/danielxfeng/booking_calendar.git](https://github.com/danielxfeng/booking_calendar.git)
+- **Live Preview:** [room.hive.fi](https://room.hive.fi) [Hive Login required]
+- **Frontend:** [Frontend Source code](https://github.com/danielxfeng/booking_calendar.git)
 ---
 
 ### Basic System Architecture Diagram
@@ -43,6 +43,7 @@ src/main/java/com/hivestudent/bookme/
 │ ├── ReservedDto       # Response model for /reservation/unavailable
 ├── entities/           # Room, Reservation, User, etc.
 ├── exceptions/         # Exception Handler
+├── Google/             # Google Auth & Calender integration
 ├── mapper/             # Mapstruct AutoMapper
 └── services/           # Business logic
 ```
@@ -126,12 +127,11 @@ MIT License
 ---
 
 ### 💡 Todo
-- [ ] Use Docker
+- [x] Use Docker
 - [ ] Add Swagger
 - [x] System Architecture Diagram
 - [ ] Sequence Diagram
 - [x] Email notifications
-- [ ] Recurrent bookings (weekly meetings)
-- [ ] Google Calendar Integration
+- [x] Google Calendar Integration
 
 ---
