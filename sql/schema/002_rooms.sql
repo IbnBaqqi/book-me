@@ -1,0 +1,8 @@
+-- +goose Up
+CREATE TABLE rooms ( -- ROOMS
+	id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    name VARCHAR(30) NOT NULL UNIQUE
+);
+
+-- +goose Down
+DROP TABLE IF EXISTS rooms;
