@@ -29,7 +29,7 @@ func (cfg *apiConfig) loginHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Redirect to 42 Auth
 	url := cfg.oauthConfig.AuthCodeURL(state)
-	http.Redirect(w, r, url, http.StatusTemporaryRedirect)
+	http.Redirect(w, r, url, http.StatusFound)
 }
 
 

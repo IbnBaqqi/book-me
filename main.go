@@ -93,7 +93,8 @@ func main() {
 
 	mux.HandleFunc("GET /api/healthz", healthHandler)
 
-	mux.HandleFunc("POST /api/login", apiCfg.loginHandler)
+	mux.HandleFunc("POST /api/oauth/login", apiCfg.loginHandler)
+	mux.HandleFunc("GET /api/oauth/callback", apiCfg.handlerCallback)
 
 	server := &http.Server{
 		Addr:    ":" + port,
