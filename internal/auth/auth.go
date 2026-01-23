@@ -16,41 +16,46 @@ import (
 
 type CustomClaims struct {
 	Name string `json:"name"`
-    Role string `json:"role"`
+	Role string `json:"role"`
 	jwt.RegisteredClaims
 }
 
-type NameAndRole struct {
-	Name string
-	Role string
+type Service struct {
+	secret         string
+	accessTokenTTL time.Duration
 }
 
 type TokenType string
 
-const (
-	TokenTypeAccess TokenType = "book-me"
-)
+const TokenTypeAccess TokenType = "book-me"
 
 var (
-	ErrEmptyBearerToken		= errors.New("bearer token is empty")
-	ErrInvalidBearerToken	= errors.New("bearer token is incorrect")
+	ErrEmptyBearerToken     = errors.New("bearer token is empty")
+	ErrInvalidBearerToken   = errors.New("bearer token is incorrect")
 	ErrNoAuthHeaderIncluded = errors.New("no auth header included in request")
 )
 
+func NewService(secret string) *Service {
+	return &Service{
+		secret:         secret,
+		accessTokenTTL: time.Hour, // Access Token Time-To-Live
+	}
+}
+
 // This create a jwt token
-func GenerateJWT(user database.User, tokenSecret string, expiresIn time.Duration) (string, error) {
-	
+func (s *Service) IssueAccessToken(user database.User) (string, error) {
+
 	claims := CustomClaims{
 		Name: user.Name,
 		Role: user.Role,
 		RegisteredClaims: jwt.RegisteredClaims{
 			Subject:   user.Email,
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(expiresIn)),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(s.accessTokenTTL)),
 			Issuer:    string(TokenTypeAccess),
 		},
 	}
-	signingKey := []byte(tokenSecret)
+	signingKey := []byte(s.secret)
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	jwtToken, err := token.SignedString(signingKey)
 	if err != nil {

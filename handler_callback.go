@@ -7,9 +7,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
-	"time"
 
-	"github.com/IbnBaqqi/book-me/internal/auth"
 	"github.com/IbnBaqqi/book-me/internal/database"
 )
 
@@ -41,22 +39,22 @@ func (cfg *apiConfig) handlerCallback(w http.ResponseWriter, r *http.Request) {
 	user42, err := get42UserData(r.Context(), cfg.oauthConfig, token)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Failed to get user data from 42", err)
-        return
+		return
 	}
 
 	// Validate Campus
 	isHive := false
-    for _, camp := range user42.Campus {
-        if camp.ID == 13 && camp.Primary {
-            isHive = true
-            break
-        }
-    }
+	for _, camp := range user42.Campus {
+		if camp.ID == 13 && camp.Primary {
+			isHive = true
+			break
+		}
+	}
 
 	if !isHive {
-        respondWithError(w, http.StatusForbidden, "Access Denied: Only Helsinki Campus Student Allowed", nil) //log that another campus tried to login
-        return
-    }
+		respondWithError(w, http.StatusForbidden, "Access Denied: Only Helsinki Campus Student Allowed", nil) //log that another campus tried to login
+		return
+	}
 
 	// Find or create user
 	user, err := cfg.db.GetUserByEmail(r.Context(), user42.Email)
@@ -75,27 +73,27 @@ func (cfg *apiConfig) handlerCallback(w http.ResponseWriter, r *http.Request) {
 			})
 			if err != nil {
 				respondWithError(w, http.StatusInternalServerError, "Failed to create user", err)
-                return
+				return
 			}
 			user = newUser
 		} else {
 			// Actual database error
-            respondWithError(w, http.StatusInternalServerError, "Database error", err)
-            return
+			respondWithError(w, http.StatusInternalServerError, "Database error", err)
+			return
 		}
 	}
 
 	// Issue jwt
-	jwtToken, err := auth.GenerateJWT( user, cfg.jwtSecret, time.Hour)
+	jwtToken, err := cfg.auth.IssueAccessToken(user)
 	if err != nil {
-        respondWithError(w, http.StatusInternalServerError, "Failed to generate token", err)
-        return
-    }
+		respondWithError(w, http.StatusInternalServerError, "Failed to generate token", err)
+		return
+	}
 
 	params := url.Values{}
-    params.Add("token", jwtToken)
-    params.Add("intra", user.Name)
-    params.Add("role", strings.ToLower(user.Role))
+	params.Add("token", jwtToken)
+	params.Add("intra", user.Name)
+	params.Add("role", strings.ToLower(user.Role))
 
 	// final redirect
 	finalRedirectURL := fmt.Sprintf("%s?%s", cfg.redirectTokenURI, params.Encode())
