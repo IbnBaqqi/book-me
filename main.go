@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/IbnBaqqi/book-me/internal/auth"
 	"github.com/IbnBaqqi/book-me/internal/database"
 	"github.com/gorilla/sessions"
 	"github.com/joho/godotenv"
@@ -17,6 +18,7 @@ type apiConfig struct {
 	db					*database.Queries //
 	sessionStore		*sessions.CookieStore
 	oauthConfig			*oauth2.Config
+	auth 				*auth.Service
 	redirectTokenURI	string
 	user42InfoURL		string
 	jwtSecret			string
@@ -98,6 +100,7 @@ func main() {
 		db: dbQueries,
 		sessionStore: sessions.NewCookieStore([]byte(sessionSecret)),
         oauthConfig: oauthCfg,
+		auth: auth.NewService(jwtSecret),
 		redirectTokenURI: redirectTokenURI,
 		user42InfoURL: user42InfoURL,
 		jwtSecret: jwtSecret,
