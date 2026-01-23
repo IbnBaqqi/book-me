@@ -20,18 +20,17 @@ type CustomClaims struct {
 	jwt.RegisteredClaims
 }
 
-// type nameAndRole struct {
-	
-// }
+type NameAndRole struct {
+	Name string
+	Role string
+}
 
 type TokenType string
 
 const (
-	// TokenTypeAccess -
 	TokenTypeAccess TokenType = "book-me"
 )
 
-// ErrNoAuthHeaderIncluded -
 var (
 	ErrEmptyBearerToken		= errors.New("bearer token is empty")
 	ErrInvalidBearerToken	= errors.New("bearer token is incorrect")
@@ -104,8 +103,7 @@ func GetBearerToken(headers http.Header) (string, error) {
 	return token, nil
 }
 
-// MakeRefreshToken makes a random 256 bit token
-// encoded in hex
+// MakeRefreshToken makes a random 256 bit token encoded in hex
 func MakeRefreshToken() string {
 	tokenBytes := make([]byte, 32)
 	rand.Read(tokenBytes) // no error check as Read always succeeds

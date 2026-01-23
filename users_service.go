@@ -11,7 +11,7 @@ import (
 )
 
 // TODO look into timeout and context
-func getUser42(ctx context.Context, oauthConfig *oauth2.Config, token *oauth2.Token) (*User42, error) {
+func get42UserData(ctx context.Context, oauthConfig *oauth2.Config, token *oauth2.Token) (*User42, error) {
 
 	// A specialized HTTP client that handles the Authorization header
 	// and token refreshing automatically.
@@ -38,3 +38,7 @@ func getUser42(ctx context.Context, oauthConfig *oauth2.Config, token *oauth2.To
 	log.Println(user42.Name, user42.Email) //remove later
 	return &user42, nil
 }
+
+// func getOrCreateUser(ctx context.Context, user42 User42) {
+	
+// }

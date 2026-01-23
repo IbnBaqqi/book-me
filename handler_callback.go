@@ -3,7 +3,10 @@ package main
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"net/http"
+	"net/url"
+	"strings"
 	"time"
 
 	"github.com/IbnBaqqi/book-me/internal/auth"
@@ -89,9 +92,12 @@ func (cfg *apiConfig) handlerCallback(w http.ResponseWriter, r *http.Request) {
         return
     }
 
-	// TODO: decode user, store in DB, issue my own JWT
+	params := url.Values{}
+    params.Add("token", jwtToken)
+    params.Add("intra", user.Name)
+    params.Add("role", strings.ToLower(user.Role))
 
-	// final redirect and TODO add jwt token once created
-	finalRedirectURL := cfg.redirectTokenURI + jwtToken
+	// final redirect
+	finalRedirectURL := fmt.Sprintf("%s?%s", cfg.redirectTokenURI, params.Encode())
 	http.Redirect(w, r, finalRedirectURL, http.StatusFound)
 }
