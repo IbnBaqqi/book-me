@@ -1,7 +1,9 @@
 package main
 
-import "net/http"
-
+import (
+	"log"
+	"net/http"
+)
 
 func (cfg *apiConfig) handlerCallback(w http.ResponseWriter, r *http.Request) {
 
@@ -26,4 +28,12 @@ func (cfg *apiConfig) handlerCallback(w http.ResponseWriter, r *http.Request) {
 		respondWithError(w, http.StatusUnauthorized, "token exchange failed", err)
 		return
 	}
+
+	// Get loggedIn User Info from 42
+	_, err = getUser42(r.Context(), cfg.oauthConfig, token)
+	if err != nil {
+		log.Println(err) // fix later
+	}
+
+	// TODO: decode user, store in DB, issue my own JWT
 }
