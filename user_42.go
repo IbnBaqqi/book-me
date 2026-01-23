@@ -1,6 +1,6 @@
 package main
 
-type IntraUser struct {
+type User42 struct {
 	Email  string        `json:"email"`
 	Name   string        `json:"login"`
 	Staff  bool          `json:"staff?"`
