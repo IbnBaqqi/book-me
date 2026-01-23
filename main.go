@@ -19,6 +19,7 @@ type apiConfig struct {
 	oauthConfig			*oauth2.Config
 	redirectTokenURI	string
 	user42InfoURL		string
+	jwtSecret			string
 }
 
 func main() {
@@ -65,6 +66,12 @@ func main() {
 	if user42InfoURL == "" {
 		log.Fatal("USER_INFO_URL must be set")
 	}
+	
+	jwtSecret := os.Getenv("JWT_SECRET")
+	if jwtSecret == "" {
+		log.Fatal("JWT_SECRET environment variable is not set")
+	}
+
 	// open a connection to the database
 	dbConn, err := sql.Open("postgres", dbURL)
 	if err != nil {
@@ -93,6 +100,7 @@ func main() {
         oauthConfig: oauthCfg,
 		redirectTokenURI: redirectTokenURI,
 		user42InfoURL: user42InfoURL,
+		jwtSecret: jwtSecret,
 	}
 
 	mux := http.NewServeMux()
