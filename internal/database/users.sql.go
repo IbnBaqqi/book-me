@@ -54,17 +54,11 @@ func (q *Queries) GetUser(ctx context.Context, id int64) (User, error) {
 
 const getUserByEmail = `-- name: GetUserByEmail :one
 SELECT id, email, name, role FROM users
-WHERE id = $1 AND email = $2
-LIMIT 1
+WHERE email = $1
 `
 
-type GetUserByEmailParams struct {
-	ID    int64
-	Email string
-}
-
-func (q *Queries) GetUserByEmail(ctx context.Context, arg GetUserByEmailParams) (User, error) {
-	row := q.db.QueryRowContext(ctx, getUserByEmail, arg.ID, arg.Email)
+func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error) {
+	row := q.db.QueryRowContext(ctx, getUserByEmail, email)
 	var i User
 	err := row.Scan(
 		&i.ID,
