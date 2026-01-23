@@ -18,6 +18,7 @@ type apiConfig struct {
 	sessionStore		*sessions.CookieStore
 	oauthConfig			*oauth2.Config
 	redirectTokenURI	string
+	user42InfoURL		string
 }
 
 func main() {
@@ -54,12 +55,16 @@ func main() {
 	if redirectURI == "" {
 		log.Fatal("REDIRECT_URI must be set")
 	}
-
+	
 	redirectTokenURI := os.Getenv("REDIRECT_TOKEN_URI") 
 	if redirectTokenURI == "" {
 		log.Fatal("REDIRECT_TOKEN_URI must be set")
 	}
-
+	
+	user42InfoURL := os.Getenv("USER_INFO_URL")
+	if user42InfoURL == "" {
+		log.Fatal("USER_INFO_URL must be set")
+	}
 	// open a connection to the database
 	dbConn, err := sql.Open("postgres", dbURL)
 	if err != nil {
@@ -87,14 +92,15 @@ func main() {
 		sessionStore: sessions.NewCookieStore([]byte(sessionSecret)),
         oauthConfig: oauthCfg,
 		redirectTokenURI: redirectTokenURI,
+		user42InfoURL: user42InfoURL,
 	}
 
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("GET /api/healthz", healthHandler)
 
-	mux.HandleFunc("POST /api/oauth/login", apiCfg.loginHandler)
-	mux.HandleFunc("GET /api/oauth/callback", apiCfg.handlerCallback)
+	mux.HandleFunc("GET /api/oauth/login", apiCfg.loginHandler)
+	mux.HandleFunc("GET /oauth/callback", apiCfg.handlerCallback)
 
 	server := &http.Server{
 		Addr:    ":" + port,
