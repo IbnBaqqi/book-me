@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -27,9 +28,9 @@ type Service struct {
 }
 
 type User struct {
-	Email string
-	Role  string
-	Name  string
+	ID		int16
+	Role	string
+	Name	string
 }
 
 type contextKey struct{}
@@ -74,6 +75,7 @@ func (s *Service) Authenticate(next http.Handler) http.Handler {
 		if err != nil {
 			// No token or malformed token → unauthenticated request
 			next.ServeHTTP(w, r)
+			return
 		}
 
 		claims, err := s.VerifyAccessToken(tokenStr)
@@ -84,10 +86,17 @@ func (s *Service) Authenticate(next http.Handler) http.Handler {
 			return
 		}
 
+		// Convert claims.Subject (string) to int16 for User.ID
+		idInt64, err := strconv.ParseInt(claims.Subject, 10, 16)
+		if err != nil {
+			// If conversion fails, treat as unauthenticated
+			next.ServeHTTP(w, r)
+			return
+		}
 		user := User{
-			Email: claims.Subject,
-			Role:  claims.Role,
-			Name:  claims.Name,
+			ID:		int16(idInt64),
+			Role:	claims.Role,
+			Name:	claims.Name,
 		}
 
 		ctx := WithUser(r.Context(), user)
@@ -114,7 +123,7 @@ func (s *Service) IssueAccessToken(user database.User) (string, error) {
 		Name: user.Name,
 		Role: user.Role,
 		RegisteredClaims: jwt.RegisteredClaims{
-			Subject:   user.Email,
+			Subject:   strconv.FormatInt(int64(user.ID), 10),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(s.accessTokenTTL)),
 			Issuer:    string(TokenTypeAccess),
