@@ -7,25 +7,23 @@ package database
 
 import (
 	"context"
-	"database/sql"
 	"time"
 )
 
 const createReservation = `-- name: CreateReservation :one
-INSERT INTO reservations (user_id, room_id, start_time, end_time, status, gcal_event_id)
+INSERT INTO reservations (user_id, room_id, start_time, end_time, status)
 VALUES (
-	$1, $2, $3, $4, $5, $6
+	$1, $2, $3, $4, $5
 )
 RETURNING id, user_id, room_id, start_time, end_time, status, gcal_event_id
 `
 
 type CreateReservationParams struct {
-	UserID      int64
-	RoomID      int64
-	StartTime   time.Time
-	EndTime     time.Time
-	Status      string
-	GcalEventID sql.NullString
+	UserID    int64
+	RoomID    int64
+	StartTime time.Time
+	EndTime   time.Time
+	Status    string
 }
 
 func (q *Queries) CreateReservation(ctx context.Context, arg CreateReservationParams) (Reservation, error) {
@@ -35,7 +33,6 @@ func (q *Queries) CreateReservation(ctx context.Context, arg CreateReservationPa
 		arg.StartTime,
 		arg.EndTime,
 		arg.Status,
-		arg.GcalEventID,
 	)
 	var i Reservation
 	err := row.Scan(
@@ -48,6 +45,29 @@ func (q *Queries) CreateReservation(ctx context.Context, arg CreateReservationPa
 		&i.GcalEventID,
 	)
 	return i, err
+}
+
+const existsOverlappingReservation = `-- name: ExistsOverlappingReservation :one
+SELECT EXISTS (
+    SELECT 1
+    FROM reservations
+    WHERE room_id = $1
+      AND start_time < $3
+      AND end_time > $2
+)
+`
+
+type ExistsOverlappingReservationParams struct {
+	RoomID    int64
+	EndTime   time.Time
+	StartTime time.Time
+}
+
+func (q *Queries) ExistsOverlappingReservation(ctx context.Context, arg ExistsOverlappingReservationParams) (bool, error) {
+	row := q.db.QueryRowContext(ctx, existsOverlappingReservation, arg.RoomID, arg.EndTime, arg.StartTime)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
 }
 
 const getReservation = `-- name: GetReservation :one
