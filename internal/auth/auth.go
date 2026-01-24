@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"context"
 	"crypto/rand"
 	"encoding/hex"
 	"errors"
@@ -25,6 +26,16 @@ type Service struct {
 	accessTokenTTL time.Duration
 }
 
+type User struct {
+	Email string
+	Role  string
+	Name  string
+}
+
+type contextKey struct{}
+
+var userKey = contextKey{}
+
 type TokenType string
 
 const TokenTypeAccess TokenType = "book-me"
@@ -37,6 +48,17 @@ var (
 	ErrNoAuthHeaderIncluded = errors.New("no auth header included in request")
 )
 
+
+func WithUser(ctx context.Context, user User) context.Context {
+	return context.WithValue(ctx, userKey, user)
+}
+
+func UserFromContext(ctx context.Context) (User, bool) {
+	user, ok := ctx.Value(userKey).(User)
+	return user, ok
+}
+
+// to create a new auth service
 func NewService(secret string) *Service {
 	return &Service{
 		secret:         secret,
@@ -44,9 +66,50 @@ func NewService(secret string) *Service {
 	}
 }
 
+// Authentication middleware
+func (s *Service) Authenticate(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+		tokenStr, err := GetBearerToken(r.Header)
+		if err != nil {
+			// No token or malformed token → unauthenticated request
+			next.ServeHTTP(w, r)
+		}
+
+		claims, err := s.VerifyAccessToken(tokenStr)
+		if err != nil {
+			// silent failure is intentional (public endpoints)
+			// Invalid or expired token → unauthenticated request
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		user := User{
+			Email: claims.Subject,
+			Role:  claims.Role,
+			Name:  claims.Name,
+		}
+
+		ctx := WithUser(r.Context(), user)
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+// Authorization middleware
+func RequireAuth(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if _, ok := UserFromContext(r.Context()); !ok {
+			http.Error(w, "unauthorized", http.StatusUnauthorized)
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
+}
+
+
 // This create a jwt token
 func (s *Service) IssueAccessToken(user database.User) (string, error) {
-
+	
 	claims := CustomClaims{
 		Name: user.Name,
 		Role: user.Role,
@@ -97,11 +160,11 @@ func (s *Service) VerifyAccessToken(tokenStr string) (*CustomClaims, error) {
 
 
 func GetBearerToken(headers http.Header) (string, error) {
-	bearerToken := headers.Get("Authorization")
-	if bearerToken == "" {
+	authHeader := headers.Get("Authorization")
+	if authHeader == "" {
 		return "", ErrNoAuthHeaderIncluded
 	}
-	token, ok := strings.CutPrefix(bearerToken, "Bearer ")
+	token, ok := strings.CutPrefix(authHeader, "Bearer ")
 	if !ok {
 		return "", ErrInvalidBearerToken
 	}
@@ -109,6 +172,13 @@ func GetBearerToken(headers http.Header) (string, error) {
 		return "", ErrEmptyBearerToken
 	}
 	return token, nil
+}
+
+// MakeRefreshToken makes a random 256 bit token encoded in hex
+func MakeRefreshToken() string {
+	tokenBytes := make([]byte, 32)
+	rand.Read(tokenBytes) // no error check as Read always succeeds
+	return hex.EncodeToString(tokenBytes)
 }
 
 // (Depreciated) This validate the signature of the JWT and extract the claims(userId)
@@ -138,11 +208,4 @@ func ValidateJWT(tokenString, tokenSecret string) (uuid.UUID, error) {
 		return uuid.Nil, fmt.Errorf("invalid user ID: %w", err)
 	}
 	return userId, nil
-}
-
-// MakeRefreshToken makes a random 256 bit token encoded in hex
-func MakeRefreshToken() string {
-	tokenBytes := make([]byte, 32)
-	rand.Read(tokenBytes) // no error check as Read always succeeds
-	return hex.EncodeToString(tokenBytes)
 }
