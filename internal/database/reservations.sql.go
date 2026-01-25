@@ -70,6 +70,69 @@ func (q *Queries) ExistsOverlappingReservation(ctx context.Context, arg ExistsOv
 	return exists, err
 }
 
+const getAllBetweenDates = `-- name: GetAllBetweenDates :many
+SELECT 
+    r.id,
+    r.room_id,
+    r.start_time,
+    r.end_time,
+    r.user_id as created_by_id,
+    u.name as created_by_name,
+    room.name as room_name
+FROM reservations r
+INNER JOIN users u ON r.user_id = u.id
+INNER JOIN rooms room ON r.room_id = room.id
+WHERE r.start_time >= $1
+  AND r.end_time <= $2
+ORDER BY r.room_id, r.start_time
+`
+
+type GetAllBetweenDatesParams struct {
+	StartTime time.Time
+	EndTime   time.Time
+}
+
+type GetAllBetweenDatesRow struct {
+	ID            int64
+	RoomID        int64
+	StartTime     time.Time
+	EndTime       time.Time
+	CreatedByID   int64
+	CreatedByName string
+	RoomName      string
+}
+
+func (q *Queries) GetAllBetweenDates(ctx context.Context, arg GetAllBetweenDatesParams) ([]GetAllBetweenDatesRow, error) {
+	rows, err := q.db.QueryContext(ctx, getAllBetweenDates, arg.StartTime, arg.EndTime)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetAllBetweenDatesRow
+	for rows.Next() {
+		var i GetAllBetweenDatesRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.RoomID,
+			&i.StartTime,
+			&i.EndTime,
+			&i.CreatedByID,
+			&i.CreatedByName,
+			&i.RoomName,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getReservation = `-- name: GetReservation :one
 SELECT id, user_id, room_id, start_time, end_time, status, gcal_event_id FROM reservations
 WHERE id = $1 LIMIT 1
