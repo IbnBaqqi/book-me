@@ -117,8 +117,8 @@ func main() {
 		"POST /reservation",
 		apiCfg.auth.Authenticate(
 			auth.RequireAuth(
-				http.HandlerFunc(apiCfg.handlerCreateReservation)))) // Add middleware
-	// mux.HandleFunc("GET /reservation/", apiCfg.handlerCallback) // to change
+				http.HandlerFunc(apiCfg.handlerCreateReservation))))
+	mux.HandleFunc("GET /reservation/", apiCfg.handlerGetReservations)
 	// mux.HandleFunc("DELETE /reservation/{id}", apiCfg.handlerCallback) // to change
 
 	server := &http.Server{
