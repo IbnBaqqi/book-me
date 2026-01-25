@@ -2,13 +2,25 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"time"
 
 	"github.com/IbnBaqqi/book-me/internal/auth"
 	"github.com/IbnBaqqi/book-me/internal/database"
 )
+
+type reservationDTO struct {
+	ID          int64	 `json:"Id"`
+	RoomID      int64	 `json:"roomId"`
+	StartTime   time.Time `json:"startTime"`
+	EndTime     time.Time `json:"endTime"`
+	CreatedBy	UserDto	  `json:"createdBy"`
+}
+
+type UserDto struct {
+	ID		int64	 `json:"Id"`
+	Name	string	 `json:"name"`
+}
 
 func (cfg *apiConfig) handlerCreateReservation(w http.ResponseWriter, r *http.Request) {
 	
@@ -18,7 +30,7 @@ func (cfg *apiConfig) handlerCreateReservation(w http.ResponseWriter, r *http.Re
 		EndTime   time.Time `json:"endTime"`
 	}
 
-	// Get authenticated user (OAuth/JWT)
+	// Get authenticated user from context
 	currentUser, ok := auth.UserFromContext(r.Context())
 	if !ok {
 		http.Error(w, "unauthorized", http.StatusUnauthorized)
@@ -36,7 +48,6 @@ func (cfg *apiConfig) handlerCreateReservation(w http.ResponseWriter, r *http.Re
 
 	// Fetch room
 	room, err := cfg.db.GetRoomByID(r.Context(), req.RoomID)
-	fmt.Println(req.RoomID)
 	if err != nil {
 		respondWithError(w, http.StatusNotFound, "Room not found", err)
 		return
@@ -47,12 +58,13 @@ func (cfg *apiConfig) handlerCreateReservation(w http.ResponseWriter, r *http.Re
 
 	// Validate time
 	if start.Before(time.Now()) {
-		respondWithError(w, http.StatusNotFound, "You can't book past times", err)
+		respondWithError(w, http.StatusBadRequest, "You can't book past times", err)
 		return
 	}
 
 	if !end.After(start) {
-		respondWithError(w, http.StatusNotFound, "End time must be after start time", err)
+		respondWithError(w, http.StatusBadRequest, "End time must be after start time", err)
+		return
 	}
 
 	// Overlap check
@@ -63,10 +75,12 @@ func (cfg *apiConfig) handlerCreateReservation(w http.ResponseWriter, r *http.Re
 	})
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Internal error", err)
+		return
 	}
 
 	if overlap {
 		respondWithError(w, http.StatusBadRequest, "This time slot is already booked", err)
+		return
 	}
 
 	// Max duration rule (students only)
@@ -75,6 +89,7 @@ func (cfg *apiConfig) handlerCreateReservation(w http.ResponseWriter, r *http.Re
 
 	if duration.Minutes() > float64(maxMinutes) && currentUser.Role == "STUDENT" {
 		respondWithError(w, http.StatusBadRequest, "reservation exceeds maximum allowed duration of 4 hours", err)
+		return
 	}
 
 	// 5. Persist reservation
@@ -87,10 +102,20 @@ func (cfg *apiConfig) handlerCreateReservation(w http.ResponseWriter, r *http.Re
 	})
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "internal error", err)
+		return
 	}
 
 	// handle google calender here
 	// sending email
 
-	respondWithJSON(w, http.StatusCreated, reservation) // change to return reservation dto without gcal
+	respondWithJSON(w, http.StatusCreated, reservationDTO{
+		ID: reservation.ID,
+		RoomID: reservation.RoomID,
+		StartTime: reservation.StartTime,
+		EndTime: reservation.EndTime,
+		CreatedBy: UserDto{
+			ID: int64(currentUser.ID),
+			Name: currentUser.Name,
+		},
+	})
 }
