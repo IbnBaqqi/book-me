@@ -118,7 +118,7 @@ func main() {
 		apiCfg.auth.Authenticate(
 			auth.RequireAuth(
 				http.HandlerFunc(apiCfg.handlerCreateReservation))))
-	mux.HandleFunc("GET /reservation/", apiCfg.handlerGetReservations)
+	mux.HandleFunc("GET /reservation/", apiCfg.handlerFetchReservations)
 	// mux.HandleFunc("DELETE /reservation/{id}", apiCfg.handlerCallback) // to change
 
 	server := &http.Server{
