@@ -77,7 +77,7 @@ func (cfg *apiConfig) getUnavailableSlots(
 	isStaff := isAuthenticated && currentUser.Role == "STAFF"
 
 	// Fetch all reservations between dates
-	reservations, err := cfg.db.FindAllBetweenDates(ctx, database.FindAllBetweenDatesParams{
+	reservations, err := cfg.db.GetAllBetweenDates(ctx, database.GetAllBetweenDatesParams{
 		StartTime: endDateTime,
 		EndTime:   startDateTime,
 	})
@@ -86,10 +86,45 @@ func (cfg *apiConfig) getUnavailableSlots(
 	}
 
 	// Group reservations by room ID
-	grouped := make(map[int64][]database.FindAllBetweenDatesRow)
+	grouped := make(map[int64][]database.GetAllBetweenDatesRow)
 	for _, res := range reservations {
 		grouped[res.RoomID] = append(grouped[res.RoomID], res)
 	}
 
-	
+	// Build result
+	result := make([]ReservedDto, 0, len(grouped))
+
+	for roomID, roomReservations := range grouped {
+		if len(roomReservations) == 0 {
+			continue
+		}
+
+		roomName := roomReservations[0].RoomName
+
+		// Map reservations to slots
+		slots := make([]ReservedSlotDto, 0, len(roomReservations))
+		for _, res := range roomReservations {
+			var bookedBy *string
+
+			// Show bookedBy only if user is staff or is the owner
+			if isStaff || (isAuthenticated && res.CreatedByID == int64(currentUser.ID)) {
+				bookedBy = &res.CreatedByName
+			}
+
+			slots = append(slots, ReservedSlotDto{
+				ID:        res.ID,
+				StartTime: res.StartTime,
+				EndTime:   res.EndTime,
+				BookedBy:  bookedBy,
+			})
+		}
+
+		result = append(result, ReservedDto{
+			RoomID:   roomID,
+			RoomName: roomName,
+			Slots:    slots,
+		})
+	}
+
+	return result, nil
 }
