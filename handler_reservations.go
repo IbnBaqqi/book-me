@@ -10,20 +10,20 @@ import (
 )
 
 type reservationDTO struct {
-	ID          int64	 `json:"Id"`
-	RoomID      int64	 `json:"roomId"`
-	StartTime   time.Time `json:"startTime"`
-	EndTime     time.Time `json:"endTime"`
-	CreatedBy	UserDto	  `json:"createdBy"`
+	ID        int64     `json:"Id"`
+	RoomID    int64     `json:"roomId"`
+	StartTime time.Time `json:"startTime"`
+	EndTime   time.Time `json:"endTime"`
+	CreatedBy UserDto   `json:"createdBy"`
 }
 
 type UserDto struct {
-	ID		int64	 `json:"Id"`
-	Name	string	 `json:"name"`
+	ID   int64  `json:"Id"`
+	Name string `json:"name"`
 }
 
 func (cfg *apiConfig) handlerCreateReservation(w http.ResponseWriter, r *http.Request) {
-	
+
 	type createReservationRequest struct {
 		RoomID    int64     `json:"roomId"`
 		StartTime time.Time `json:"startTime"`
@@ -39,7 +39,7 @@ func (cfg *apiConfig) handlerCreateReservation(w http.ResponseWriter, r *http.Re
 
 	decoder := json.NewDecoder(r.Body)
 	req := createReservationRequest{}
-	
+
 	err := decoder.Decode(&req)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Couldn't decode parameters", err)
@@ -69,9 +69,9 @@ func (cfg *apiConfig) handlerCreateReservation(w http.ResponseWriter, r *http.Re
 
 	// Overlap check
 	overlap, err := cfg.db.ExistsOverlappingReservation(r.Context(), database.ExistsOverlappingReservationParams{
-		RoomID: req.RoomID,
-		StartTime:  end,
-		EndTime:    start,
+		RoomID:    req.RoomID,
+		StartTime: end,
+		EndTime:   start,
 	})
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Internal error", err)
@@ -94,11 +94,11 @@ func (cfg *apiConfig) handlerCreateReservation(w http.ResponseWriter, r *http.Re
 
 	// 5. Persist reservation
 	reservation, err := cfg.db.CreateReservation(r.Context(), database.CreateReservationParams{
-		UserID:		int64(currentUser.ID),
-		RoomID:		room.ID,
-		StartTime:	start,
-		EndTime:	end,
-		Status:		"RESERVED",
+		UserID:    int64(currentUser.ID),
+		RoomID:    room.ID,
+		StartTime: start,
+		EndTime:   end,
+		Status:    "RESERVED",
 	})
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "internal error", err)
@@ -109,13 +109,31 @@ func (cfg *apiConfig) handlerCreateReservation(w http.ResponseWriter, r *http.Re
 	// sending email
 
 	respondWithJSON(w, http.StatusCreated, reservationDTO{
-		ID: reservation.ID,
-		RoomID: reservation.RoomID,
+		ID:        reservation.ID,
+		RoomID:    reservation.RoomID,
 		StartTime: reservation.StartTime,
-		EndTime: reservation.EndTime,
+		EndTime:   reservation.EndTime,
 		CreatedBy: UserDto{
-			ID: int64(currentUser.ID),
+			ID:   int64(currentUser.ID),
 			Name: currentUser.Name,
 		},
 	})
+}
+
+func (cfg *apiConfig) handlerGetReservations(w http.ResponseWriter, r *http.Request) {
+
+	type ReservedSlotDto struct {
+		ID        int64     `json:"id"`
+		StartTime time.Time `json:"startTime"`
+		EndTime   time.Time `json:"endTime"`
+		BookedBy  *string   `json:"bookedBy,omitempty"`
+	}
+
+	type ReservedDto struct {
+		RoomID   int64             `json:"roomId"`
+		RoomName string            `json:"roomName"`
+		Slots    []ReservedSlotDto `json:"slots"`
+	}
+
+
 }
