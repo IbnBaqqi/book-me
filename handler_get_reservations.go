@@ -78,13 +78,12 @@ func (cfg *apiConfig) getUnavailableSlots(
 
 	// Fetch all reservations between dates
 	reservations, err := cfg.db.GetAllBetweenDates(ctx, database.GetAllBetweenDatesParams{
-		StartTime: endDateTime,
-		EndTime:   startDateTime,
+		StartTime: startDateTime,
+		EndTime:   endDateTime,
 	})
 	if err != nil {
 		return nil, err // handle db error
 	}
-
 	// Group reservations by room ID
 	grouped := make(map[int64][]database.GetAllBetweenDatesRow)
 	for _, res := range reservations {
