@@ -113,6 +113,14 @@ func main() {
 	mux.HandleFunc("GET /api/oauth/login", apiCfg.loginHandler)
 	mux.HandleFunc("GET /oauth/callback", apiCfg.handlerCallback)
 
+	mux.Handle(
+		"POST /reservation",
+		apiCfg.auth.Authenticate(
+			auth.RequireAuth(
+				http.HandlerFunc(apiCfg.handlerCreateReservation)))) // Add middleware
+	// mux.HandleFunc("GET /reservation/", apiCfg.handlerCallback) // to change
+	// mux.HandleFunc("DELETE /reservation/{id}", apiCfg.handlerCallback) // to change
+
 	server := &http.Server{
 		Addr:    ":" + port,
 		Handler: mux,
