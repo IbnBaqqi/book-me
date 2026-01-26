@@ -5,9 +5,11 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 
 	"github.com/IbnBaqqi/book-me/internal/auth"
 	"github.com/IbnBaqqi/book-me/internal/database"
+	"github.com/IbnBaqqi/book-me/internal/email"
 	"github.com/gorilla/sessions"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
@@ -19,6 +21,7 @@ type apiConfig struct {
 	sessionStore     *sessions.CookieStore
 	oauthConfig      *oauth2.Config
 	auth             *auth.Service
+	EmailService     *email.Service
 	redirectTokenURI string
 	user42InfoURL    string
 	jwtSecret        string
@@ -73,13 +76,34 @@ func main() {
 		log.Fatal("JWT_SECRET environment variable is not set")
 	}
 
+	// Email configuration
+	smtpPort, err := strconv.Atoi(os.Getenv("SMTP_PORT"))
+	if err != nil {
+		smtpPort = 587 // Default
+	}
+
+	emailCfg := email.Config{
+		SMTPHost:     os.Getenv("SMTP_HOST"),
+		SMTPPort:     smtpPort,
+		SMTPUsername: os.Getenv("SMTP_USERNAME"),
+		SMTPPassword: os.Getenv("SMTP_PASSWORD"),
+		FromEmail:    os.Getenv("FROM_EMAIL"),
+		FromName:     os.Getenv("FROM_NAME"),
+		UseTLS:       os.Getenv("SMTP_USE_TLS") == "true",
+	}
+
+	emailSvc, err := email.NewService(emailCfg)
+	if err != nil {
+		log.Fatalf("failed to initialize email service: %v", err)
+	}
+
 	// open a connection to the database
 	dbConn, err := sql.Open("postgres", dbURL)
 	if err != nil {
 		log.Fatalf("Error opening database: %s", dbURL)
 	}
 
-	//Using SQLC generated database package to create a new *database.Queries,
+	// Using SQLC generated database package to create a new *database.Queries,
 	// and storing in apiConfig struct so that handlers can access it:
 	dbQueries := database.New(dbConn)
 
@@ -100,6 +124,7 @@ func main() {
 		sessionStore:     sessions.NewCookieStore([]byte(sessionSecret)),
 		oauthConfig:      oauthCfg,
 		auth:             auth.NewService(jwtSecret),
+		EmailService:     emailSvc,
 		redirectTokenURI: redirectTokenURI,
 		user42InfoURL:    user42InfoURL,
 		jwtSecret:        jwtSecret,
