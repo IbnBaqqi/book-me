@@ -15,18 +15,17 @@ import (
 )
 
 type apiConfig struct {
-	db					*database.Queries //
-	sessionStore		*sessions.CookieStore
-	oauthConfig			*oauth2.Config
-	auth 				*auth.Service
-	redirectTokenURI	string
-	user42InfoURL		string
-	jwtSecret			string
+	db               *database.Queries //
+	sessionStore     *sessions.CookieStore
+	oauthConfig      *oauth2.Config
+	auth             *auth.Service
+	redirectTokenURI string
+	user42InfoURL    string
+	jwtSecret        string
 }
 
 func main() {
 	const port = "8080"
-
 
 	// Load .env file
 	err := godotenv.Load()
@@ -44,7 +43,7 @@ func main() {
 		log.Fatal("SESSION_SECRET must be set")
 	}
 
-    clientID := os.Getenv("CLIENT_ID")
+	clientID := os.Getenv("CLIENT_ID")
 	if clientID == "" {
 		log.Fatal("CLIENT_ID must be set")
 	}
@@ -58,17 +57,17 @@ func main() {
 	if redirectURI == "" {
 		log.Fatal("REDIRECT_URI must be set")
 	}
-	
-	redirectTokenURI := os.Getenv("REDIRECT_TOKEN_URI") 
+
+	redirectTokenURI := os.Getenv("REDIRECT_TOKEN_URI")
 	if redirectTokenURI == "" {
 		log.Fatal("REDIRECT_TOKEN_URI must be set")
 	}
-	
+
 	user42InfoURL := os.Getenv("USER_INFO_URL")
 	if user42InfoURL == "" {
 		log.Fatal("USER_INFO_URL must be set")
 	}
-	
+
 	jwtSecret := os.Getenv("JWT_SECRET")
 	if jwtSecret == "" {
 		log.Fatal("JWT_SECRET environment variable is not set")
@@ -97,13 +96,13 @@ func main() {
 	}
 
 	apiCfg := &apiConfig{
-		db: dbQueries,
-		sessionStore: sessions.NewCookieStore([]byte(sessionSecret)),
-        oauthConfig: oauthCfg,
-		auth: auth.NewService(jwtSecret),
+		db:               dbQueries,
+		sessionStore:     sessions.NewCookieStore([]byte(sessionSecret)),
+		oauthConfig:      oauthCfg,
+		auth:             auth.NewService(jwtSecret),
 		redirectTokenURI: redirectTokenURI,
-		user42InfoURL: user42InfoURL,
-		jwtSecret: jwtSecret,
+		user42InfoURL:    user42InfoURL,
+		jwtSecret:        jwtSecret,
 	}
 
 	mux := http.NewServeMux()
@@ -124,10 +123,10 @@ func main() {
 			auth.RequireAuth(
 				http.HandlerFunc(apiCfg.handlerFetchReservations))))
 	mux.Handle(
-		"DELETE /reservation{id}",
+		"DELETE /reservation/{id}",
 		apiCfg.auth.Authenticate(
 			auth.RequireAuth(
-				http.HandlerFunc(apiCfg.handlerDeleteReservation))))
+				http.HandlerFunc(apiCfg.handlerCancelReservation))))
 
 	server := &http.Server{
 		Addr:    ":" + port,
