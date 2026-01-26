@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Booking Confirmed</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        
+        body {
+            margin: 0; padding: 0; width: 100% !important; 
+            background-color: #F4F7F9; font-family: 'Inter', -apple-system, sans-serif;
+        }
+        .wrapper { width: 100%; table-layout: fixed; background-color: #F4F7F9; padding-bottom: 40px; }
+        .main {
+            background-color: #ffffff; margin: 0 auto; width: 100%; max-width: 600px;
+            border-spacing: 0; color: #1A1C1E; border-radius: 12px; overflow: hidden;
+            margin-top: 40px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+        }
+        .content { padding: 40px; }
+        .details-box {
+            background-color: #F8FAFC; border: 1px solid #E2E8F0;
+            border-radius: 8px; padding: 20px; margin: 25px 0;
+        }
+        .btn {
+            background-color: #00BABC; color: #ffffff !important;
+            padding: 14px 28px; text-decoration: none; border-radius: 6px;
+            font-weight: 600; font-size: 14px; display: inline-block;
+        }
+        .footer { text-align: center; padding: 30px; font-size: 12px; color: #94A3B8; }
+    </style>
+</head>
+<body>
+    <div class="wrapper">
+        <table class="main" role="presentation">
+            <tr>
+                <td class="content">
+                    <table width="100%">
+                        <tr>
+                            <td>
+                                <img src="https://github.com/hivehelsinki/.github/raw/main/assets/logo.png" alt="Logo" width="100" style="display: block; margin-bottom: 30px;">
+                                <h1 style="margin: 0; font-size: 28px; font-weight: 700; letter-spacing: -0.5px;">You're all set.</h1>
+                                <p style="color: #64748B; font-size: 16px; margin-top: 8px;">Your meeting room has been reserved.</p>
+                            </td>
+                        </tr>
+                    </table>
+
+                    <div class="details-box">
+                        <table width="100%" cellspacing="0" cellpadding="0">
+                            <tr>
+                                <td style="padding-bottom: 12px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em; color: #94A3B8;">Room</td>
+                                <td style="padding-bottom: 12px; font-weight: 600; text-align: right;">__ROOM_NAME__</td>
+                            </tr>
+                            <tr>
+                                <td style="padding-bottom: 12px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em; color: #94A3B8;">Starts</td>
+                                <td style="padding-bottom: 12px; font-weight: 600; text-align: right;">__START_TIME__</td>
+                            </tr>
+                            <tr>
+                                <td style="font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em; color: #94A3B8;">Ends</td>
+                                <td style="font-weight: 600; text-align: right;">__END_TIME__</td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    <p style="font-size: 15px; line-height: 1.6; color: #475569;">
+                        Need to make changes? You can manage your reservation directly in the app.
+                    </p>
+                    <div style="margin-top: 30px;">
+                        <a href="https://room.hive.fi/" class="btn">View Reservation</a>
+                    </div>
+
+                    <hr style="border: 0; border-top: 1px solid #F1F5F9; margin: 40px 0 30px;">
+                    <p style="font-size: 13px; font-weight: 600; color: #1A1C1E; margin-bottom: 10px;">Quick Reminders:</p>
+                    <ul style="font-size: 13px; color: #64748B; padding-left: 18px; line-height: 1.6;">
+                        <li>Please leave the room clean and tidy for the next person.</li>
+                        <li>Wrap up a few minutes early to allow a smooth transition.</li>
+                    </ul>
+                </td>
+            </tr>
+        </table>
+
+        <div class="footer">
+            Sent via <strong>Book Me App</strong> for Hive Helsinki.<br>
+            <a href="https://room.hive.fi/" style="color: #00BABC; text-decoration: none; margin-top: 10px; display: inline-block;">Open Web App</a>
+        </div>
+    </div>
+</body>
+</html>
