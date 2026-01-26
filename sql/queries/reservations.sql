@@ -5,9 +5,9 @@ VALUES (
 )
 RETURNING *;
 
--- name: GetReservation :one
+-- name: GetReservationByID :one
 SELECT * FROM reservations
-WHERE id = $1 LIMIT 1;
+WHERE id = $1;
 
 -- name: ListReservationsByRoom :many
 SELECT * FROM reservations
@@ -38,3 +38,7 @@ INNER JOIN rooms room ON r.room_id = room.id
 WHERE r.start_time >= $1
   AND r.end_time <= $2
 ORDER BY r.room_id, r.start_time;
+
+-- name: DeleteReservation :exec
+DELETE FROM reservations
+WHERE id = $1;

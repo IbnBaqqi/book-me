@@ -47,6 +47,16 @@ func (q *Queries) CreateReservation(ctx context.Context, arg CreateReservationPa
 	return i, err
 }
 
+const deleteReservation = `-- name: DeleteReservation :exec
+DELETE FROM reservations
+WHERE id = $1
+`
+
+func (q *Queries) DeleteReservation(ctx context.Context, id int64) error {
+	_, err := q.db.ExecContext(ctx, deleteReservation, id)
+	return err
+}
+
 const existsOverlappingReservation = `-- name: ExistsOverlappingReservation :one
 SELECT EXISTS (
     SELECT 1
@@ -133,13 +143,13 @@ func (q *Queries) GetAllBetweenDates(ctx context.Context, arg GetAllBetweenDates
 	return items, nil
 }
 
-const getReservation = `-- name: GetReservation :one
+const getReservationByID = `-- name: GetReservationByID :one
 SELECT id, user_id, room_id, start_time, end_time, status, gcal_event_id FROM reservations
-WHERE id = $1 LIMIT 1
+WHERE id = $1
 `
 
-func (q *Queries) GetReservation(ctx context.Context, id int64) (Reservation, error) {
-	row := q.db.QueryRowContext(ctx, getReservation, id)
+func (q *Queries) GetReservationByID(ctx context.Context, id int64) (Reservation, error) {
+	row := q.db.QueryRowContext(ctx, getReservationByID, id)
 	var i Reservation
 	err := row.Scan(
 		&i.ID,
