@@ -105,6 +105,18 @@ func (cfg *apiConfig) handlerCreateReservation(w http.ResponseWriter, r *http.Re
 		return
 	}
 
+	// TODO use redis instead
+	dbUser, err := cfg.db.GetUser(r.Context(), int64(currentUser.ID))
+
+	// Send confirmation email (async)
+	cfg.EmailService.SendConfirmation(
+		r.Context(),
+		dbUser.Email,
+		room.Name,
+		req.StartTime.Format("Monday, January 2, 2006 at 3:04 PM"),
+		req.EndTime.Format("Monday, January 2, 2006 at 3:04 PM"),
+	)
+
 	// handle google calender here
 	// sending email
 

@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 
 	"golang.org/x/oauth2"
@@ -35,7 +34,6 @@ func get42UserData(ctx context.Context, oauthConfig *oauth2.Config, token *oauth
 		return nil, fmt.Errorf("failed to decode intra user data: %w", err)
 	}
 
-	log.Println(user42.Name, user42.Email) //remove later
 	return &user42, nil
 }
 
