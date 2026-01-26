@@ -123,7 +123,11 @@ func main() {
 		apiCfg.auth.Authenticate(
 			auth.RequireAuth(
 				http.HandlerFunc(apiCfg.handlerFetchReservations))))
-	// mux.HandleFunc("DELETE /reservation/{id}", apiCfg.handlerCallback) // to change
+	mux.Handle(
+		"DELETE /reservation{id}",
+		apiCfg.auth.Authenticate(
+			auth.RequireAuth(
+				http.HandlerFunc(apiCfg.handlerDeleteReservation))))
 
 	server := &http.Server{
 		Addr:    ":" + port,
