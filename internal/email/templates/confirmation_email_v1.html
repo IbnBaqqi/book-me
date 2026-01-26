@@ -29,7 +29,7 @@
             <tr>
                 <td align="center" style="padding: 0 40px 30px 40px;">
                     <h1 style="margin: 0; font-size: 24px; color: #333; font-weight: 600;">Your room is booked</h1>
-                    <p style="margin: 10px 0 0 0; color: #777; font-size: 16px;">Confirmation for __ROOM_NAME__</p>
+                    <p style="margin: 10px 0 0 0; color: #777; font-size: 16px;">Confirmation for {{.RoomName}}</p>
                 </td>
             </tr>
 
@@ -44,15 +44,15 @@
                                 <table width="100%" style="background-color: #fcfcfc; border-radius: 6px; margin: 20px 0; padding: 15px;">
                                     <tr>
                                         <td style="padding: 8px 0; color: #777; font-size: 14px;">Room</td>
-                                        <td style="padding: 8px 0; color: #333; font-weight: 600;">__ROOM_NAME__</td>
+                                        <td style="padding: 8px 0; color: #333; font-weight: 600;">{{.RoomName}}</td>
                                     </tr>
                                     <tr>
                                         <td style="padding: 8px 0; color: #777; font-size: 14px;">Starts</td>
-                                        <td style="padding: 8px 0; color: #333; font-weight: 600;">__START_TIME__</td>
+                                        <td style="padding: 8px 0; color: #333; font-weight: 600;">{{.StartTime}}</td>
                                     </tr>
                                     <tr>
                                         <td style="padding: 8px 0; color: #777; font-size: 14px;">Ends</td>
-                                        <td style="padding: 8px 0; color: #333; font-weight: 600;">__END_TIME__</td>
+                                        <td style="padding: 8px 0; color: #333; font-weight: 600;">{{.EndTime}}</td>
                                     </tr>
                                 </table>
 
