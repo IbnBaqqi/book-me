@@ -11,12 +11,12 @@ import (
 )
 
 var (
-	ErrReservationNotFound       = errors.New("reservation not found")
-	ErrUnauthorizedCancellation  = errors.New("unauthorized to cancel this reservation")
+	ErrReservationNotFound      = errors.New("reservation not found")
+	ErrUnauthorizedCancellation = errors.New("unauthorized to cancel this reservation")
 )
 
-func (cfg *apiConfig) handlerDeleteReservation(w http.ResponseWriter, r *http.Request) {
-	
+func (cfg *apiConfig) handlerCancelReservation(w http.ResponseWriter, r *http.Request) {
+
 	// Extract ID from path parameter
 	idStr := r.PathValue("id")
 	if idStr == "" {
@@ -60,7 +60,7 @@ func (cfg *apiConfig) cancelReservation(
 	id int64,
 	currentUser auth.User,
 ) error {
-	
+
 	// Find reservation by ID
 	reservation, err := cfg.db.GetReservationByID(ctx, id)
 	if err != nil {
