@@ -42,3 +42,8 @@ ORDER BY r.room_id, r.start_time;
 -- name: DeleteReservation :exec
 DELETE FROM reservations
 WHERE id = $1;
+
+-- name: UpdateGoogleCalID :exec
+UPDATE reservations
+SET gcal_event_id = $2
+WHERE id = $1;
