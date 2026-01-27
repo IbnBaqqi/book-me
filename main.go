@@ -7,6 +7,7 @@ import (
 	"os"
 	"strconv"
 
+	"github.com/IbnBaqqi/book-me/external/google"
 	"github.com/IbnBaqqi/book-me/internal/auth"
 	"github.com/IbnBaqqi/book-me/internal/database"
 	"github.com/IbnBaqqi/book-me/internal/email"
@@ -17,11 +18,12 @@ import (
 )
 
 type apiConfig struct {
-	db               *database.Queries //
+	db               *database.Queries
 	sessionStore     *sessions.CookieStore
 	oauthConfig      *oauth2.Config
 	auth             *auth.Service
 	EmailService     *email.Service
+	CalendarService  *google.CalendarService
 	redirectTokenURI string
 	user42InfoURL    string
 	jwtSecret        string
@@ -76,6 +78,54 @@ func main() {
 		log.Fatal("JWT_SECRET environment variable is not set")
 	}
 
+	// Google Calendar configuration
+	googleCalendarScope := os.Getenv("GOOGLE_CALENDAR_SCOPE")
+	if googleCalendarScope == "" {
+		log.Fatal("GOOGLE_CALENDAR_SCOPE must be set")
+	}
+
+	googlePrivateKey := os.Getenv("GOOGLE_PRIVATE_KEY")
+	if googlePrivateKey == "" {
+		log.Fatal("GOOGLE_PRIVATE_KEY must be set")
+	}
+
+	googleServiceAccountEmail := os.Getenv("GOOGLE_SERVICE_ACCOUNT_EMAIL")
+	if googleServiceAccountEmail == "" {
+		log.Fatal("GOOGLE_SERVICE_ACCOUNT_EMAIL must be set")
+	}
+
+	googleTokenURI := os.Getenv("GOOGLE_TOKEN_URI")
+	if googleTokenURI == "" {
+		log.Fatal("GOOGLE_TOKEN_URI must be set")
+	}
+
+	googleTokenExpiration, err := strconv.ParseInt(os.Getenv("GOOGLE_TOKEN_EXPIRATION"), 10, 64)
+	if err != nil {
+		googleTokenExpiration = 3600 // Default 1 hour
+	}
+
+	googleCalendarURI := os.Getenv("GOOGLE_CALENDAR_URI")
+	if googleCalendarURI == "" {
+		log.Fatal("GOOGLE_CALENDAR_URI must be set")
+	}
+
+	googleCalendarID := os.Getenv("GOOGLE_CALENDAR_ID")
+	if googleCalendarID == "" {
+		googleCalendarID = "primary" // Default
+	}
+
+	// Initialize Google Calendar service
+	authService := google.NewAuthService(
+		googleCalendarScope,
+		googlePrivateKey,
+		googleServiceAccountEmail,
+		googleTokenURI,
+		googleTokenExpiration,
+	)
+
+	tokenManager := google.NewTokenManager(authService)
+	calendarSvc := google.NewCalendarService(tokenManager, googleCalendarURI, googleCalendarID)
+
 	// Email configuration
 	smtpPort, err := strconv.Atoi(os.Getenv("SMTP_PORT"))
 	if err != nil {
@@ -125,6 +175,7 @@ func main() {
 		oauthConfig:      oauthCfg,
 		auth:             auth.NewService(jwtSecret),
 		EmailService:     emailSvc,
+		CalendarService:  calendarSvc,
 		redirectTokenURI: redirectTokenURI,
 		user42InfoURL:    user42InfoURL,
 		jwtSecret:        jwtSecret,

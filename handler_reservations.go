@@ -1,10 +1,14 @@
 package main
 
 import (
+	"context"
+	"database/sql"
 	"encoding/json"
+	"log"
 	"net/http"
 	"time"
 
+	"github.com/IbnBaqqi/book-me/external/google"
 	"github.com/IbnBaqqi/book-me/internal/auth"
 	"github.com/IbnBaqqi/book-me/internal/database"
 )
@@ -105,6 +109,37 @@ func (cfg *apiConfig) handlerCreateReservation(w http.ResponseWriter, r *http.Re
 		return
 	}
 
+	// Create Google Calendar event asynchronously
+	go func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+
+		// Build reservation object for calendar service
+		calendarReservation := &google.Reservation{
+			StartTime: reservation.StartTime,
+			EndTime:   reservation.EndTime,
+			CreatedBy: currentUser.Name,
+			Room:      room.Name,
+		}
+
+		eventID, err := cfg.CalendarService.CreateGoogleEvent(ctx, calendarReservation)
+		if err != nil {
+			log.Printf("Failed to create Google Calendar event: %v", err)
+			return
+		}
+
+		// Update reservation with event ID
+		if eventID != "" {
+			updateErr := cfg.db.UpdateGoogleCalID(ctx, database.UpdateGoogleCalIDParams{
+				ID:         reservation.ID,
+				GcalEventID: sql.NullString{String: eventID, Valid: eventID != ""},
+			})
+			if updateErr != nil {
+				log.Printf("Failed to update reservation with calendar event ID: %v", updateErr)
+			}
+		}
+	}()
+
 	// TODO use redis instead
 	dbUser, err := cfg.db.GetUser(r.Context(), int64(currentUser.ID))
 
@@ -116,9 +151,6 @@ func (cfg *apiConfig) handlerCreateReservation(w http.ResponseWriter, r *http.Re
 		req.StartTime.Format("Monday, January 2, 2006 at 3:04 PM"),
 		req.EndTime.Format("Monday, January 2, 2006 at 3:04 PM"),
 	)
-
-	// handle google calender here
-	// sending email
 
 	respondWithJSON(w, http.StatusCreated, reservationDTO{
 		ID:        reservation.ID,

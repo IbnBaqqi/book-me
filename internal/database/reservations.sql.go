@@ -7,6 +7,7 @@ package database
 
 import (
 	"context"
+	"database/sql"
 	"time"
 )
 
@@ -198,4 +199,20 @@ func (q *Queries) ListReservationsByRoom(ctx context.Context, roomID int64) ([]R
 		return nil, err
 	}
 	return items, nil
+}
+
+const updateGoogleCalID = `-- name: UpdateGoogleCalID :exec
+UPDATE reservations
+SET gcal_event_id = $2
+WHERE id = $1
+`
+
+type UpdateGoogleCalIDParams struct {
+	ID          int64
+	GcalEventID sql.NullString
+}
+
+func (q *Queries) UpdateGoogleCalID(ctx context.Context, arg UpdateGoogleCalIDParams) error {
+	_, err := q.db.ExecContext(ctx, updateGoogleCalID, arg.ID, arg.GcalEventID)
+	return err
 }
