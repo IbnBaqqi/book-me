@@ -1,4 +1,4 @@
-package main
+package handler
 
 import (
 	"context"
@@ -9,20 +9,20 @@ import (
 	"github.com/IbnBaqqi/book-me/internal/database"
 )
 
-	type ReservedSlotDto struct {
-		ID        int64     `json:"id"`
-		StartTime time.Time `json:"startTime"`
-		EndTime   time.Time `json:"endTime"`
-		BookedBy  *string   `json:"bookedBy,omitempty"`
-	}
+type ReservedSlotDto struct {
+	ID        int64     `json:"id"`
+	StartTime time.Time `json:"startTime"`
+	EndTime   time.Time `json:"endTime"`
+	BookedBy  *string   `json:"bookedBy,omitempty"`
+}
 
-	type ReservedDto struct {
-		RoomID   int64             `json:"roomId"`
-		RoomName string            `json:"roomName"`
-		Slots    []ReservedSlotDto `json:"slots"`
-	}
+type ReservedDto struct {
+	RoomID   int64             `json:"roomId"`
+	RoomName string            `json:"roomName"`
+	Slots    []ReservedSlotDto `json:"slots"`
+}
 
-func (cfg *apiConfig) handlerFetchReservations(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) GetReservations(w http.ResponseWriter, r *http.Request) {
 
 	// Parse query parameters
 	startDateStr := r.URL.Query().Get("start")
@@ -50,7 +50,7 @@ func (cfg *apiConfig) handlerFetchReservations(w http.ResponseWriter, r *http.Re
 	currentUser, isAuthenticated := auth.UserFromContext(r.Context())
 
 	// Call service method
-	reserved, err := cfg.getUnavailableSlots(r.Context(), startDate, endDate, currentUser, isAuthenticated)
+	reserved, err := h.getUnavailableSlots(r.Context(), startDate, endDate, currentUser, isAuthenticated)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "failed to fetch unavailable slots", err)
 		return
@@ -61,7 +61,7 @@ func (cfg *apiConfig) handlerFetchReservations(w http.ResponseWriter, r *http.Re
 }
 
 // Service method
-func (cfg *apiConfig) getUnavailableSlots(
+func (h *Handler) getUnavailableSlots(
 	ctx context.Context,
 	start time.Time,
 	end time.Time,
@@ -70,14 +70,14 @@ func (cfg *apiConfig) getUnavailableSlots(
 ) ([]ReservedDto, error) {
 
 	// Convert dates to datetime range
-	startDateTime := start // Already at 00:00:00
+	startDateTime := start              // Already at 00:00:00
 	endDateTime := end.AddDate(0, 0, 1) // Add 1 day (equivalent to plusDays(1).atStartOfDay())
 
 	// Check if user is staff
 	isStaff := isAuthenticated && currentUser.Role == "STAFF"
 
 	// Fetch all reservations between dates
-	reservations, err := cfg.db.GetAllBetweenDates(ctx, database.GetAllBetweenDatesParams{
+	reservations, err := h.db.GetAllBetweenDates(ctx, database.GetAllBetweenDatesParams{
 		StartTime: startDateTime,
 		EndTime:   endDateTime,
 	})

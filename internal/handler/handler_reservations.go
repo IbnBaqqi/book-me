@@ -1,4 +1,4 @@
-package main
+package handler
 
 import (
 	"context"
@@ -26,7 +26,7 @@ type UserDto struct {
 	Name string `json:"name"`
 }
 
-func (cfg *apiConfig) handlerCreateReservation(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) CreateReservation(w http.ResponseWriter, r *http.Request) {
 
 	type createReservationRequest struct {
 		RoomID    int64     `json:"roomId"`
@@ -51,7 +51,7 @@ func (cfg *apiConfig) handlerCreateReservation(w http.ResponseWriter, r *http.Re
 	}
 
 	// Fetch room
-	room, err := cfg.db.GetRoomByID(r.Context(), req.RoomID)
+	room, err := h.db.GetRoomByID(r.Context(), req.RoomID)
 	if err != nil {
 		respondWithError(w, http.StatusNotFound, "Room not found", err)
 		return
@@ -72,7 +72,7 @@ func (cfg *apiConfig) handlerCreateReservation(w http.ResponseWriter, r *http.Re
 	}
 
 	// Overlap check
-	overlap, err := cfg.db.ExistsOverlappingReservation(r.Context(), database.ExistsOverlappingReservationParams{
+	overlap, err := h.db.ExistsOverlappingReservation(r.Context(), database.ExistsOverlappingReservationParams{
 		RoomID:    req.RoomID,
 		StartTime: end,
 		EndTime:   start,
@@ -97,7 +97,7 @@ func (cfg *apiConfig) handlerCreateReservation(w http.ResponseWriter, r *http.Re
 	}
 
 	// 5. Persist reservation
-	reservation, err := cfg.db.CreateReservation(r.Context(), database.CreateReservationParams{
+	reservation, err := h.db.CreateReservation(r.Context(), database.CreateReservationParams{
 		UserID:    int64(currentUser.ID),
 		RoomID:    room.ID,
 		StartTime: start,
@@ -122,7 +122,7 @@ func (cfg *apiConfig) handlerCreateReservation(w http.ResponseWriter, r *http.Re
 			Room:      room.Name,
 		}
 
-		eventID, err := cfg.CalendarService.CreateGoogleEvent(ctx, calendarReservation)
+		eventID, err := h.calendar.CreateGoogleEvent(ctx, calendarReservation)
 		if err != nil {
 			log.Printf("Failed to create Google Calendar event: %v", err)
 			return
@@ -130,8 +130,8 @@ func (cfg *apiConfig) handlerCreateReservation(w http.ResponseWriter, r *http.Re
 
 		// Update reservation with event ID
 		if eventID != "" {
-			updateErr := cfg.db.UpdateGoogleCalID(ctx, database.UpdateGoogleCalIDParams{
-				ID:         reservation.ID,
+			updateErr := h.db.UpdateGoogleCalID(ctx, database.UpdateGoogleCalIDParams{
+				ID:          reservation.ID,
 				GcalEventID: sql.NullString{String: eventID, Valid: eventID != ""},
 			})
 			if updateErr != nil {
@@ -141,10 +141,10 @@ func (cfg *apiConfig) handlerCreateReservation(w http.ResponseWriter, r *http.Re
 	}()
 
 	// TODO use redis instead
-	dbUser, err := cfg.db.GetUser(r.Context(), int64(currentUser.ID))
+	dbUser, err := h.db.GetUser(r.Context(), int64(currentUser.ID))
 
 	// Send confirmation email (async)
-	cfg.EmailService.SendConfirmation(
+	h.email.SendConfirmation(
 		r.Context(),
 		dbUser.Email,
 		room.Name,

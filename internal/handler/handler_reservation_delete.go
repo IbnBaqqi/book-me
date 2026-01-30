@@ -1,4 +1,4 @@
-package main
+package handler
 
 import (
 	"context"
@@ -15,7 +15,7 @@ var (
 	ErrUnauthorizedCancellation = errors.New("unauthorized to cancel this reservation")
 )
 
-func (cfg *apiConfig) handlerCancelReservation(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) CancelReservation(w http.ResponseWriter, r *http.Request) {
 
 	// Extract ID from path parameter
 	idStr := r.PathValue("id")
@@ -37,7 +37,7 @@ func (cfg *apiConfig) handlerCancelReservation(w http.ResponseWriter, r *http.Re
 	}
 
 	// Call service method
-	err = cfg.cancelReservation(r.Context(), id, currentUser)
+	err = h.cancelReservation(r.Context(), id, currentUser)
 	if err != nil {
 		// Handle different error types
 		switch err {
@@ -55,14 +55,14 @@ func (cfg *apiConfig) handlerCancelReservation(w http.ResponseWriter, r *http.Re
 }
 
 // Service method
-func (cfg *apiConfig) cancelReservation(
+func (h *Handler) cancelReservation(
 	ctx context.Context,
 	id int64,
 	currentUser auth.User,
 ) error {
 
 	// Find reservation by ID
-	reservation, err := cfg.db.GetReservationByID(ctx, id)
+	reservation, err := h.db.GetReservationByID(ctx, id)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return ErrReservationNotFound
@@ -79,7 +79,7 @@ func (cfg *apiConfig) cancelReservation(
 	}
 
 	// Delete from database
-	err = cfg.db.DeleteReservation(ctx, id)
+	err = h.db.DeleteReservation(ctx, id)
 	if err != nil {
 		return err
 	}
