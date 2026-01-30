@@ -25,7 +25,7 @@ It supports calendar-based views, role-based access control (students & staff), 
 ---
 
 ### Basic System Architecture Diagram
-![System Architecture](/v3BookMe-whiteBg.png)
+![System Architecture](assets/v3BookMe-whiteBg.png)
 
 ## Features
 
