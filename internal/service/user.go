@@ -9,6 +9,18 @@ import (
 	"golang.org/x/oauth2"
 )
 
+type User42 struct {
+	Email  string        `json:"email"`
+	Name   string        `json:"login"`
+	Staff  bool          `json:"staff?"`
+	Campus []CampusUsers `json:"campus_users"`
+}
+
+type CampusUsers struct {
+	ID      int  `json:"campus_id"`
+	Primary bool `json:"is_primary"`
+}
+
 // TODO look into timeout and context
 func Get42UserData(ctx context.Context, oauthConfig *oauth2.Config, token *oauth2.Token) (*User42, error) {
 
@@ -16,7 +28,7 @@ func Get42UserData(ctx context.Context, oauthConfig *oauth2.Config, token *oauth
 	// and token refreshing automatically.
 	client := oauthConfig.Client(ctx, token)
 
-	res, err := client.Get("https://api.intra.42.fr/v2/me") //externalize later
+	res, err := client.Get("https://api.intra.42.fr/v2/me") //will externalize later
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch user from intra: %s", err)
 	}
