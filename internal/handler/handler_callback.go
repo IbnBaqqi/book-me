@@ -1,4 +1,4 @@
-package main
+package handler
 
 import (
 	"database/sql"
@@ -9,12 +9,13 @@ import (
 	"strings"
 
 	"github.com/IbnBaqqi/book-me/internal/database"
+	"github.com/IbnBaqqi/book-me/internal/service"
 )
 
-func (cfg *apiConfig) handlerCallback(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) Callback(w http.ResponseWriter, r *http.Request) {
 
 	// Check State (CSRF Protection)
-	session, _ := cfg.sessionStore.Get(r, sessionName)
+	session, _ := h.session.Get(r, sessionName)
 
 	expectedState, ok := session.Values["oauth_state"].(string) // get saved state and compare with incoming state
 	if !ok || expectedState != r.URL.Query().Get("state") {
@@ -29,14 +30,15 @@ func (cfg *apiConfig) handlerCallback(w http.ResponseWriter, r *http.Request) {
 	// Exchange code for token
 	code := r.URL.Query().Get("code")
 
-	token, err := cfg.oauthConfig.Exchange(r.Context(), code)
+	token, err := h.oauthConfig.Exchange(r.Context(), code)
 	if err != nil {
 		respondWithError(w, http.StatusUnauthorized, "token exchange failed", err)
 		return
 	}
 
 	// Get loggedIn User Info from 42
-	user42, err := get42UserData(r.Context(), cfg.oauthConfig, token)
+	
+	user42, err := service.Get42UserData(r.Context(), h.oauthConfig, token)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Failed to get user data from 42", err)
 		return
@@ -57,7 +59,7 @@ func (cfg *apiConfig) handlerCallback(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Find or create user
-	user, err := cfg.db.GetUserByEmail(r.Context(), user42.Email)
+	user, err := h.db.GetUserByEmail(r.Context(), user42.Email)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) { // if user doesn't exist
 
@@ -66,7 +68,7 @@ func (cfg *apiConfig) handlerCallback(w http.ResponseWriter, r *http.Request) {
 				role = "STAFF"
 			}
 			// create user
-			newUser, err := cfg.db.CreateUser(r.Context(), database.CreateUserParams{
+			newUser, err := h.db.CreateUser(r.Context(), database.CreateUserParams{
 				Email: user42.Email,
 				Name:  user42.Name,
 				Role:  role,
@@ -84,7 +86,7 @@ func (cfg *apiConfig) handlerCallback(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Issue jwt
-	jwtToken, err := cfg.auth.IssueAccessToken(user)
+	jwtToken, err := h.auth.IssueAccessToken(user)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Failed to generate token", err)
 		return
@@ -96,6 +98,6 @@ func (cfg *apiConfig) handlerCallback(w http.ResponseWriter, r *http.Request) {
 	params.Add("role", strings.ToLower(user.Role))
 
 	// final redirect
-	finalRedirectURL := fmt.Sprintf("%s?%s", cfg.redirectTokenURI, params.Encode())
+	finalRedirectURL := fmt.Sprintf("%s?%s", h.redirectTokenURI, params.Encode())
 	http.Redirect(w, r, finalRedirectURL, http.StatusFound)
 }

@@ -1,4 +1,4 @@
-package main
+package service
 
 type User42 struct {
 	Email  string        `json:"email"`

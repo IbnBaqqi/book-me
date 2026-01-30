@@ -1,4 +1,4 @@
-package main
+package service
 
 import (
 	"context"
@@ -10,7 +10,7 @@ import (
 )
 
 // TODO look into timeout and context
-func get42UserData(ctx context.Context, oauthConfig *oauth2.Config, token *oauth2.Token) (*User42, error) {
+func Get42UserData(ctx context.Context, oauthConfig *oauth2.Config, token *oauth2.Token) (*User42, error) {
 
 	// A specialized HTTP client that handles the Authorization header
 	// and token refreshing automatically.

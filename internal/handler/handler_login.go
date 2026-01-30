@@ -1,4 +1,4 @@
-package main
+package handler
 
 import (
 	"crypto/rand"
@@ -10,16 +10,15 @@ const (
 	// clientID     = "YOUR_CLIENT_ID"
 	// redirectURI  = "http://localhost:8080/oauth/callback"
 	// oauthAuthURL = "https://api.intra.42.fr/oauth/authorize"
-	sessionName  = "bookme-session"
+	sessionName = "bookme-session"
 )
 
-
-func (cfg *apiConfig) loginHandler(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 
 	state := generateRandomState()
 
 	// Store state in session to prevent CSRF
-	session, err := cfg.sessionStore.Get(r, sessionName)
+	session, err := h.session.Get(r, sessionName)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "failed to get session", err)
 		return
@@ -28,10 +27,9 @@ func (cfg *apiConfig) loginHandler(w http.ResponseWriter, r *http.Request) {
 	session.Save(r, w)
 
 	// Redirect to 42 Auth
-	url := cfg.oauthConfig.AuthCodeURL(state)
+	url := h.oauthConfig.AuthCodeURL(state)
 	http.Redirect(w, r, url, http.StatusFound)
 }
-
 
 func generateRandomState() string {
 	b := make([]byte, 32)
