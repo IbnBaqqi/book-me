@@ -57,5 +57,9 @@ var (
 		Message:    "failed to fetch reservations",
 		StatusCode: http.StatusInternalServerError,
 	}
+	ErrUnauthorizedCancellation  = &ServiceError{
+		Message:    "unauthorized to cancel this reservation",
+		StatusCode: http.StatusInternalServerError,
+	}
 	
 )
