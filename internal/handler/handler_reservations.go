@@ -1,16 +1,13 @@
 package handler
 
 import (
-	"context"
-	"database/sql"
 	"encoding/json"
-	"log"
+	"errors"
 	"net/http"
 	"time"
 
-	"github.com/IbnBaqqi/book-me/external/google"
 	"github.com/IbnBaqqi/book-me/internal/auth"
-	"github.com/IbnBaqqi/book-me/internal/database"
+	"github.com/IbnBaqqi/book-me/internal/service"
 )
 
 type reservationDTO struct {
@@ -50,107 +47,24 @@ func (h *Handler) CreateReservation(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Fetch room
-	room, err := h.db.GetRoomByID(r.Context(), req.RoomID)
-	if err != nil {
-		respondWithError(w, http.StatusNotFound, "Room not found", err)
-		return
-	}
-
-	start := req.StartTime
-	end := req.EndTime
-
-	// Validate time
-	if start.Before(time.Now()) {
-		respondWithError(w, http.StatusBadRequest, "You can't book past times", err)
-		return
-	}
-
-	if !end.After(start) {
-		respondWithError(w, http.StatusBadRequest, "End time must be after start time", err)
-		return
-	}
-
-	// Overlap check
-	overlap, err := h.db.ExistsOverlappingReservation(r.Context(), database.ExistsOverlappingReservationParams{
-		RoomID:    req.RoomID,
-		StartTime: end,
-		EndTime:   start,
-	})
-	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, "Internal error", err)
-		return
-	}
-
-	if overlap {
-		respondWithError(w, http.StatusBadRequest, "This time slot is already booked", err)
-		return
-	}
-
-	// Max duration rule (students only)
-	duration := end.Sub(start)
-	maxMinutes := 240
-
-	if duration.Minutes() > float64(maxMinutes) && currentUser.Role == "STUDENT" {
-		respondWithError(w, http.StatusBadRequest, "reservation exceeds maximum allowed duration of 4 hours", err)
-		return
-	}
-
-	// 5. Persist reservation
-	reservation, err := h.db.CreateReservation(r.Context(), database.CreateReservationParams{
-		UserID:    int64(currentUser.ID),
-		RoomID:    room.ID,
-		StartTime: start,
-		EndTime:   end,
-		Status:    "RESERVED",
-	})
-	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, "internal error", err)
-		return
-	}
-
-	// Create Google Calendar event asynchronously
-	go func() {
-		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-		defer cancel()
-
-		// Build reservation object for calendar service
-		calendarReservation := &google.Reservation{
-			StartTime: reservation.StartTime,
-			EndTime:   reservation.EndTime,
-			CreatedBy: currentUser.Name,
-			Room:      room.Name,
-		}
-
-		eventID, err := h.calendar.CreateGoogleEvent(ctx, calendarReservation)
-		if err != nil {
-			log.Printf("Failed to create Google Calendar event: %v", err)
-			return
-		}
-
-		// Update reservation with event ID
-		if eventID != "" {
-			updateErr := h.db.UpdateGoogleCalID(ctx, database.UpdateGoogleCalIDParams{
-				ID:          reservation.ID,
-				GcalEventID: sql.NullString{String: eventID, Valid: eventID != ""},
-			})
-			if updateErr != nil {
-				log.Printf("Failed to update reservation with calendar event ID: %v", updateErr)
-			}
-		}
-	}()
-
 	// TODO use redis instead
 	dbUser, err := h.db.GetUser(r.Context(), int64(currentUser.ID))
 
-	// Send confirmation email (async)
-	h.email.SendConfirmation(
-		r.Context(),
-		dbUser.Email,
-		room.Name,
-		req.StartTime.Format("Monday, January 2, 2006 at 3:04 PM"),
-		req.EndTime.Format("Monday, January 2, 2006 at 3:04 PM"),
-	)
+	// Call service
+	reservation, err := h.reservation.CreateReservation(r.Context(), service.CreateReservationInput{
+		UserID:    int64(currentUser.ID),
+		UserName:  currentUser.Name,
+		UserEmail: dbUser.Email,
+		UserRole:  currentUser.Role,
+		RoomID:    req.RoomID,
+		StartTime: req.StartTime,
+		EndTime:   req.EndTime,
+	})
+
+	if err != nil {
+		handleServiceError(w, err)
+		return
+	}
 
 	respondWithJSON(w, http.StatusCreated, reservationDTO{
 		ID:        reservation.ID,
@@ -162,4 +76,16 @@ func (h *Handler) CreateReservation(w http.ResponseWriter, r *http.Request) {
 			Name: currentUser.Name,
 		},
 	})
+}
+
+// handleServiceError maps service errors to HTTP responses
+func handleServiceError(w http.ResponseWriter, err error) {
+	var serviceErr *service.ServiceError
+	if errors.As(err, &serviceErr) {
+		respondWithError(w, serviceErr.StatusCode, serviceErr.Message, err)
+		return
+	}
+
+	// Fallback for unexpected errors
+	respondWithError(w, http.StatusInternalServerError, "internal server error", err)
 }

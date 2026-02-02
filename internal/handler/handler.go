@@ -5,6 +5,7 @@ import (
 	"github.com/IbnBaqqi/book-me/internal/auth"
 	"github.com/IbnBaqqi/book-me/internal/database"
 	"github.com/IbnBaqqi/book-me/internal/email"
+	"github.com/IbnBaqqi/book-me/internal/service"
 
 	"github.com/gorilla/sessions"
 	"golang.org/x/oauth2"
@@ -18,6 +19,12 @@ type Handler struct {
 	auth             *auth.Service
 	email            *email.Service
 	calendar         *google.CalendarService
+	
+	// Services (business logic)
+	reservation		 *service.ReservationService
+	// authService        *services.AuthService
+	// userService        *services.UserService
+
 	redirectTokenURI string
 	user42InfoURL    string
 	jwtSecret        string
@@ -42,6 +49,7 @@ func New(
 		auth:             authService,
 		email:            emailService,
 		calendar:         calendarService,
+		reservation: 	  service.NewReservationService(db, emailService, calendarService),
 		redirectTokenURI: redirectTokenURI,
 		user42InfoURL:    user42InfoURL,
 		jwtSecret:        jwtSecret,

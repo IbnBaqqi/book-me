@@ -1,129 +1,82 @@
 package handler
 
 import (
-	"context"
 	"net/http"
 	"time"
 
 	"github.com/IbnBaqqi/book-me/internal/auth"
-	"github.com/IbnBaqqi/book-me/internal/database"
+	"github.com/IbnBaqqi/book-me/internal/service"
 )
-
-type ReservedSlotDto struct {
-	ID        int64     `json:"id"`
-	StartTime time.Time `json:"startTime"`
-	EndTime   time.Time `json:"endTime"`
-	BookedBy  *string   `json:"bookedBy,omitempty"`
-}
-
-type ReservedDto struct {
-	RoomID   int64             `json:"roomId"`
-	RoomName string            `json:"roomName"`
-	Slots    []ReservedSlotDto `json:"slots"`
-}
 
 func (h *Handler) GetReservations(w http.ResponseWriter, r *http.Request) {
 
-	// Parse query parameters
-	startDateStr := r.URL.Query().Get("start")
-	endDateStr := r.URL.Query().Get("end")
-
-	if startDateStr == "" || endDateStr == "" {
-		respondWithError(w, http.StatusBadRequest, "start and end parameters are required", nil)
+	// Validate & parse query parameters
+	startDate, endDate, err := parseDateRange(r)
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, err.Error(), err)
 		return
 	}
 
-	// Parse dates (ISO format: YYYY-MM-DD)
-	startDate, err := time.Parse("2006-01-02", startDateStr)
-	if err != nil {
-		respondWithError(w, http.StatusBadRequest, "invalid start date format", err)
+	// Get authenticated user from context
+	currentUser, ok := auth.UserFromContext(r.Context())
+	if !ok {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
 		return
 	}
 
-	endDate, err := time.Parse("2006-01-02", endDateStr)
-	if err != nil {
-		respondWithError(w, http.StatusBadRequest, "invalid end date format", err)
-		return
+	// Build service input
+	input := service.GetReservationsInput{
+		StartDate: startDate,
+		EndDate:   endDate,
+		UserID:    int64(currentUser.ID),
+		UserRole:  currentUser.Role,
 	}
 
-	// Get authenticated user from context (can be nil for public access)
-	currentUser, isAuthenticated := auth.UserFromContext(r.Context())
-
-	// Call service method
-	reserved, err := h.getUnavailableSlots(r.Context(), startDate, endDate, currentUser, isAuthenticated)
+	// Call service
+	reserved, err := h.reservation.GetReservations(r.Context(), input)
 	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, "failed to fetch unavailable slots", err)
+		handleServiceError(w, err)
 		return
 	}
 
 	respondWithJSON(w, http.StatusOK, reserved)
-
 }
 
-// Service method
-func (h *Handler) getUnavailableSlots(
-	ctx context.Context,
-	start time.Time,
-	end time.Time,
-	currentUser auth.User,
-	isAuthenticated bool,
-) ([]ReservedDto, error) {
+// parseDateRange extracts and validates start/end dates from query params
+func parseDateRange(r *http.Request) (time.Time, time.Time, error) {
+	startDateStr := r.URL.Query().Get("start")
+	endDateStr := r.URL.Query().Get("end")
 
-	// Convert dates to datetime range
-	startDateTime := start              // Already at 00:00:00
-	endDateTime := end.AddDate(0, 0, 1) // Add 1 day (equivalent to plusDays(1).atStartOfDay())
+	if startDateStr == "" || endDateStr == "" {
+		return time.Time{}, time.Time{}, &service.ServiceError{
+			Message:    "start and end date parameters are required",
+			StatusCode: http.StatusBadRequest,
+		}
+	}
 
-	// Check if user is staff
-	isStaff := isAuthenticated && currentUser.Role == "STAFF"
-
-	// Fetch all reservations between dates
-	reservations, err := h.db.GetAllBetweenDates(ctx, database.GetAllBetweenDatesParams{
-		StartTime: startDateTime,
-		EndTime:   endDateTime,
-	})
+	startDate, err := time.Parse("2006-01-02", startDateStr)
 	if err != nil {
-		return nil, err // handle db error
-	}
-	// Group reservations by room ID
-	grouped := make(map[int64][]database.GetAllBetweenDatesRow)
-	for _, res := range reservations {
-		grouped[res.RoomID] = append(grouped[res.RoomID], res)
-	}
-
-	// Build result
-	result := make([]ReservedDto, 0, len(grouped))
-
-	for roomID, roomReservations := range grouped {
-		if len(roomReservations) == 0 {
-			continue
+		return time.Time{}, time.Time{}, &service.ServiceError{
+			Message:    "invalid start date format, expected YYYY-MM-DD",
+			StatusCode: http.StatusBadRequest,
 		}
-
-		roomName := roomReservations[0].RoomName
-
-		// Map reservations to slots
-		slots := make([]ReservedSlotDto, 0, len(roomReservations))
-		for _, res := range roomReservations {
-			var bookedBy *string
-
-			// Show bookedBy only if user is staff or is the owner
-			if isStaff || (isAuthenticated && res.CreatedByID == int64(currentUser.ID)) {
-				bookedBy = &res.CreatedByName
-			}
-
-			slots = append(slots, ReservedSlotDto{
-				ID:        res.ID,
-				StartTime: res.StartTime,
-				EndTime:   res.EndTime,
-				BookedBy:  bookedBy,
-			})
-		}
-
-		result = append(result, ReservedDto{
-			RoomID:   roomID,
-			RoomName: roomName,
-			Slots:    slots,
-		})
 	}
 
-	return result, nil
+	endDate, err := time.Parse("2006-01-02", endDateStr)
+	if err != nil {
+		return time.Time{}, time.Time{}, &service.ServiceError{
+			Message:    "invalid end date format, expected YYYY-MM-DD",
+			StatusCode: http.StatusBadRequest,
+		}
+	}
+
+	// Validate date range
+	if endDate.Before(startDate) {
+		return time.Time{}, time.Time{}, &service.ServiceError{
+			Message:    "end date must be after start date",
+			StatusCode: http.StatusBadRequest,
+		}
+	}
+
+	return startDate, endDate, nil
 }
