@@ -8,6 +8,7 @@ import (
 
 	"github.com/IbnBaqqi/book-me/external/google"
 	"github.com/IbnBaqqi/book-me/internal/database"
+	"github.com/IbnBaqqi/book-me/internal/dto"
 	"github.com/IbnBaqqi/book-me/internal/email"
 )
 
@@ -27,6 +28,12 @@ type CreateReservationInput struct {
 	EndTime   time.Time
 }
 
+type GetReservationsInput struct {
+	StartDate time.Time
+	EndDate   time.Time
+	UserID    int64
+	UserRole  string
+}
 
 func NewReservationService(
 	db *database.Queries,
@@ -138,4 +145,68 @@ func (s *ReservationService) CreateReservation(
 	)
 
 	return &reservation, nil
+}
+
+func (h *ReservationService) GetReservations(
+	ctx context.Context,
+	input GetReservationsInput,
+) ([]dto.ReservedDto, error) {
+
+	// Convert dates to datetime range
+	startDateTime := input.StartDate              // Already at 00:00:00
+	endDateTime := input.EndDate.AddDate(0, 0, 1) // Add 1 day (equivalent to plusDays(1).atStartOfDay())
+
+	// Check if user is a staff
+	isStaff := input.UserRole == "STAFF"
+
+	// Fetch all reservations between dates
+	reservations, err := h.db.GetAllBetweenDates(ctx, database.GetAllBetweenDatesParams{
+		StartTime: startDateTime,
+		EndTime:   endDateTime,
+	})
+	if err != nil {
+		return nil, ErrReservationFetchFailed
+	}
+	// Group reservations by room ID
+	grouped := make(map[int64][]database.GetAllBetweenDatesRow)
+	for _, res := range reservations {
+		grouped[res.RoomID] = append(grouped[res.RoomID], res)
+	}
+
+	// Build result
+	result := make([]dto.ReservedDto, 0, len(grouped))
+
+	for roomID, roomReservations := range grouped {
+		if len(roomReservations) == 0 {
+			continue
+		}
+
+		roomName := roomReservations[0].RoomName
+
+		// Map reservations to slots
+		slots := make([]dto.ReservedSlotDto, 0, len(roomReservations))
+		for _, res := range roomReservations {
+			var bookedBy *string
+
+			// Show bookedBy only if user is staff or is the owner
+			if isStaff || res.CreatedByID == input.UserID {
+				bookedBy = &res.CreatedByName
+			}
+
+			slots = append(slots, dto.ReservedSlotDto{
+				ID:        res.ID,
+				StartTime: res.StartTime,
+				EndTime:   res.EndTime,
+				BookedBy:  bookedBy,
+			})
+		}
+
+		result = append(result, dto.ReservedDto{
+			RoomID:   roomID,
+			RoomName: roomName,
+			Slots:    slots,
+		})
+	}
+
+	return result, nil
 }
