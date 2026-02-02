@@ -35,6 +35,12 @@ type GetReservationsInput struct {
 	UserRole  string
 }
 
+type CancelReservationInput struct {
+	ID  int64
+	UserID int16
+	UserRole string
+}
+
 func NewReservationService(
 	db *database.Queries,
 	emailService *email.Service,
@@ -209,4 +215,35 @@ func (h *ReservationService) GetReservations(
 	}
 
 	return result, nil
+}
+
+func (h *ReservationService) CancelReservation(
+	ctx context.Context,
+	input CancelReservationInput,
+) error {
+
+	// Find reservation by ID
+	reservation, err := h.db.GetReservationByID(ctx, input.ID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return ErrReservationNotFound
+		}
+		return err
+	}
+
+	// Check authorization
+	isStaff := input.UserRole == "STAFF"
+	isOwner := reservation.UserID == int64(input.UserID)
+
+	if !isStaff && !isOwner {
+		return ErrUnauthorizedCancellation
+	}
+
+	// Delete from database
+	err = h.db.DeleteReservation(ctx, input.ID)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

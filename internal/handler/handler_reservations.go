@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/IbnBaqqi/book-me/internal/auth"
@@ -23,6 +24,7 @@ type UserDto struct {
 	Name string `json:"name"`
 }
 
+// Handler to create a new reservation
 func (h *Handler) CreateReservation(w http.ResponseWriter, r *http.Request) {
 
 	type createReservationRequest struct {
@@ -76,6 +78,80 @@ func (h *Handler) CreateReservation(w http.ResponseWriter, r *http.Request) {
 			Name: currentUser.Name,
 		},
 	})
+}
+
+// Handler to Fetch reservations and group them
+func (h *Handler) GetReservations(w http.ResponseWriter, r *http.Request) {
+
+	// Validate & parse query parameters
+	startDate, endDate, err := parseDateRange(r)
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, err.Error(), err)
+		return
+	}
+
+	// Get authenticated user from context
+	currentUser, ok := auth.UserFromContext(r.Context())
+	if !ok {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	// Build service input
+	input := service.GetReservationsInput{
+		StartDate: startDate,
+		EndDate:   endDate,
+		UserID:    int64(currentUser.ID),
+		UserRole:  currentUser.Role,
+	}
+
+	// Call service
+	reserved, err := h.reservation.GetReservations(r.Context(), input)
+	if err != nil {
+		handleServiceError(w, err)
+		return
+	}
+
+	respondWithJSON(w, http.StatusOK, reserved)
+}
+
+// Handler to cancel reservation
+func (h *Handler) CancelReservation(w http.ResponseWriter, r *http.Request) {
+
+	// Extract ID from path parameter
+	idStr := r.PathValue("id")
+	if idStr == "" {
+		respondWithError(w, http.StatusBadRequest, "reservation ID is required", nil)
+		return
+	}
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		http.Error(w, "Invalid reservation ID", http.StatusBadRequest)
+		return
+	}
+
+	// Get authenticated user from context
+	currentUser, ok := auth.UserFromContext(r.Context())
+	if !ok {
+		respondWithError(w, http.StatusUnauthorized, "unauthorized", nil)
+		return
+	}
+
+	// Build service input
+	input := service.CancelReservationInput{
+		ID: id,
+		UserID: currentUser.ID,
+		UserRole: currentUser.Role,
+	}
+
+	// Call service
+	err = h.reservation.CancelReservation(r.Context(), input)
+	if err != nil {
+		handleServiceError(w, err)
+		return
+	}
+	
+	w.WriteHeader(http.StatusNoContent)
 }
 
 // handleServiceError maps service errors to HTTP responses

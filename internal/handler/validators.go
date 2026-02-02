@@ -4,43 +4,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/IbnBaqqi/book-me/internal/auth"
 	"github.com/IbnBaqqi/book-me/internal/service"
 )
-
-func (h *Handler) GetReservations(w http.ResponseWriter, r *http.Request) {
-
-	// Validate & parse query parameters
-	startDate, endDate, err := parseDateRange(r)
-	if err != nil {
-		respondWithError(w, http.StatusBadRequest, err.Error(), err)
-		return
-	}
-
-	// Get authenticated user from context
-	currentUser, ok := auth.UserFromContext(r.Context())
-	if !ok {
-		http.Error(w, "unauthorized", http.StatusUnauthorized)
-		return
-	}
-
-	// Build service input
-	input := service.GetReservationsInput{
-		StartDate: startDate,
-		EndDate:   endDate,
-		UserID:    int64(currentUser.ID),
-		UserRole:  currentUser.Role,
-	}
-
-	// Call service
-	reserved, err := h.reservation.GetReservations(r.Context(), input)
-	if err != nil {
-		handleServiceError(w, err)
-		return
-	}
-
-	respondWithJSON(w, http.StatusOK, reserved)
-}
 
 // parseDateRange extracts and validates start/end dates from query params
 func parseDateRange(r *http.Request) (time.Time, time.Time, error) {
