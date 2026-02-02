@@ -10,25 +10,10 @@ import (
 
 func (h *Handler) GetReservations(w http.ResponseWriter, r *http.Request) {
 
-	// Parse query parameters
-	startDateStr := r.URL.Query().Get("start")
-	endDateStr := r.URL.Query().Get("end")
-
-	if startDateStr == "" || endDateStr == "" {
-		respondWithError(w, http.StatusBadRequest, "start and end parameters are required", nil)
-		return
-	}
-
-	// Parse dates (ISO format: YYYY-MM-DD)
-	startDate, err := time.Parse("2006-01-02", startDateStr)
+	// Validate & parse query parameters
+	startDate, endDate, err := parseDateRange(r)
 	if err != nil {
-		respondWithError(w, http.StatusBadRequest, "invalid start date format", err)
-		return
-	}
-
-	endDate, err := time.Parse("2006-01-02", endDateStr)
-	if err != nil {
-		respondWithError(w, http.StatusBadRequest, "invalid end date format", err)
+		respondWithError(w, http.StatusBadRequest, err.Error(), err)
 		return
 	}
 
@@ -39,6 +24,7 @@ func (h *Handler) GetReservations(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Build service input
 	input := service.GetReservationsInput{
 		StartDate: startDate,
 		EndDate:   endDate,
@@ -46,7 +32,7 @@ func (h *Handler) GetReservations(w http.ResponseWriter, r *http.Request) {
 		UserRole:  currentUser.Role,
 	}
 
-	// Call service method
+	// Call service
 	reserved, err := h.reservation.GetReservations(r.Context(), input)
 	if err != nil {
 		handleServiceError(w, err)
@@ -54,4 +40,43 @@ func (h *Handler) GetReservations(w http.ResponseWriter, r *http.Request) {
 	}
 
 	respondWithJSON(w, http.StatusOK, reserved)
+}
+
+// parseDateRange extracts and validates start/end dates from query params
+func parseDateRange(r *http.Request) (time.Time, time.Time, error) {
+	startDateStr := r.URL.Query().Get("start")
+	endDateStr := r.URL.Query().Get("end")
+
+	if startDateStr == "" || endDateStr == "" {
+		return time.Time{}, time.Time{}, &service.ServiceError{
+			Message:    "start and end date parameters are required",
+			StatusCode: http.StatusBadRequest,
+		}
+	}
+
+	startDate, err := time.Parse("2006-01-02", startDateStr)
+	if err != nil {
+		return time.Time{}, time.Time{}, &service.ServiceError{
+			Message:    "invalid start date format, expected YYYY-MM-DD",
+			StatusCode: http.StatusBadRequest,
+		}
+	}
+
+	endDate, err := time.Parse("2006-01-02", endDateStr)
+	if err != nil {
+		return time.Time{}, time.Time{}, &service.ServiceError{
+			Message:    "invalid end date format, expected YYYY-MM-DD",
+			StatusCode: http.StatusBadRequest,
+		}
+	}
+
+	// Validate date range
+	if endDate.Before(startDate) {
+		return time.Time{}, time.Time{}, &service.ServiceError{
+			Message:    "end date must be after start date",
+			StatusCode: http.StatusBadRequest,
+		}
+	}
+
+	return startDate, endDate, nil
 }
