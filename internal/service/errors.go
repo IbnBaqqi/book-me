@@ -5,8 +5,7 @@ import (
 	"net/http"
 )
 
-// ServiceError represents a business logic error with a code
-// Commit message: Update error handling logic in internal/services/errors.go for improved clarity and maintainability.
+// ServiceError represents a business logic error with a status code
 type ServiceError struct {
 	Err        error
 	Message    string
@@ -54,4 +53,9 @@ var (
 		Message:    "reservation exceeds maximum allowed duration",
 		StatusCode: http.StatusBadRequest,
 	}
+	ErrReservationFetchFailed = &ServiceError{
+		Message:    "failed to fetch reservations",
+		StatusCode: http.StatusInternalServerError,
+	}
+	
 )
