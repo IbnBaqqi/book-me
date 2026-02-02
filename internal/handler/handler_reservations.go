@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"time"
 
@@ -79,16 +80,12 @@ func (h *Handler) CreateReservation(w http.ResponseWriter, r *http.Request) {
 
 // handleServiceError maps service errors to HTTP responses
 func handleServiceError(w http.ResponseWriter, err error) {
-    statusCode := http.StatusInternalServerError
-    
-    switch err {
-    case service.ErrReservationNotFound, service.ErrRoomNotFound:
-        statusCode = http.StatusNotFound
-    case service.ErrInvalidTimeRange, service.ErrPastTime, service.ErrExceedsMaxDuration:
-        statusCode = http.StatusBadRequest
-    case service.ErrTimeSlotTaken:
-        statusCode = http.StatusConflict
-    }
-    
-    respondWithError(w, statusCode, err.Error(), err)
+	var serviceErr *service.ServiceError
+	if errors.As(err, &serviceErr) {
+		respondWithError(w, serviceErr.StatusCode, serviceErr.Message, err)
+		return
+	}
+
+	// Fallback for unexpected errors
+	respondWithError(w, http.StatusInternalServerError, "internal server error", err)
 }
