@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/IbnBaqqi/book-me/internal/auth"
-	"github.com/IbnBaqqi/book-me/internal/services"
+	"github.com/IbnBaqqi/book-me/internal/service"
 )
 
 type reservationDTO struct {
