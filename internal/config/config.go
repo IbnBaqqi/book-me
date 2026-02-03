@@ -32,8 +32,8 @@ type AppConfig struct {
 // Google Calendar config
 type GoogleConfig struct {
 	CredentialsFile string
-	CalendarURI string
-	CalendarID  string
+	CalendarScope   string
+	CalendarID      string
 }
 
 // Email config
@@ -70,8 +70,8 @@ func Load() (*Config, error) {
 		},
 		Google: GoogleConfig{
 			CredentialsFile: mustGetEnv("GOOGLE_CREDENTIALS_FILE"),
-			CalendarURI:         mustGetEnv("GOOGLE_CALENDAR_URI"),
-			CalendarID:          mustGetEnv("GOOGLE_CALENDAR_ID"),
+			CalendarScope:   mustGetEnv("GOOGLE_CALENDAR_SCOPE"),
+			CalendarID:      mustGetEnv("GOOGLE_CALENDAR_ID"),
 		},
 		Email: EmailConfig{
 			SMTPHost:     mustGetEnv("SMTP_HOST"),

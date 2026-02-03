@@ -41,7 +41,7 @@ func New(cfg *config.Config) (*API, error) {
 	// Initialize Google Calendar service
 	calendarService, err := google.NewCalendarService(
 		cfg.Google.CredentialsFile,
-		cfg.Google.CalendarURI,
+		cfg.Google.CalendarScope,
 		cfg.Google.CalendarID,
 	)
 	if err != nil {
