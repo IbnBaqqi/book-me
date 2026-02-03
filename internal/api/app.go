@@ -14,7 +14,7 @@ import (
 	"golang.org/x/oauth2"
 )
 
-// APIConfig holds all dependencies for the API handlers
+// API holds all dependencies for the API handlers
 type API struct {
 	DB               *database.Queries
 	SessionStore     *sessions.CookieStore
@@ -35,24 +35,19 @@ func New(cfg *config.Config) (*API, error) {
 		return nil, fmt.Errorf("failed to open database: %w", err)
 	}
 
+	// Initialize Database
 	dbQueries := database.New(dbConn)
 
 	// Initialize Google Calendar service
-	googleAuthService := google.NewAuthService(
+	calendarService, err := google.NewCalendarService(
+		cfg.Google.CredentialsFile,
 		cfg.Google.CalendarScope,
-		cfg.Google.PrivateKey,
-		cfg.Google.ServiceAccountEmail,
-		cfg.Google.TokenURI,
-		cfg.Google.TokenExpiration,
-	)
-
-	tokenManager := google.NewTokenManager(googleAuthService)
-	calendarService := google.NewCalendarService(
-		tokenManager,
-		cfg.Google.CalendarURI,
 		cfg.Google.CalendarID,
 	)
-
+	if err != nil {
+        return nil, fmt.Errorf("failed to initialize calendar service: %w", err)
+    }
+	
 	// Initialize email service
 	emailCfg := email.Config{
 		SMTPHost:     cfg.Email.SMTPHost,
@@ -69,7 +64,7 @@ func New(cfg *config.Config) (*API, error) {
 		return nil, fmt.Errorf("failed to initialize email service: %w", err)
 	}
 
-	// Initialize OAuth2 config
+	// Initialize OAuth2 config for 42 auth
 	oauthConfig := &oauth2.Config{
 		ClientID:     cfg.App.ClientID,
 		ClientSecret: cfg.App.ClientSecret,
@@ -81,7 +76,7 @@ func New(cfg *config.Config) (*API, error) {
 		},
 	}
 
-	// Initialize auth service
+	// Initialize auth service for app (JWT)
 	authService := auth.NewService(cfg.App.JWTSecret)
 
 	return &API{

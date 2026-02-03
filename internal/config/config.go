@@ -10,9 +10,9 @@ import (
 
 // Config holds all configuration needed to run the API
 type Config struct {
-	App AppConfig
+	App    AppConfig
 	Google GoogleConfig
-	Email EmailConfig
+	Email  EmailConfig
 }
 
 type AppConfig struct {
@@ -31,13 +31,9 @@ type AppConfig struct {
 
 // Google Calendar config
 type GoogleConfig struct {
-	CalendarScope       string
-	PrivateKey          string
-	ServiceAccountEmail string
-	TokenURI            string
-	TokenExpiration     int64
-	CalendarURI         string
-	CalendarID          string
+	CredentialsFile string
+	CalendarScope   string
+	CalendarID      string
 }
 
 // Email config
@@ -50,8 +46,6 @@ type EmailConfig struct {
 	FromName     string
 	UseTLS       bool
 }
-
-
 
 // LoadConfig loads configuration from environment variables
 func Load() (*Config, error) {
@@ -75,13 +69,9 @@ func Load() (*Config, error) {
 			OAuthTokenURI:    mustGetEnv("OAUTH_TOKEN_URI"),
 		},
 		Google: GoogleConfig{
-			CalendarScope:       mustGetEnv("GOOGLE_CALENDAR_SCOPE"),
-			PrivateKey:          mustGetEnv("GOOGLE_PRIVATE_KEY"),
-			ServiceAccountEmail: mustGetEnv("GOOGLE_SERVICE_ACCOUNT_EMAIL"),
-			TokenURI:            mustGetEnv("GOOGLE_TOKEN_URI"),
-			TokenExpiration:     getEnvAsInt64("GOOGLE_TOKEN_EXPIRATION", 3600),
-			CalendarURI:         mustGetEnv("GOOGLE_CALENDAR_URI"),
-			CalendarID:          mustGetEnv("GOOGLE_CALENDAR_ID"),
+			CredentialsFile: mustGetEnv("GOOGLE_CREDENTIALS_FILE"),
+			CalendarScope:   mustGetEnv("GOOGLE_CALENDAR_SCOPE"),
+			CalendarID:      mustGetEnv("GOOGLE_CALENDAR_ID"),
 		},
 		Email: EmailConfig{
 			SMTPHost:     mustGetEnv("SMTP_HOST"),
@@ -96,8 +86,6 @@ func Load() (*Config, error) {
 
 	return cfg, nil
 }
-
-
 
 func getEnv(key, defaultValue string) string {
 	if value := os.Getenv(key); value != "" {

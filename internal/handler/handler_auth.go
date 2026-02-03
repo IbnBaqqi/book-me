@@ -75,7 +75,7 @@ func (h *Handler) Callback(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !isHive {
-		respondWithError(w, http.StatusForbidden, "Access Denied: Only Helsinki Campus Student Allowed", nil) //log that another campus tried to login
+		respondWithError(w, http.StatusForbidden, "Access Denied: Only Helsinki Campus Student Allowed", nil)
 		return
 	}
 
