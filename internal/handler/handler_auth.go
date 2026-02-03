@@ -1,7 +1,9 @@
 package handler
 
 import (
+	"crypto/rand"
 	"database/sql"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"net/http"
@@ -11,6 +13,26 @@ import (
 	"github.com/IbnBaqqi/book-me/internal/database"
 	"github.com/IbnBaqqi/book-me/internal/service"
 )
+
+const sessionName = "bookme-session"
+
+func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
+
+	state := generateRandomState()
+
+	// Store state in session to prevent CSRF
+	session, err := h.session.Get(r, sessionName)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "failed to get session", err)
+		return
+	}
+	session.Values["oauth_state"] = state
+	session.Save(r, w)
+
+	// Redirect to 42 Auth
+	url := h.oauthConfig.AuthCodeURL(state)
+	http.Redirect(w, r, url, http.StatusFound)
+}
 
 func (h *Handler) Callback(w http.ResponseWriter, r *http.Request) {
 
@@ -37,7 +59,6 @@ func (h *Handler) Callback(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get loggedIn User Info from 42
-	
 	user42, err := service.Get42UserData(r.Context(), h.oauthConfig, token)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Failed to get user data from 42", err)
@@ -80,7 +101,7 @@ func (h *Handler) Callback(w http.ResponseWriter, r *http.Request) {
 			user = newUser
 		} else {
 			// Actual database error
-			respondWithError(w, http.StatusInternalServerError, "Database error", err)
+			respondWithError(w, http.StatusInternalServerError, "Internal server error", err)
 			return
 		}
 	}
@@ -100,4 +121,10 @@ func (h *Handler) Callback(w http.ResponseWriter, r *http.Request) {
 	// final redirect
 	finalRedirectURL := fmt.Sprintf("%s?%s", h.redirectTokenURI, params.Encode())
 	http.Redirect(w, r, finalRedirectURL, http.StatusFound)
+}
+
+func generateRandomState() string {
+	b := make([]byte, 32)
+	rand.Read(b) // no error check as Read always succeeds
+	return hex.EncodeToString(b)
 }
