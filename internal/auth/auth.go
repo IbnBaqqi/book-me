@@ -23,8 +23,8 @@ type CustomClaims struct {
 }
 
 type Service struct {
-	secret         string
-	accessTokenTTL time.Duration
+	JwtSecret         string
+	AccessTokenTTL time.Duration
 }
 
 type User struct {
@@ -62,8 +62,8 @@ func UserFromContext(ctx context.Context) (User, bool) {
 // to create a new auth service
 func NewService(secret string) *Service {
 	return &Service{
-		secret:         secret,
-		accessTokenTTL: time.Hour, // Access Token Time-To-Live
+		JwtSecret:         secret,
+		AccessTokenTTL: time.Hour, // Access Token Time-To-Live
 	}
 }
 
@@ -125,11 +125,11 @@ func (s *Service) IssueAccessToken(user database.User) (string, error) {
 		RegisteredClaims: jwt.RegisteredClaims{
 			Subject:   strconv.FormatInt(int64(user.ID), 10),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(s.accessTokenTTL)),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(s.AccessTokenTTL)),
 			Issuer:    string(TokenTypeAccess),
 		},
 	}
-	signingKey := []byte(s.secret)
+	signingKey := []byte(s.JwtSecret)
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	jwtToken, err := token.SignedString(signingKey)
 	if err != nil {
@@ -148,7 +148,7 @@ func (s *Service) VerifyAccessToken(tokenStr string) (*CustomClaims, error) {
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 				return nil, ErrInvalidToken
 			}
-			return []byte(s.secret), nil
+			return []byte(s.JwtSecret), nil
 		},
 	)
 
