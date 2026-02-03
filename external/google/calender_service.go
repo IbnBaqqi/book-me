@@ -2,9 +2,9 @@ package google
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"log"
+	"os"
 	"time"
 
 	"golang.org/x/oauth2/google"
@@ -25,20 +25,15 @@ type CalendarService struct {
 }
 
 // NewCalendarService creates a new calendar service
-func NewCalendarService(privateKey, serviceAccountEmail, tokenURI, calendarScope, calendarID string) (*CalendarService, error) {
+func NewCalendarService(credentialsFile, calendarScope, calendarID string) (*CalendarService, error) {
+
     ctx := context.Background()
 
-	credentials := map[string]interface{}{
-        "type":         "service_account",
-        "private_key":  privateKey,
-        "client_email": serviceAccountEmail,
-        "token_uri":    tokenURI,
-    }
-
-    credentialsJSON, err := json.Marshal(credentials)
-    if err != nil {
-        return nil, fmt.Errorf("failed to marshal credentials: %w", err)
-    }
+	// Read the entire service account JSON file
+	credentialsJSON, err := os.ReadFile(credentialsFile)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read credentials file: %w", err)
+	}
 
     // Create JWT config from credentials
     config, err := google.JWTConfigFromJSON(credentialsJSON, calendarScope)

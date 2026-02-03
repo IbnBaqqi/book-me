@@ -40,10 +40,8 @@ func New(cfg *config.Config) (*API, error) {
 
 	// Initialize Google Calendar service
 	calendarService, err := google.NewCalendarService(
-		cfg.Google.PrivateKey,
-		cfg.Google.ServiceAccountEmail,
-		cfg.Google.TokenURI,
-		cfg.Google.CalendarScope,
+		cfg.Google.CredentialsFile,
+		cfg.Google.CalendarURI,
 		cfg.Google.CalendarID,
 	)
 	if err != nil {
