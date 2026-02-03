@@ -73,15 +73,15 @@ func (s *Service) Authenticate(next http.Handler) http.Handler {
 
 		tokenStr, err := GetBearerToken(r.Header)
 		if err != nil {
-			// No token or malformed token → unauthenticated request
+			// No token or malformed token - unauthenticated request
 			next.ServeHTTP(w, r)
 			return
 		}
 
 		claims, err := s.VerifyAccessToken(tokenStr)
 		if err != nil {
-			// silent failure is intentional (public endpoints)
-			// Invalid or expired token → unauthenticated request
+			// public endpoints
+			// Invalid or expired token - unauthenticated request
 			next.ServeHTTP(w, r)
 			return
 		}
