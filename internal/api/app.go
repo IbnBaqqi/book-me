@@ -17,6 +17,7 @@ import (
 // API holds all dependencies for the API handlers
 type API struct {
 	DB               *database.Queries
+	dbConn           *sql.DB
 	SessionStore     *sessions.CookieStore
 	OAuthConfig      *oauth2.Config
 	Auth             *auth.Service
@@ -35,7 +36,13 @@ func New(cfg *config.Config) (*API, error) {
 		return nil, fmt.Errorf("failed to open database: %w", err)
 	}
 
-	// Initialize Database
+	// Test the connection
+	if err := dbConn.Ping(); err != nil {
+		dbConn.Close()
+		return nil, fmt.Errorf("failed to ping database: %w", err)
+	}
+
+	// Using SQLC generated database package to create a new *database.Queries,
 	dbQueries := database.New(dbConn)
 
 	// Initialize Google Calendar service
@@ -45,9 +52,9 @@ func New(cfg *config.Config) (*API, error) {
 		cfg.Google.CalendarID,
 	)
 	if err != nil {
-        return nil, fmt.Errorf("failed to initialize calendar service: %w", err)
-    }
-	
+		return nil, fmt.Errorf("failed to initialize calendar service: %w", err)
+	}
+
 	// Initialize email service
 	emailCfg := email.Config{
 		SMTPHost:     cfg.Email.SMTPHost,
@@ -56,7 +63,7 @@ func New(cfg *config.Config) (*API, error) {
 		SMTPPassword: cfg.Email.SMTPPassword,
 		FromEmail:    cfg.Email.FromEmail,
 		FromName:     cfg.Email.FromName,
-		UseTLS:       cfg.Email.UseTLS,     
+		UseTLS:       cfg.Email.UseTLS,
 	}
 
 	emailService, err := email.NewService(emailCfg)
@@ -81,6 +88,7 @@ func New(cfg *config.Config) (*API, error) {
 
 	return &API{
 		DB:               dbQueries,
+		dbConn:           dbConn,
 		SessionStore:     sessions.NewCookieStore([]byte(cfg.App.SessionSecret)),
 		OAuthConfig:      oauthConfig,
 		Auth:             authService,
@@ -90,4 +98,15 @@ func New(cfg *config.Config) (*API, error) {
 		User42InfoURL:    cfg.App.User42InfoURL,
 		JWTSecret:        cfg.App.JWTSecret,
 	}, nil
+}
+
+// Close: close database connection
+func (a *API) Close() error {
+	if a.dbConn != nil {
+		if err := a.dbConn.Close(); err != nil {
+			return fmt.Errorf("failed to close database: %w", err)
+		}
+	}
+
+	return nil
 }
