@@ -245,5 +245,11 @@ func (h *ReservationService) CancelReservation(
 		return err
 	}
 
+	go func ()  {
+		ctx, cancel := context.WithTimeout(context.Background(), 15 * time.Second)
+		defer cancel()
+		h.calendar.DeleteGoogleEvent(ctx, reservation.GcalEventID.String)
+	}()
+	
 	return nil
 }
