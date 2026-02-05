@@ -9,6 +9,7 @@ import (
 	"github.com/IbnBaqqi/book-me/internal/config"
 	"github.com/IbnBaqqi/book-me/internal/database"
 	"github.com/IbnBaqqi/book-me/internal/email"
+	"github.com/IbnBaqqi/book-me/internal/service"
 	"github.com/gorilla/sessions"
 	_ "github.com/lib/pq"
 	"golang.org/x/oauth2"
@@ -23,9 +24,7 @@ type API struct {
 	Auth             *auth.Service
 	EmailService     *email.Service
 	CalendarService  *google.CalendarService
-	RedirectTokenURI string
-	User42InfoURL    string
-	JWTSecret        string
+	UserService      *service.UserService
 }
 
 // New initializes all services and returns a pointer to API
@@ -86,6 +85,9 @@ func New(cfg *config.Config) (*API, error) {
 	// Initialize auth service for app (JWT)
 	authService := auth.NewService(cfg.App.JWTSecret)
 
+	// Initialize user service
+	userService := service.NewUserService(cfg.App.RedirectTokenURI, cfg.App.User42InfoURL)
+
 	return &API{
 		DB:               dbQueries,
 		dbConn:           dbConn,
@@ -94,9 +96,7 @@ func New(cfg *config.Config) (*API, error) {
 		Auth:             authService,
 		EmailService:     emailService,
 		CalendarService:  calendarService,
-		RedirectTokenURI: cfg.App.RedirectTokenURI,
-		User42InfoURL:    cfg.App.User42InfoURL,
-		JWTSecret:        cfg.App.JWTSecret,
+		UserService:      userService,
 	}, nil
 }
 

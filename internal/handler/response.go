@@ -2,14 +2,18 @@ package handler
 
 import (
 	"encoding/json"
+	"errors"
 	"log"
 	"net/http"
+
+	"github.com/IbnBaqqi/book-me/internal/service"
 )
 
 // respondWithError sends a JSON error response with the specified HTTP status code and message.
 // It also logs the provided error and message for server-side debugging.
 func respondWithError(w http.ResponseWriter, code int, msg string, err error) {
-	if err != nil {
+	var serviceErr *service.ServiceError
+	if err != nil && !errors.As(err, &serviceErr){
 		log.Println(err)
 	}
 

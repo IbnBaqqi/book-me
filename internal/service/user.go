@@ -9,6 +9,7 @@ import (
 	"golang.org/x/oauth2"
 )
 
+// User42 holds user data returned from 42
 type User42 struct {
 	Email  string        `json:"email"`
 	Name   string        `json:"login"`
@@ -21,14 +22,27 @@ type CampusUsers struct {
 	Primary bool `json:"is_primary"`
 }
 
+type UserService struct {
+	RedirectTokenURI string
+	IntraUserInfoURL string
+}
+
+// NewUserService create a new user service
+func NewUserService(redirectTokenURI, intraUserInfoURL string) *UserService{
+	return &UserService{
+		RedirectTokenURI: redirectTokenURI,
+		IntraUserInfoURL: intraUserInfoURL,
+	}
+}
+
 // TODO look into timeout and context
-func Get42UserData(ctx context.Context, oauthConfig *oauth2.Config, token *oauth2.Token) (*User42, error) {
+func (u *UserService) Get42UserData(ctx context.Context, oauthConfig *oauth2.Config, token *oauth2.Token) (*User42, error) {
 
 	// A specialized HTTP client that handles the Authorization header
 	// and token refreshing automatically.
 	client := oauthConfig.Client(ctx, token)
 
-	res, err := client.Get("https://api.intra.42.fr/v2/me") //will externalize later
+	res, err := client.Get(u.IntraUserInfoURL)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch user from intra: %s", err)
 	}
@@ -50,5 +64,5 @@ func Get42UserData(ctx context.Context, oauthConfig *oauth2.Config, token *oauth
 }
 
 // func getOrCreateUser(ctx context.Context, user42 User42) {
-	
+
 // }

@@ -11,7 +11,6 @@ import (
 	"strings"
 
 	"github.com/IbnBaqqi/book-me/internal/database"
-	"github.com/IbnBaqqi/book-me/internal/service"
 )
 
 const sessionName = "bookme-session"
@@ -59,7 +58,7 @@ func (h *Handler) Callback(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get loggedIn User Info from 42
-	user42, err := service.Get42UserData(r.Context(), h.oauthConfig, token)
+	user42, err := h.userService.Get42UserData(r.Context(), h.oauthConfig, token)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Failed to get user data from 42", err)
 		return
@@ -119,7 +118,7 @@ func (h *Handler) Callback(w http.ResponseWriter, r *http.Request) {
 	params.Add("role", strings.ToLower(user.Role))
 
 	// final redirect
-	finalRedirectURL := fmt.Sprintf("%s?%s", h.redirectTokenURI, params.Encode())
+	finalRedirectURL := fmt.Sprintf("%s?%s", h.userService.RedirectTokenURI, params.Encode())
 	http.Redirect(w, r, finalRedirectURL, http.StatusFound)
 }
 

@@ -24,13 +24,12 @@ func main() {
 	}
 
 	// Setup structured logging
-	logger := cfg.Logger.NewLogger()
+	logger := cfg.Logger.New()
 	slog.SetDefault(logger)
 
 	logger.Info("starting book-me server",
 		"port", cfg.Server.Port,
 		"log_level", cfg.Logger.Level,
-		"environment", cfg.App.Environment,
 	)
 
 	// Initialize services

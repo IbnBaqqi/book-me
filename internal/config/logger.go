@@ -6,8 +6,8 @@ import (
 	"strings"
 )
 
-// NewLogger creates a new structured logger based on configuration
-func (c *LoggerConfig) NewLogger() *slog.Logger {
+// New creates a new structured logger based on configuration
+func (c *LoggerConfig) New() *slog.Logger {
 	var handler slog.Handler
 
 	level := parseLogLevel(c.Level)
@@ -17,7 +17,12 @@ func (c *LoggerConfig) NewLogger() *slog.Logger {
 		AddSource: level == slog.LevelDebug || level == slog.LevelError,
 	}
 
-	handler = slog.NewJSONHandler(os.Stdout, opts)
+	// Use text handler in dev, JSON in prod
+	if os.Getenv("ENVIRONMENT") == "dev" {
+		handler = slog.NewTextHandler(os.Stdout, opts)
+	} else {
+		handler = slog.NewJSONHandler(os.Stdout, opts)
+	}
 
 	return slog.New(handler)
 }
