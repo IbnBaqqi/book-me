@@ -9,6 +9,7 @@ import (
 
 	"github.com/gorilla/sessions"
 	"golang.org/x/oauth2"
+	"log/slog"
 )
 
 // Handler holds all dependencies for HTTP handlers
@@ -22,6 +23,7 @@ type Handler struct {
 	
 	reservation		 *service.ReservationService
 	userService      *service.UserService
+	logger           *slog.Logger
 	// authService        *services.AuthService
 }
 
@@ -34,6 +36,7 @@ func New(
 	emailService *email.Service,
 	calendarService *google.CalendarService,
 	userService     *service.UserService,
+	logger  *slog.Logger,
 ) *Handler {
 	return &Handler{
 		db:               db,
@@ -42,7 +45,8 @@ func New(
 		auth:             authService,
 		email:            emailService,
 		calendar:         calendarService,
-		reservation: 	  service.NewReservationService(db, emailService, calendarService),
+		reservation: 	  service.NewReservationService(db, emailService, calendarService, logger),
 		userService:      userService,
+		logger:           logger,
 	}
 }

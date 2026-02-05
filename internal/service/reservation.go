@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"log"
+	"log/slog"
 	"time"
 
 	"github.com/IbnBaqqi/book-me/external/google"
@@ -16,6 +17,7 @@ type ReservationService struct {
 	db       *database.Queries
 	email    *email.Service
 	calendar *google.CalendarService
+	logger   *slog.Logger
 }
 
 type CreateReservationInput struct {
@@ -45,11 +47,13 @@ func NewReservationService(
 	db *database.Queries,
 	emailService *email.Service,
 	calendarService *google.CalendarService,
+	logger   *slog.Logger,
 ) *ReservationService {
 	return &ReservationService{
 		db:       db,
 		email:    emailService,
 		calendar: calendarService,
+		logger:   logger,
 	}
 }
 

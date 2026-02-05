@@ -32,10 +32,11 @@ func main() {
 		"log_level", cfg.Logger.Level,
 	)
 
-	// Initialize services
-	apiCfg, err := api.New(cfg)
+	// Initialize database & services
+	ctx := context.Background()
+	apiCfg, err := api.New(ctx, cfg, logger)
 	if err != nil {
-		logger.Error("Failed to initialize API config:", "error", err)
+		logger.Error("Failed to initialize api services:", "error", err)
 	}
 
 	// Ensure database connection close on exit
