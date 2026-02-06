@@ -26,7 +26,7 @@ type UserDto struct {
 
 type createReservationRequest struct {
 	RoomID    int64     `json:"roomId" validate:"required,gt=0"`
-	StartTime time.Time `json:"startTime" validate:"required,futureTime"`
+	StartTime time.Time `json:"startTime" validate:"required,futureTime,schoolHours"`
 	EndTime   time.Time `json:"endTime" validate:"required,afterField=StartTime"`
 }
 
