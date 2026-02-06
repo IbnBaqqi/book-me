@@ -16,7 +16,7 @@ func init() {
     // Register custom validators
     validate.RegisterValidation("futureTime", validateFutureTime)
     validate.RegisterValidation("afterField", validateAfterField)
-    validate.RegisterValidation("maxDurationStudent", validateMaxDurationStudent)
+	validate.RegisterValidation("schoolHours", validateSchoolHours)
 }
 
 // Validate validates a struct and returns ValidationError if validation fails
@@ -71,11 +71,15 @@ func validateAfterField(fl validator.FieldLevel) bool {
     return endTime.After(startTime)
 }
 
-// Custom validator for student max duration (context-aware)
-func validateMaxDurationStudent(fl validator.FieldLevel) bool {
-    // This is just a placeholder - actual validation happens in service layer
-    // because we need user role context
-    return true
+// validateSchoolHours checks if time is within school operating hours
+func validateSchoolHours(fl validator.FieldLevel) bool {
+    t, ok := fl.Field().Interface().(time.Time)
+	if !ok {
+		return false
+	}
+	
+    hour := t.Hour()
+    return hour >= 6 && hour < 20 // 6 AM to 8 PM
 }
 
 // FormatValidationErrors formats validator errors into user-friendly messages
@@ -103,6 +107,8 @@ func formatFieldError(err validator.FieldError) string {
         return fmt.Sprintf("Must be after %s", err.Param())
     case "datetime":
         return "Invalid date/time format"
+	case "schoolHours":
+		return "Time must be between 6:00 AM and 8:00 PM"
     default:
         return fmt.Sprintf("Validation failed on '%s'", err.Tag())
     }
