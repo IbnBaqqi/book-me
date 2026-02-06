@@ -2,13 +2,13 @@ package handler
 
 import (
 	"encoding/json"
-	"errors"
 	"net/http"
 	"strconv"
 	"time"
 
 	"github.com/IbnBaqqi/book-me/internal/auth"
 	"github.com/IbnBaqqi/book-me/internal/service"
+	appvalidator "github.com/IbnBaqqi/book-me/internal/validator"
 )
 
 type reservationDTO struct {
@@ -24,14 +24,14 @@ type UserDto struct {
 	Name string `json:"name"`
 }
 
+type createReservationRequest struct {
+	RoomID    int64     `json:"roomId" validate:"required,gt=0"`
+	StartTime time.Time `json:"startTime" validate:"required,futureTime"`
+	EndTime   time.Time `json:"endTime" validate:"required,afterField=StartTime"`
+}
+
 // Handler to create a new reservation
 func (h *Handler) CreateReservation(w http.ResponseWriter, r *http.Request) {
-
-	type createReservationRequest struct {
-		RoomID    int64     `json:"roomId"`
-		StartTime time.Time `json:"startTime"`
-		EndTime   time.Time `json:"endTime"`
-	}
 
 	// Get authenticated user from context
 	currentUser, ok := auth.UserFromContext(r.Context())
@@ -40,17 +40,32 @@ func (h *Handler) CreateReservation(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Limit request body size
+    r.Body = http.MaxBytesReader(w, r.Body, 1048576) // 1MB
+	
+	// Decode with strict validation
 	decoder := json.NewDecoder(r.Body)
-	req := createReservationRequest{}
+	decoder.DisallowUnknownFields()
 
+	req := createReservationRequest{}
 	err := decoder.Decode(&req)
 	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, "Couldn't decode parameters", err)
+		respondWithError(w, http.StatusBadRequest, "Invalid request body", err)
 		return
 	}
 
+	// Validate the request
+    if err := appvalidator.Validate(req); err != nil {
+        handleValidationError(w, err)
+        return
+    }
+
 	// TODO use redis instead
 	dbUser, err := h.db.GetUser(r.Context(), int64(currentUser.ID))
+	if err != nil {
+        respondWithError(w, http.StatusInternalServerError, "Failed to get user", err)
+        return
+    }
 
 	// Call service
 	reservation, err := h.reservation.CreateReservation(r.Context(), service.CreateReservationInput{
@@ -152,16 +167,4 @@ func (h *Handler) CancelReservation(w http.ResponseWriter, r *http.Request) {
 	}
 	
 	w.WriteHeader(http.StatusNoContent)
-}
-
-// handleServiceError maps service errors to HTTP responses
-func handleServiceError(w http.ResponseWriter, err error) {
-	var serviceErr *service.ServiceError
-	if errors.As(err, &serviceErr) {
-		respondWithError(w, serviceErr.StatusCode, serviceErr.Message, err)
-		return
-	}
-
-	// Fallback for unexpected errors
-	respondWithError(w, http.StatusInternalServerError, "internal server error", err)
 }
