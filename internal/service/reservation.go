@@ -62,15 +62,6 @@ func (s *ReservationService) CreateReservation(
 	input CreateReservationInput,
 ) (*database.Reservation, error) {
 
-	// Validate time
-	if input.StartTime.Before(time.Now()) {
-		return nil, ErrPastTime
-	}
-
-	if !input.EndTime.After(input.StartTime) {
-		return nil, ErrInvalidTimeRange
-	}
-
 	// Fetch room
 	room, err := s.db.GetRoomByID(ctx, input.RoomID)
 	if err != nil {
