@@ -4,19 +4,36 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"time"
 
 	"github.com/joho/godotenv"
 )
 
 // Config holds all configuration needed to run the API
 type Config struct {
+	Server ServerConfig
+	Logger LoggerConfig
 	App    AppConfig
 	Google GoogleConfig
 	Email  EmailConfig
 }
 
+// ServerConfig holds HTTP server configuration
+type ServerConfig struct {
+	Port         string
+	ReadTimeout  time.Duration
+	WriteTimeout time.Duration
+	IdleTimeout  time.Duration
+}
+
+// LoggerConfig holds logging configuration
+type LoggerConfig struct {
+	Level string // debug, info, warn, error
+}
+
+// AppConfig holds application-specific configuration
 type AppConfig struct {
-	Port             string
+	Environment      string
 	DBURL            string
 	SessionSecret    string
 	ClientID         string
@@ -55,8 +72,14 @@ func Load() (*Config, error) {
 	}
 
 	cfg := &Config{
+		Server: ServerConfig{
+			Port:         getEnv("PORT", "8080"),
+			ReadTimeout:  getEnvAsDuration("SERVER_READ_TIMEOUT", "15s"),
+			WriteTimeout: getEnvAsDuration("SERVER_WRITE_TIMEOUT", "15s"),
+			IdleTimeout:  getEnvAsDuration("SERVER_IDLE_TIMEOUT", "60s"),
+		},
 		App: AppConfig{
-			Port:             getEnv("PORT", "8080"),
+			Environment:      getEnv("ENVIRONMENT", "dev"),
 			DBURL:            mustGetEnv("DB_URL"),
 			SessionSecret:    mustGetEnv("SESSION_SECRET"),
 			ClientID:         mustGetEnv("CLIENT_ID"),
@@ -81,6 +104,9 @@ func Load() (*Config, error) {
 			FromEmail:    mustGetEnv("FROM_EMAIL"),
 			FromName:     getEnv("FROM_NAME", "BookMe"),
 			UseTLS:       getEnv("SMTP_USE_TLS", "true") == "true",
+		},
+		Logger: LoggerConfig{
+			Level: getEnv("LOG_LEVEL", "info"),
 		},
 	}
 
@@ -126,4 +152,17 @@ func getEnvAsInt64(key string, defaultValue int64) int64 {
 		return defaultValue
 	}
 	return value
+}
+
+func getEnvAsDuration(key, defaultValue string) time.Duration {
+	valueStr := getEnv(key, defaultValue)
+	duration, err := time.ParseDuration(valueStr)
+	if err != nil {
+		// Fallback to parsing the default if provided value is invalid
+		duration, err = time.ParseDuration(defaultValue)
+		if err != nil {
+			return 0
+		}
+	}
+	return duration
 }

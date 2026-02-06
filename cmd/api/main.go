@@ -2,7 +2,8 @@ package main
 
 import (
 	"context"
-	"log"
+
+	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
@@ -13,44 +14,55 @@ import (
 	"github.com/IbnBaqqi/book-me/internal/config"
 )
 
-
 func main() {
-	const port = "8080"
 
 	// Load configuration from environment
 	cfg, err := config.Load()
 	if err != nil {
-		log.Fatalf("Failed to load configuration: %v", err)
+		slog.Error("failed to load configuration", "error", err)
+		os.Exit(1)
 	}
 
-	// Initialize services
-	apiCfg, err := api.New(cfg)
+	// Setup structured logging
+	logger := cfg.Logger.New()
+	slog.SetDefault(logger)
+
+	logger.Info("starting book-me server",
+		"port", cfg.Server.Port,
+		"log_level", cfg.Logger.Level,
+	)
+
+	// Initialize database & services
+	ctx := context.Background()
+	apiCfg, err := api.New(ctx, cfg, logger)
 	if err != nil {
-		log.Fatalf("Failed to initialize API config: %v", err)
+		logger.Error("Failed to initialize api services:", "error", err)
 	}
 
-	// defer func() {
-	// 	if err = apiCfg.DB.Close(); err != nil {
-	// 		logger.Error("failed to close database connection", "error", err)
-	// 	}
-	// }()
+	// Ensure database connection close on exit
+	defer func() {
+		if err = apiCfg.Close(); err != nil {
+			logger.Error("failed to close database connection", "error", err)
+		}
+	}()
 
 	// Setup routes
 	mux := api.SetupRoutes(apiCfg)
 
 	server := &http.Server{
-		Addr:    ":" + port,
-		Handler: mux,
-		ReadTimeout: 10 * time.Second,
-		WriteTimeout: 10 * time.Second,
-		IdleTimeout: 30 * time.Second,
+		Addr:         ":" + cfg.Server.Port,
+		Handler:      mux,
+		ReadTimeout:  cfg.Server.ReadTimeout,
+		WriteTimeout: cfg.Server.WriteTimeout,
+		IdleTimeout:  cfg.Server.IdleTimeout,
 	}
 
 	// Start server in a goroutine
 	go func() {
-		log.Printf("Server starting on port: %s\n", port)
+		logger.Info("Server listening", "address", server.Addr)
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("Server failed to start: %v", err)
+			logger.Error("Server failed to start:", "error", err)
+			os.Exit(1)
 		}
 	}()
 
@@ -59,7 +71,7 @@ func main() {
 	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
 	<-quit
 
-	log.Println("Server is shutting down...")
+	logger.Info("Server is shutting down...")
 
 	// Create a deadline for shutdown
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -67,14 +79,9 @@ func main() {
 
 	// Attempt graceful shutdown
 	if err := server.Shutdown(ctx); err != nil {
-		log.Printf("Server forced to shutdown: %v", err)
+		logger.Error("Server forced to shutdown:", "error", err)
 	}
 
-	// Close database connection
-	if err := apiCfg.Close(); err != nil {
-		log.Printf("Error closing database: %v", err)
-	}
-
-	log.Println("Server exited gracefully")
+	logger.Info("Server exited gracefully")
 
 }

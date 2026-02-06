@@ -19,33 +19,32 @@ func SetupRoutes(cfg *API) *http.ServeMux {
 		cfg.Auth,
 		cfg.EmailService,
 		cfg.CalendarService,
-		cfg.RedirectTokenURI,
-		cfg.User42InfoURL,
-		cfg.JWTSecret,
+		cfg.UserService,
+		cfg.Logger,
 	)
 
 	// Health check (public)
-	mux.HandleFunc("GET /api/healthz", h.Health)
+	mux.HandleFunc("GET /api/v1/healthz", h.Health)
 
 	// Authentication routes (public)
-	mux.HandleFunc("GET /api/oauth/login", h.Login)
-	mux.HandleFunc("GET /oauth/callback", h.Callback)
+	mux.HandleFunc("GET /api/v1/oauth/login", h.Login)
+	mux.HandleFunc("GET /api/v1/oauth/callback", h.Callback)
 
 	// Reservation routes (authenticated)
 	mux.Handle(
-		"POST /reservation",
+		"POST /api/v1/reservation",
 		cfg.Auth.Authenticate(
 			auth.RequireAuth(
 				http.HandlerFunc(h.CreateReservation))))
 
 	mux.Handle(
-		"GET /reservation",
+		"GET /api/v1/reservation",
 		cfg.Auth.Authenticate(
 			auth.RequireAuth(
 				http.HandlerFunc(h.GetReservations))))
 
 	mux.Handle(
-		"DELETE /reservation/{id}",
+		"DELETE /api/v1/reservation/{id}",
 		cfg.Auth.Authenticate(
 			auth.RequireAuth(
 				http.HandlerFunc(h.CancelReservation))))

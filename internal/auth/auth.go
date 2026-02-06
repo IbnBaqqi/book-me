@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"strconv"
 	"strings"
@@ -25,6 +26,7 @@ type CustomClaims struct {
 type Service struct {
 	JwtSecret         string
 	AccessTokenTTL time.Duration
+	logger         *slog.Logger
 }
 
 type User struct {
@@ -60,10 +62,11 @@ func UserFromContext(ctx context.Context) (User, bool) {
 }
 
 // to create a new auth service
-func NewService(secret string) *Service {
+func NewService(secret string, logger *slog.Logger) *Service {
 	return &Service{
 		JwtSecret:         secret,
 		AccessTokenTTL: time.Hour, // Access Token Time-To-Live
+		logger: logger,
 	}
 }
 
