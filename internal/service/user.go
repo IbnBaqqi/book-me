@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log/slog"
 	"net/http"
 
 	"golang.org/x/oauth2"
@@ -26,15 +25,13 @@ type CampusUsers struct {
 type UserService struct {
 	RedirectTokenURI string
 	IntraUserInfoURL string
-	logger   *slog.Logger
 }
 
 // NewUserService create a new user service
-func NewUserService(redirectTokenURI, intraUserInfoURL string, logger *slog.Logger) *UserService{
+func NewUserService(redirectTokenURI, intraUserInfoURL string) *UserService{
 	return &UserService{
 		RedirectTokenURI: redirectTokenURI,
 		IntraUserInfoURL: intraUserInfoURL,
-		logger:           logger,
 	}
 }
 
