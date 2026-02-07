@@ -20,7 +20,6 @@ func SetupRoutes(cfg *API) *http.ServeMux {
 		cfg.EmailService,
 		cfg.CalendarService,
 		cfg.UserService,
-		cfg.Logger,
 	)
 
 	// Health check (public)

@@ -12,6 +12,7 @@ import (
 
 	"github.com/IbnBaqqi/book-me/internal/api"
 	"github.com/IbnBaqqi/book-me/internal/config"
+	"github.com/IbnBaqqi/book-me/internal/logger"
 )
 
 func main() {
@@ -24,25 +25,24 @@ func main() {
 	}
 
 	// Setup structured logging
-	logger := cfg.Logger.New()
-	slog.SetDefault(logger)
+	logger.Init(&cfg.Logger, cfg.App.Env)
 
-	logger.Info("starting book-me server",
+	logger.Log.Info("starting book-me server",
 		"port", cfg.Server.Port,
 		"log_level", cfg.Logger.Level,
 	)
 
 	// Initialize database & services
 	ctx := context.Background()
-	apiCfg, err := api.New(ctx, cfg, logger)
+	apiCfg, err := api.New(ctx, cfg)
 	if err != nil {
-		logger.Error("Failed to initialize api services:", "error", err)
+		logger.Log.Error("Failed to initialize api services:", "error", err)
 	}
 
 	// Ensure database connection close on exit
 	defer func() {
 		if err = apiCfg.Close(); err != nil {
-			logger.Error("failed to close database connection", "error", err)
+			logger.Log.Error("failed to close database connection", "error", err)
 		}
 	}()
 
@@ -59,9 +59,9 @@ func main() {
 
 	// Start server in a goroutine
 	go func() {
-		logger.Info("Server listening", "address", server.Addr)
+		logger.Log.Info("Server listening", "address", server.Addr)
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			logger.Error("Server failed to start:", "error", err)
+			logger.Log.Error("Server failed to start:", "error", err)
 			os.Exit(1)
 		}
 	}()
@@ -71,7 +71,7 @@ func main() {
 	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
 	<-quit
 
-	logger.Info("Server is shutting down...")
+	logger.Log.Info("Server is shutting down...")
 
 	// Create a deadline for shutdown
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -79,9 +79,9 @@ func main() {
 
 	// Attempt graceful shutdown
 	if err := server.Shutdown(ctx); err != nil {
-		logger.Error("Server forced to shutdown:", "error", err)
+		logger.Log.Error("Server forced to shutdown:", "error", err)
 	}
 
-	logger.Info("Server exited gracefully")
+	logger.Log.Info("Server exited gracefully")
 
 }

@@ -47,13 +47,11 @@ func NewReservationService(
 	db *database.Queries,
 	emailService *email.Service,
 	calendarService *google.CalendarService,
-	logger   *slog.Logger,
 ) *ReservationService {
 	return &ReservationService{
 		db:       db,
 		email:    emailService,
 		calendar: calendarService,
-		logger:   logger,
 	}
 }
 

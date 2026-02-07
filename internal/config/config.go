@@ -33,7 +33,7 @@ type LoggerConfig struct {
 
 // AppConfig holds application-specific configuration
 type AppConfig struct {
-	Environment      string
+	Env              string
 	DBURL            string
 	SessionSecret    string
 	ClientID         string
@@ -79,7 +79,7 @@ func Load() (*Config, error) {
 			IdleTimeout:  getEnvAsDuration("SERVER_IDLE_TIMEOUT", "60s"),
 		},
 		App: AppConfig{
-			Environment:      getEnv("ENVIRONMENT", "dev"),
+			Env:              getEnv("ENVIRONMENT", "dev"),
 			DBURL:            mustGetEnv("DB_URL"),
 			SessionSecret:    mustGetEnv("SESSION_SECRET"),
 			ClientID:         mustGetEnv("CLIENT_ID"),

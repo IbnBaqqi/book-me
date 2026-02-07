@@ -62,11 +62,10 @@ func UserFromContext(ctx context.Context) (User, bool) {
 }
 
 // to create a new auth service
-func NewService(secret string, logger *slog.Logger) *Service {
+func NewService(secret string) *Service {
 	return &Service{
 		JwtSecret:         secret,
-		AccessTokenTTL: time.Hour, // Access Token Time-To-Live
-		logger: logger,
+		AccessTokenTTL: time.Hour,
 	}
 }
 

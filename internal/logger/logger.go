@@ -1,13 +1,17 @@
-package config
+package logger
 
 import (
 	"log/slog"
 	"os"
 	"strings"
+
+	"github.com/IbnBaqqi/book-me/internal/config"
 )
 
-// New creates a new structured logger based on configuration
-func (c *LoggerConfig) New() *slog.Logger {
+var Log *slog.Logger
+
+// Init creates the global structured logger based on configuration
+func Init(c *config.LoggerConfig, env string) {
 	var handler slog.Handler
 
 	level := parseLogLevel(c.Level)
@@ -18,13 +22,14 @@ func (c *LoggerConfig) New() *slog.Logger {
 	}
 
 	// Use text handler in dev, JSON in prod
-	if os.Getenv("ENVIRONMENT") == "dev" {
+	if env == "dev" {
 		handler = slog.NewTextHandler(os.Stdout, opts)
 	} else {
 		handler = slog.NewJSONHandler(os.Stdout, opts)
 	}
 
-	return slog.New(handler)
+	Log = slog.New(handler)
+	slog.SetDefault(Log)
 }
 
 func parseLogLevel(level string) slog.Level {
