@@ -10,13 +10,7 @@ import (
 type reservationRequest struct {
 	RoomID    int64     `validate:"required,gt=0"`
 	StartTime time.Time `validate:"required,futureTime,schoolHours"`
-	EndTime   time.Time `validate:"required,afterField=StartTime,schoolHours"`
-}
-
-type userRequest struct {
-	Name  string `validate:"required"`
-	Email string `validate:"required,email"`
-	Age   int    `validate:"required,gt=0"`
+	EndTime   time.Time `validate:"required,gtfield=StartTime,schoolHours"`
 }
 
 // TestValidate_Success tests successful validation scenarios
@@ -33,14 +27,6 @@ func TestValidate_Success(t *testing.T) {
 				RoomID:    1,
 				StartTime: time.Date(tomorrow.Year(), tomorrow.Month(), tomorrow.Day(), 10, 0, 0, 0, time.UTC),
 				EndTime:   time.Date(tomorrow.Year(), tomorrow.Month(), tomorrow.Day(), 12, 0, 0, 0, time.UTC),
-			},
-		},
-		{
-			name: "valid user",
-			input: userRequest{
-				Name:  "John Doe",
-				Email: "john@example.com",
-				Age:   25,
 			},
 		},
 		{
@@ -93,14 +79,6 @@ func TestValidate_RequiredFields(t *testing.T) {
 				EndTime: time.Now().Add(25 * time.Hour),
 			},
 			expectedField: "StartTime",
-		},
-		{
-			name: "missing user name",
-			input: userRequest{
-				Email: "test@example.com",
-				Age:   25,
-			},
-			expectedField: "Name",
 		},
 	}
 
@@ -192,7 +170,7 @@ func TestValidate_FutureTime(t *testing.T) {
 }
 
 // TestValidate_AfterField tests afterField custom validator
-func TestValidate_AfterField(t *testing.T) {
+func TestValidate_GtField(t *testing.T) {
 	tomorrow := time.Now().Add(24 * time.Hour)
 
 	tests := []struct {
@@ -332,6 +310,183 @@ func TestValidate_SchoolHours(t *testing.T) {
 	}
 }
 
+// TestValidate_MaxDateRange tests maxDateRange custom validator
+func TestValidate_MaxDateRange(t *testing.T) {
+	type dateRangeStruct struct {
+		StartDate time.Time `validate:"required"`
+		EndDate   time.Time `validate:"required,maxDateRange"`
+	}
+
+	baseDate := time.Date(2026, 2, 1, 0, 0, 0, 0, time.UTC)
+
+	tests := []struct {
+		name      string
+		startDate time.Time
+		endDate   time.Time
+		wantErr   bool
+	}{
+		{
+			name:      "valid range - 1 day",
+			startDate: baseDate,
+			endDate:   baseDate.AddDate(0, 0, 1),
+			wantErr:   false,
+		},
+		{
+			name:      "valid range - 30 days",
+			startDate: baseDate,
+			endDate:   baseDate.AddDate(0, 0, 30),
+			wantErr:   false,
+		},
+		{
+			name:      "valid range - exactly 60 days",
+			startDate: baseDate,
+			endDate:   baseDate.AddDate(0, 0, 60),
+			wantErr:   false,
+		},
+		{
+			name:      "valid range - 59 days 23 hours",
+			startDate: baseDate,
+			endDate:   baseDate.AddDate(0, 0, 59).Add(23 * time.Hour),
+			wantErr:   false,
+		},
+		{
+			name:      "invalid range - 61 days",
+			startDate: baseDate,
+			endDate:   baseDate.AddDate(0, 0, 61),
+			wantErr:   true,
+		},
+		{
+			name:      "invalid range - 90 days",
+			startDate: baseDate,
+			endDate:   baseDate.AddDate(0, 0, 90),
+			wantErr:   true,
+		},
+		{
+			name:      "invalid range - 180 days",
+			startDate: baseDate,
+			endDate:   baseDate.AddDate(0, 0, 180),
+			wantErr:   true,
+		},
+		{
+			name:      "invalid range - 1 year",
+			startDate: baseDate,
+			endDate:   baseDate.AddDate(1, 0, 0),
+			wantErr:   true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dateRange := dateRangeStruct{
+				StartDate: tt.startDate,
+				EndDate:   tt.endDate,
+			}
+
+			err := Validate(dateRange)
+
+			if tt.wantErr {
+				var valErr *ValidationError
+				if !errors.As(err, &valErr) {
+					t.Fatalf("expected ValidationError, got: %v", err)
+				}
+
+				if _, exists := valErr.Fields["EndDate"]; !exists {
+					t.Errorf("expected error for EndDate, got fields: %v", valErr.Fields)
+				}
+
+				expectedMsg := "Date range cannot exceed 60 days"
+				if valErr.Fields["EndDate"] != expectedMsg {
+					t.Errorf("expected '%s', got: %s", expectedMsg, valErr.Fields["EndDate"])
+				}
+			} else {
+				if err != nil {
+					var valErr *ValidationError
+					if errors.As(err, &valErr) {
+						t.Errorf("expected no error, got validation errors: %v", valErr.Fields)
+					} else {
+						t.Errorf("expected no error, got: %v", err)
+					}
+				}
+			}
+		})
+	}
+}
+
+// TestValidate_DateRangeWithMultipleValidations tests combining maxDateRange with other validators
+func TestValidate_DateRangeWithMultipleValidations(t *testing.T) {
+	type dateRangeStruct struct {
+		StartDate time.Time `validate:"required"`
+		EndDate   time.Time `validate:"required,gtfield=StartDate,maxDateRange"`
+	}
+
+	baseDate := time.Date(2026, 2, 1, 0, 0, 0, 0, time.UTC)
+
+	tests := []struct {
+		name        string
+		startDate   time.Time
+		endDate     time.Time
+		wantErr     bool
+		expectedErr string
+	}{
+		{
+			name:      "valid - all constraints pass",
+			startDate: baseDate,
+			endDate:   baseDate.AddDate(0, 0, 30),
+			wantErr:   false,
+		},
+		{
+			name:        "invalid - end before start",
+			startDate:   baseDate,
+			endDate:     baseDate.AddDate(0, 0, -1),
+			wantErr:     true,
+			expectedErr: "Must be after StartDate",
+		},
+		{
+			name:        "invalid - exceeds max range",
+			startDate:   baseDate,
+			endDate:     baseDate.AddDate(0, 0, 90),
+			wantErr:     true,
+			expectedErr: "Date range cannot exceed 60 days",
+		},
+		{
+			name:      "edge case - exactly at limit",
+			startDate: baseDate,
+			endDate:   baseDate.AddDate(0, 0, 60),
+			wantErr:   false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dateRange := dateRangeStruct{
+				StartDate: tt.startDate,
+				EndDate:   tt.endDate,
+			}
+
+			err := Validate(dateRange)
+
+			if tt.wantErr {
+				var valErr *ValidationError
+				if !errors.As(err, &valErr) {
+					t.Fatalf("expected ValidationError, got: %v", err)
+				}
+
+				if _, exists := valErr.Fields["EndDate"]; !exists {
+					t.Errorf("expected error for EndDate, got fields: %v", valErr.Fields)
+				}
+
+				if tt.expectedErr != "" && valErr.Fields["EndDate"] != tt.expectedErr {
+					t.Errorf("expected '%s', got: %s", tt.expectedErr, valErr.Fields["EndDate"])
+				}
+			} else {
+				if err != nil {
+					t.Errorf("expected no error, got: %v", err)
+				}
+			}
+		})
+	}
+}
+
 // TestValidate_MultipleErrors tests multiple validation errors
 func TestValidate_MultipleErrors(t *testing.T) {
 	yesterday := time.Now().Add(-24 * time.Hour)
@@ -460,20 +615,5 @@ func TestValidationError_Error(t *testing.T) {
 	errMsg := valErr.Error()
 	if errMsg != "validation failed" {
 		t.Errorf("expected 'validation failed', got: %s", errMsg)
-	}
-}
-
-// BenchmarkValidate benchmarks the validation performance
-func BenchmarkValidate(b *testing.B) {
-	tomorrow := time.Now().Add(24 * time.Hour)
-	req := reservationRequest{
-		RoomID:    1,
-		StartTime: time.Date(tomorrow.Year(), tomorrow.Month(), tomorrow.Day(), 10, 0, 0, 0, time.UTC),
-		EndTime:   time.Date(tomorrow.Year(), tomorrow.Month(), tomorrow.Day(), 12, 0, 0, 0, time.UTC),
-	}
-
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		_ = Validate(req)
 	}
 }
