@@ -3,7 +3,6 @@ package handler
 import (
 	"encoding/json"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/IbnBaqqi/book-me/internal/auth"
@@ -27,7 +26,7 @@ type UserDto struct {
 type createReservationRequest struct {
 	RoomID    int64     `json:"roomId" validate:"required,gt=0"`
 	StartTime time.Time `json:"startTime" validate:"required,futureTime,schoolHours"`
-	EndTime   time.Time `json:"endTime" validate:"required,afterField=StartTime"`
+	EndTime   time.Time `json:"endTime" validate:"required,gtfield=StartTime,shoolhours"`
 }
 
 // Handler to create a new reservation
@@ -41,8 +40,8 @@ func (h *Handler) CreateReservation(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Limit request body size
-    r.Body = http.MaxBytesReader(w, r.Body, 1048576) // 1MB
-	
+	r.Body = http.MaxBytesReader(w, r.Body, 1048576) // 1MB
+
 	// Decode with strict validation
 	decoder := json.NewDecoder(r.Body)
 	decoder.DisallowUnknownFields()
@@ -55,17 +54,17 @@ func (h *Handler) CreateReservation(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Validate the request
-    if err := appvalidator.Validate(req); err != nil {
-        handleValidationError(w, err)
-        return
-    }
+	if err := appvalidator.Validate(req); err != nil {
+		handleValidationError(w, err)
+		return
+	}
 
 	// TODO use redis instead
 	dbUser, err := h.db.GetUser(r.Context(), int64(currentUser.ID))
 	if err != nil {
-        respondWithError(w, http.StatusInternalServerError, "Failed to get user", err)
-        return
-    }
+		respondWithError(w, http.StatusInternalServerError, "Failed to get user", err)
+		return
+	}
 
 	// Call service
 	reservation, err := h.reservation.CreateReservation(r.Context(), service.CreateReservationInput{
@@ -101,7 +100,7 @@ func (h *Handler) GetReservations(w http.ResponseWriter, r *http.Request) {
 	// Validate & parse query parameters
 	startDate, endDate, err := parseDateRange(r)
 	if err != nil {
-		respondWithError(w, http.StatusBadRequest, err.Error(), err)
+		handleValidationError(w, err)
 		return
 	}
 
@@ -133,15 +132,10 @@ func (h *Handler) GetReservations(w http.ResponseWriter, r *http.Request) {
 // Handler to cancel reservation
 func (h *Handler) CancelReservation(w http.ResponseWriter, r *http.Request) {
 
-	// Extract ID from path parameter
-	idStr := r.PathValue("id")
-	if idStr == "" {
-		respondWithError(w, http.StatusBadRequest, "reservation ID is required", nil)
-		return
-	}
-	id, err := strconv.ParseInt(idStr, 10, 64)
+	// Extract & validate ID from path parameter
+	id, err := parseReservationID(r)
 	if err != nil {
-		http.Error(w, "Invalid reservation ID", http.StatusBadRequest)
+		handleValidationError(w, err)
 		return
 	}
 
@@ -154,8 +148,8 @@ func (h *Handler) CancelReservation(w http.ResponseWriter, r *http.Request) {
 
 	// Build service input
 	input := service.CancelReservationInput{
-		ID: id,
-		UserID: currentUser.ID,
+		ID:       id,
+		UserID:   currentUser.ID,
 		UserRole: currentUser.Role,
 	}
 
@@ -165,6 +159,6 @@ func (h *Handler) CancelReservation(w http.ResponseWriter, r *http.Request) {
 		handleServiceError(w, err)
 		return
 	}
-	
+
 	w.WriteHeader(http.StatusNoContent)
 }
