@@ -15,8 +15,8 @@ func init() {
     
     // Register custom validators
     validate.RegisterValidation("futureTime", validateFutureTime)
-    validate.RegisterValidation("afterField", validateAfterField)
 	validate.RegisterValidation("schoolHours", validateSchoolHours)
+	validate.RegisterValidation("maxDateRange", validateMaxDateRange) 
 }
 
 // Validate validates a struct and returns ValidationError if validation fails
@@ -50,27 +50,6 @@ func validateFutureTime(fl validator.FieldLevel) bool {
     return t.After(time.Now())
 }
 
-// Custom validator: field must be after another field
-func validateAfterField(fl validator.FieldLevel) bool {
-    endTime, ok := fl.Field().Interface().(time.Time)
-    if !ok {
-        return false
-    }
-    
-    // Get the start time field
-    startTimeField := fl.Parent().FieldByName(fl.Param())
-    if !startTimeField.IsValid() {
-        return false
-    }
-    
-    startTime, ok := startTimeField.Interface().(time.Time)
-    if !ok {
-        return false
-    }
-    
-    return endTime.After(startTime)
-}
-
 // validateSchoolHours checks if time is within school operating hours
 func validateSchoolHours(fl validator.FieldLevel) bool {
     t, ok := fl.Field().Interface().(time.Time)
@@ -80,6 +59,30 @@ func validateSchoolHours(fl validator.FieldLevel) bool {
 	
     hour := t.Hour()
     return hour >= 6 && hour < 20 // 6 AM to 8 PM
+}
+
+// validateMaxDateRange ensures date range doesn't exceed a maximum (e.g., 60 days)
+func validateMaxDateRange(fl validator.FieldLevel) bool {
+	endDate, ok := fl.Field().Interface().(time.Time)
+	if !ok {
+		return false
+	}
+	
+	// Get the start date field
+	startDateField := fl.Parent().FieldByName("StartDate")
+	if !startDateField.IsValid() {
+		return false
+	}
+	
+	startDate, ok := startDateField.Interface().(time.Time)
+	if !ok {
+		return false
+	}
+	
+	// Check if range is within 90 days
+	maxDays := 60
+	diff := endDate.Sub(startDate)
+	return diff.Hours() <= float64(maxDays*24)
 }
 
 // FormatValidationErrors formats validator errors into user-friendly messages
@@ -103,12 +106,14 @@ func formatFieldError(err validator.FieldError) string {
         return fmt.Sprintf("Must be greater than %s", err.Param())
     case "futureTime":
         return "Time must be in the future"
-    case "afterField":
+    case "gtfield":
         return fmt.Sprintf("Must be after %s", err.Param())
     case "datetime":
         return "Invalid date/time format"
 	case "schoolHours":
 		return "Time must be between 6:00 AM and 8:00 PM"
+	case "maxDateRange":
+		return "Date range cannot exceed 60 days"
     default:
         return fmt.Sprintf("Validation failed on '%s'", err.Tag())
     }
