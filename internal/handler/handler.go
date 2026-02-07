@@ -36,7 +36,6 @@ func New(
 	emailService *email.Service,
 	calendarService *google.CalendarService,
 	userService     *service.UserService,
-	logger  *slog.Logger,
 ) *Handler {
 	return &Handler{
 		db:               db,
@@ -45,8 +44,7 @@ func New(
 		auth:             authService,
 		email:            emailService,
 		calendar:         calendarService,
-		reservation: 	  service.NewReservationService(db, emailService, calendarService, logger),
+		reservation: 	  service.NewReservationService(db, emailService, calendarService),
 		userService:      userService,
-		logger:           logger,
 	}
 }
