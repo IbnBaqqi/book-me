@@ -37,14 +37,6 @@ var (
 		Message:    "room not found",
 		StatusCode: http.StatusNotFound,
 	}
-	ErrInvalidTimeRange = &ServiceError{
-		Message:    "invalid time range: end time must be after start time",
-		StatusCode: http.StatusBadRequest,
-	}
-	ErrPastTime = &ServiceError{
-		Message:    "cannot book past times",
-		StatusCode: http.StatusBadRequest,
-	}
 	ErrTimeSlotTaken = &ServiceError{
 		Message:    "this time slot is already booked",
 		StatusCode: http.StatusConflict,
