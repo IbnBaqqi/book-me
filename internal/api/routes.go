@@ -27,7 +27,7 @@ func SetupRoutes(cfg *API) *http.ServeMux {
 
 	// Authentication routes (public)
 	mux.HandleFunc("GET /api/v1/oauth/login", h.Login)
-	mux.HandleFunc("GET /oauth/callback", h.Callback)
+	mux.HandleFunc("GET /oauth/fortytwo/callback", h.Callback)
 
 	// Reservation routes (authenticated)
 	mux.Handle(

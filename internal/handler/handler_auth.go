@@ -50,6 +50,9 @@ func (h *Handler) Callback(w http.ResponseWriter, r *http.Request) {
 
 	// Exchange code for token
 	code := r.URL.Query().Get("code")
+	if code == "" {
+		respondWithError(w, http.StatusBadRequest, "Missing code in callback", nil)
+	}
 
 	token, err := h.oauthConfig.Exchange(r.Context(), code)
 	if err != nil {
@@ -58,7 +61,7 @@ func (h *Handler) Callback(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get loggedIn User Info from 42
-	user42, err := h.userService.Get42UserData(r.Context(), h.oauthConfig, token)
+	user42, err := h.userService.Fetch42UserData(r.Context(), h.oauthConfig, token)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Failed to get user data from 42", err)
 		return
