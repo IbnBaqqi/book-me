@@ -10,6 +10,25 @@ import (
 
 var Log *slog.Logger
 
+// RetryLogger adapts the retryablehttp.LeveledLogger interface to your slog logger
+type RetryLogger struct{}
+
+func (l *RetryLogger) Error(msg string, keysAndValues ...interface{}) {
+	Log.Error(msg, keysAndValues...)
+}
+
+func (l *RetryLogger) Info(msg string, keysAndValues ...interface{}) {
+	Log.Info(msg, keysAndValues...)
+}
+
+func (l *RetryLogger) Debug(msg string, keysAndValues ...interface{}) {
+	Log.Debug(msg, keysAndValues...)
+}
+
+func (l *RetryLogger) Warn(msg string, keysAndValues ...interface{}) {
+	Log.Warn(msg, keysAndValues...)
+}
+
 // Init creates the global structured logger based on configuration
 func Init(c *config.LoggerConfig, env string) {
 	var handler slog.Handler
