@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"crypto/rand"
 	"database/sql"
 	"encoding/hex"
@@ -9,6 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 
 	"github.com/IbnBaqqi/book-me/internal/database"
 )
@@ -52,6 +54,7 @@ func (h *Handler) Callback(w http.ResponseWriter, r *http.Request) {
 	code := r.URL.Query().Get("code")
 	if code == "" {
 		respondWithError(w, http.StatusBadRequest, "Missing code in callback", nil)
+		return
 	}
 
 	token, err := h.oauthConfig.Exchange(r.Context(), code)
@@ -60,9 +63,15 @@ func (h *Handler) Callback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	ctx, cancel := context.WithTimeout(r.Context(), 15 * time.Second)
+	defer cancel()
 	// Get loggedIn User Info from 42
-	user42, err := h.userService.Fetch42UserData(r.Context(), h.oauthConfig, token)
+	user42, err := h.userService.Fetch42UserData(ctx, h.oauthConfig, token)
 	if err != nil {
+		if errors.Is(err, context.DeadlineExceeded) {
+			respondWithError(w, http.StatusGatewayTimeout, "Request to 42 API timed out", err)
+			return
+		}
 		respondWithError(w, http.StatusInternalServerError, "Failed to get user data from 42", err)
 		return
 	}
