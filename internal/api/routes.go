@@ -13,12 +13,12 @@ func SetupRoutes(cfg *API) *http.ServeMux {
 
 	// Create handlers with injected dependencies
 	h := handler.New(
-		cfg.DB,
 		cfg.SessionStore,
 		cfg.OAuthConfig,
 		cfg.Auth,
 		cfg.EmailService,
 		cfg.CalendarService,
+		cfg.Reservation,
 		cfg.UserService,
 	)
 
