@@ -40,18 +40,10 @@ func (h *Handler) CreateReservation(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO use redis instead
-	dbUser, err := h.db.GetUser(r.Context(), int64(currentUser.ID))
-	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, "Failed to get user", err)
-		return
-	}
-
 	// Call service
 	reservation, err := h.reservation.CreateReservation(r.Context(), service.CreateReservationInput{
-		UserID:    int64(currentUser.ID),
+		UserID:    currentUser.ID,
 		UserName:  currentUser.Name,
-		UserEmail: dbUser.Email,
 		UserRole:  currentUser.Role,
 		RoomID:    req.RoomID,
 		StartTime: req.StartTime,
@@ -69,7 +61,7 @@ func (h *Handler) CreateReservation(w http.ResponseWriter, r *http.Request) {
 		StartTime: reservation.StartTime,
 		EndTime:   reservation.EndTime,
 		CreatedBy: dto.UserDto{
-			ID:   int64(currentUser.ID),
+			ID:   currentUser.ID,
 			Name: currentUser.Name,
 		},
 	})
@@ -96,7 +88,7 @@ func (h *Handler) GetReservations(w http.ResponseWriter, r *http.Request) {
 	input := service.GetReservationsInput{
 		StartDate: startDate,
 		EndDate:   endDate,
-		UserID:    int64(currentUser.ID),
+		UserID:    currentUser.ID,
 		UserRole:  currentUser.Role,
 	}
 
