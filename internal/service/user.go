@@ -2,11 +2,14 @@ package service
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
 
+	"github.com/IbnBaqqi/book-me/internal/database"
 	"github.com/IbnBaqqi/book-me/internal/logger"
 	"github.com/hashicorp/go-retryablehttp"
 	"golang.org/x/oauth2"
@@ -26,19 +29,20 @@ type CampusUsers struct {
 }
 
 type UserService struct {
+	db               *database.Queries
 	RedirectTokenURI string
 	IntraUserInfoURL string
 }
 
 // NewUserService create a new user service
-func NewUserService(redirectTokenURI, intraUserInfoURL string) *UserService {
+func NewUserService(db *database.Queries, redirectTokenURI, intraUserInfoURL string) *UserService {
 	return &UserService{
+		db:               db,
 		RedirectTokenURI: redirectTokenURI,
 		IntraUserInfoURL: intraUserInfoURL,
 	}
 }
 
-// TODO look into timeout and context
 func (u *UserService) Fetch42UserData(ctx context.Context, oauthConfig *oauth2.Config, token *oauth2.Token) (*User42, error) {
 
 	// A specialized HTTP client that handles the Authorization header and token refreshing automatically.
@@ -86,4 +90,40 @@ func (u *UserService) newRetryClient(oauthTransport http.RoundTripper) *retryabl
 	client.HTTPClient.Transport = oauthTransport
 	
 	return client
+}
+
+// findOrCreateUser gets existing user or creates new one
+func (s *UserService) FindOrCreateUser(ctx context.Context, user42 *User42) (database.User, error) {
+	// Try to find existing user
+	user, err := s.db.GetUserByEmail(ctx, user42.Email)
+	if err == nil {
+		return user, nil 
+	}
+
+	// If not found, create new user
+	if errors.Is(err, sql.ErrNoRows) {
+		return s.createUser(ctx, user42)
+	}
+
+	// Database error
+	return database.User{}, fmt.Errorf("database error: %w", err)
+}
+
+// createUser creates a new user from 42 data
+func (s *UserService) createUser(ctx context.Context, user42 *User42) (database.User, error) {
+	role := "STUDENT"
+	if user42.Staff {
+		role = "STAFF"
+	}
+
+	user, err := s.db.CreateUser(ctx, database.CreateUserParams{
+		Email: user42.Email,
+		Name:  user42.Name,
+		Role:  role,
+	})
+	if err != nil {
+		return database.User{}, fmt.Errorf("failed to create user: %w", err)
+	}
+
+	return user, nil
 }
