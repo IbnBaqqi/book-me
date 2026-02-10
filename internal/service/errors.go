@@ -25,6 +25,10 @@ func (e *ServiceError) Unwrap() error {
 }
 
 var (
+	ErrGetUserFailed = &ServiceError{
+		Message:    "failed to get User",
+		StatusCode: http.StatusInternalServerError,
+	}
 	ErrReservationNotFound = &ServiceError{
 		Message:    "reservation not found",
 		StatusCode: http.StatusNotFound,
