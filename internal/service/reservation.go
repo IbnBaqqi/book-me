@@ -4,26 +4,23 @@ import (
 	"context"
 	"database/sql"
 	"log"
-	"log/slog"
 	"time"
 
-	"github.com/IbnBaqqi/book-me/external/google"
 	"github.com/IbnBaqqi/book-me/internal/database"
 	"github.com/IbnBaqqi/book-me/internal/dto"
 	"github.com/IbnBaqqi/book-me/internal/email"
+	"github.com/IbnBaqqi/book-me/internal/google"
 )
 
 type ReservationService struct {
 	db       *database.Queries
 	email    *email.Service
 	calendar *google.CalendarService
-	logger   *slog.Logger
 }
 
 type CreateReservationInput struct {
 	UserID    int64
 	UserName  string
-	UserEmail string
 	UserRole  string
 	RoomID    int64
 	StartTime time.Time
@@ -39,7 +36,7 @@ type GetReservationsInput struct {
 
 type CancelReservationInput struct {
 	ID  int64
-	UserID int16
+	UserID int64
 	UserRole string
 }
 
@@ -59,6 +56,13 @@ func (s *ReservationService) CreateReservation(
 	ctx context.Context,
 	input CreateReservationInput,
 ) (*database.Reservation, error) {
+
+	// Get user email for sending email 
+	// TODO use redis instead
+	dbUser, err := s.db.GetUser(ctx, input.UserID)
+	if err != nil {
+		return nil, ErrGetUserFailed
+	}
 
 	// Fetch room
 	room, err := s.db.GetRoomByID(ctx, input.RoomID)
@@ -137,7 +141,7 @@ func (s *ReservationService) CreateReservation(
 	// Send confirmation email (async)
 	s.email.SendConfirmation(
 		ctx,
-		input.UserEmail,
+		dbUser.Email,
 		room.Name,
 		reservation.StartTime.Format("Monday, January 2, 2006 at 3:04 PM"),
 		reservation.EndTime.Format("Monday, January 2, 2006 at 3:04 PM"),
@@ -153,7 +157,7 @@ func (h *ReservationService) GetReservations(
 
 	// Convert dates to datetime range
 	startDateTime := input.StartDate              // Already at 00:00:00
-	endDateTime := input.EndDate.AddDate(0, 0, 1) // Add 1 day (equivalent to plusDays(1).atStartOfDay())
+	endDateTime := input.EndDate.AddDate(0, 0, 1) // Add 1 day
 
 	// Check if user is a staff
 	isStaff := input.UserRole == "STAFF"
@@ -226,7 +230,7 @@ func (h *ReservationService) CancelReservation(
 
 	// Check authorization
 	isStaff := input.UserRole == "STAFF"
-	isOwner := reservation.UserID == int64(input.UserID)
+	isOwner := reservation.UserID == input.UserID
 
 	if !isStaff && !isOwner {
 		return ErrUnauthorizedCancellation
