@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 
-	"github.com/IbnBaqqi/book-me/external/google"
+	"github.com/IbnBaqqi/book-me/internal/google"
 	"github.com/IbnBaqqi/book-me/internal/auth"
 	"github.com/IbnBaqqi/book-me/internal/config"
 	"github.com/IbnBaqqi/book-me/internal/database"
@@ -27,6 +27,7 @@ type API struct {
 	EmailService     *email.Service
 	CalendarService  *google.CalendarService
 	UserService      *service.UserService
+	Reservation      *service.ReservationService
 }
 
 // New initializes all services and returns a pointer to API
@@ -89,7 +90,10 @@ func New(ctx context.Context, cfg *config.Config) (*API, error) {
 	authService := auth.NewService(cfg.App.JWTSecret)
 
 	// Initialize user service
-	userService := service.NewUserService(cfg.App.RedirectTokenURI, cfg.App.User42InfoURL)
+	userService := service.NewUserService(dbQueries, cfg.App.RedirectTokenURI, cfg.App.User42InfoURL)
+	
+	// Initialize reservation service
+	reservationService := service.NewReservationService(dbQueries, emailService, calendarService)
 
 	return &API{
 		DB:               dbQueries,
@@ -100,6 +104,7 @@ func New(ctx context.Context, cfg *config.Config) (*API, error) {
 		EmailService:     emailService,
 		CalendarService:  calendarService,
 		UserService:      userService,
+		Reservation:      reservationService,
 	}, nil
 }
 

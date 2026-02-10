@@ -3,31 +3,12 @@ package handler
 import (
 	"encoding/json"
 	"net/http"
-	"time"
 
 	"github.com/IbnBaqqi/book-me/internal/auth"
+	"github.com/IbnBaqqi/book-me/internal/dto"
 	"github.com/IbnBaqqi/book-me/internal/service"
 	appvalidator "github.com/IbnBaqqi/book-me/internal/validator"
 )
-
-type reservationDTO struct {
-	ID        int64     `json:"Id"`
-	RoomID    int64     `json:"roomId"`
-	StartTime time.Time `json:"startTime"`
-	EndTime   time.Time `json:"endTime"`
-	CreatedBy UserDto   `json:"createdBy"`
-}
-
-type UserDto struct {
-	ID   int64  `json:"Id"`
-	Name string `json:"name"`
-}
-
-type createReservationRequest struct {
-	RoomID    int64     `json:"roomId" validate:"required,gt=0"`
-	StartTime time.Time `json:"startTime" validate:"required,futureTime,schoolHours"`
-	EndTime   time.Time `json:"endTime" validate:"required,gtfield=StartTime,shoolhours"`
-}
 
 // Handler to create a new reservation
 func (h *Handler) CreateReservation(w http.ResponseWriter, r *http.Request) {
@@ -46,7 +27,7 @@ func (h *Handler) CreateReservation(w http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)
 	decoder.DisallowUnknownFields()
 
-	req := createReservationRequest{}
+	req := dto.CreateReservationRequest{}
 	err := decoder.Decode(&req)
 	if err != nil {
 		respondWithError(w, http.StatusBadRequest, "Invalid request body", err)
@@ -59,18 +40,10 @@ func (h *Handler) CreateReservation(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO use redis instead
-	dbUser, err := h.db.GetUser(r.Context(), int64(currentUser.ID))
-	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, "Failed to get user", err)
-		return
-	}
-
 	// Call service
 	reservation, err := h.reservation.CreateReservation(r.Context(), service.CreateReservationInput{
-		UserID:    int64(currentUser.ID),
+		UserID:    currentUser.ID,
 		UserName:  currentUser.Name,
-		UserEmail: dbUser.Email,
 		UserRole:  currentUser.Role,
 		RoomID:    req.RoomID,
 		StartTime: req.StartTime,
@@ -82,13 +55,13 @@ func (h *Handler) CreateReservation(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	respondWithJSON(w, http.StatusCreated, reservationDTO{
+	respondWithJSON(w, http.StatusCreated, dto.ReservationDto{
 		ID:        reservation.ID,
 		RoomID:    reservation.RoomID,
 		StartTime: reservation.StartTime,
 		EndTime:   reservation.EndTime,
-		CreatedBy: UserDto{
-			ID:   int64(currentUser.ID),
+		CreatedBy: dto.UserDto{
+			ID:   currentUser.ID,
 			Name: currentUser.Name,
 		},
 	})
@@ -115,7 +88,7 @@ func (h *Handler) GetReservations(w http.ResponseWriter, r *http.Request) {
 	input := service.GetReservationsInput{
 		StartDate: startDate,
 		EndDate:   endDate,
-		UserID:    int64(currentUser.ID),
+		UserID:    currentUser.ID,
 		UserRole:  currentUser.Role,
 	}
 

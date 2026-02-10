@@ -6,7 +6,6 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"log/slog"
 	"net/http"
 	"strconv"
 	"strings"
@@ -26,11 +25,10 @@ type CustomClaims struct {
 type Service struct {
 	JwtSecret         string
 	AccessTokenTTL time.Duration
-	logger         *slog.Logger
 }
 
 type User struct {
-	ID		int16
+	ID		int64
 	Role	string
 	Name	string
 }
@@ -41,7 +39,7 @@ var userKey = contextKey{}
 
 type TokenType string
 
-const TokenTypeAccess TokenType = "book-me"
+const TokenTypeAccess TokenType = "access"
 
 var (
 	ErrInvalidToken			= errors.New("invalid token")
@@ -88,15 +86,15 @@ func (s *Service) Authenticate(next http.Handler) http.Handler {
 			return
 		}
 
-		// Convert claims.Subject (string) to int16 for User.ID
-		idInt64, err := strconv.ParseInt(claims.Subject, 10, 16)
+		// Convert claims.Subject (string) to int64 for User.ID
+		id, err := strconv.ParseInt(claims.Subject, 10, 64)
 		if err != nil {
 			// If conversion fails, treat as unauthenticated
 			next.ServeHTTP(w, r)
 			return
 		}
 		user := User{
-			ID:		int16(idInt64),
+			ID:		id,
 			Role:	claims.Role,
 			Name:	claims.Name,
 		}
@@ -125,7 +123,7 @@ func (s *Service) IssueAccessToken(user database.User) (string, error) {
 		Name: user.Name,
 		Role: user.Role,
 		RegisteredClaims: jwt.RegisteredClaims{
-			Subject:   strconv.FormatInt(int64(user.ID), 10),
+			Subject:   strconv.FormatInt(user.ID, 10),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(s.AccessTokenTTL)),
 			Issuer:    string(TokenTypeAccess),

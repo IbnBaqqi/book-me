@@ -1,16 +1,17 @@
 package handler
 
 import (
+	"context"
 	"crypto/rand"
-	"database/sql"
 	"encoding/hex"
 	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 
-	"github.com/IbnBaqqi/book-me/internal/database"
+	"golang.org/x/oauth2"
 )
 
 const sessionName = "bookme-session"
@@ -35,34 +36,28 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) Callback(w http.ResponseWriter, r *http.Request) {
 
-	// Check State (CSRF Protection)
-	session, _ := h.session.Get(r, sessionName)
-
-	expectedState, ok := session.Values["oauth_state"].(string) // get saved state and compare with incoming state
-	if !ok || expectedState != r.URL.Query().Get("state") {
-		respondWithError(w, http.StatusForbidden, "Invalid or missing state — possible CSRF attack.", nil)
+	// Validate CSRF state
+	if err := h.validateState(w, r); err != nil {
+		respondWithError(w, http.StatusForbidden, "Invalid or missing state — possible CSRF attack", err)
 		return
 	}
 
-	// remove session
-	delete(session.Values, "oauth_state")
-	session.Save(r, w)
-
-	// Exchange code for token
-	code := r.URL.Query().Get("code")
-	if code == "" {
-		respondWithError(w, http.StatusBadRequest, "Missing code in callback", nil)
-	}
-
-	token, err := h.oauthConfig.Exchange(r.Context(), code)
+	// Exchange authorization code for token
+	token, err := h.exchangeCode(r)
 	if err != nil {
 		respondWithError(w, http.StatusUnauthorized, "token exchange failed", err)
 		return
 	}
 
+	ctx, cancel := context.WithTimeout(r.Context(), 15 * time.Second)
+	defer cancel()
 	// Get loggedIn User Info from 42
-	user42, err := h.userService.Fetch42UserData(r.Context(), h.oauthConfig, token)
+	user42, err := h.userService.Fetch42UserData(ctx, h.oauthConfig, token)
 	if err != nil {
+		if errors.Is(err, context.DeadlineExceeded) {
+			respondWithError(w, http.StatusGatewayTimeout, "Request to 42 API timed out", err)
+			return
+		}
 		respondWithError(w, http.StatusInternalServerError, "Failed to get user data from 42", err)
 		return
 	}
@@ -81,31 +76,11 @@ func (h *Handler) Callback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Find or create user
-	user, err := h.db.GetUserByEmail(r.Context(), user42.Email)
+	// Find or create user - might use redis later for this TODO
+	user, err := h.userService.FindOrCreateUser(r.Context(), user42)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) { // if user doesn't exist
-
-			role := "STUDENT"
-			if user42.Staff {
-				role = "STAFF"
-			}
-			// create user
-			newUser, err := h.db.CreateUser(r.Context(), database.CreateUserParams{
-				Email: user42.Email,
-				Name:  user42.Name,
-				Role:  role,
-			})
-			if err != nil {
-				respondWithError(w, http.StatusInternalServerError, "Failed to create user", err)
-				return
-			}
-			user = newUser
-		} else {
-			// Actual database error
-			respondWithError(w, http.StatusInternalServerError, "Internal server error", err)
-			return
-		}
+		respondWithError(w, http.StatusInternalServerError, "failed to get or create user", err)
+		return
 	}
 
 	// Issue jwt
@@ -125,6 +100,34 @@ func (h *Handler) Callback(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, finalRedirectURL, http.StatusFound)
 }
 
+// validateState checks CSRF protection state
+func (h *Handler) validateState(w http.ResponseWriter, r *http.Request) error {
+	session, _ := h.session.Get(r, sessionName)
+	
+	// get saved state and compare with incoming state
+	expectedState, ok := session.Values["oauth_state"].(string)
+	if !ok || expectedState != r.URL.Query().Get("state") {
+		return errors.New("state mismatch")
+	}
+
+	// Clear state from session
+	delete(session.Values, "oauth_state")
+	session.Save(r, w)
+	
+	return nil
+}
+
+// exchangeCode exchanges OAuth code for access token
+func (h *Handler) exchangeCode(r *http.Request) (*oauth2.Token, error) {
+	code := r.URL.Query().Get("code")
+	if code == "" {
+		return nil, errors.New("missing authorization code")
+	}
+
+	return h.oauthConfig.Exchange(r.Context(), code)
+}
+
+// generateRandomState generates random state value
 func generateRandomState() string {
 	b := make([]byte, 32)
 	rand.Read(b) // no error check as Read always succeeds
