@@ -36,7 +36,7 @@ func (h *Handler) CreateReservation(w http.ResponseWriter, r *http.Request) {
 
 	// Validate the request
 	if err := appvalidator.Validate(req); err != nil {
-		handleValidationError(w, err)
+		handleError(w, err)
 		return
 	}
 
@@ -51,7 +51,7 @@ func (h *Handler) CreateReservation(w http.ResponseWriter, r *http.Request) {
 	})
 
 	if err != nil {
-		handleServiceError(w, err)
+		handleError(w, err)
 		return
 	}
 
@@ -73,7 +73,7 @@ func (h *Handler) GetReservations(w http.ResponseWriter, r *http.Request) {
 	// Validate & parse query parameters
 	startDate, endDate, err := parseDateRange(r)
 	if err != nil {
-		handleValidationError(w, err)
+		handleError(w, err)
 		return
 	}
 
@@ -95,7 +95,7 @@ func (h *Handler) GetReservations(w http.ResponseWriter, r *http.Request) {
 	// Call service
 	reserved, err := h.reservation.GetReservations(r.Context(), input)
 	if err != nil {
-		handleServiceError(w, err)
+		handleError(w, err)
 		return
 	}
 
@@ -108,7 +108,7 @@ func (h *Handler) CancelReservation(w http.ResponseWriter, r *http.Request) {
 	// Extract & validate ID from path parameter
 	id, err := parseReservationID(r)
 	if err != nil {
-		handleValidationError(w, err)
+		handleError(w, err)
 		return
 	}
 
@@ -129,7 +129,7 @@ func (h *Handler) CancelReservation(w http.ResponseWriter, r *http.Request) {
 	// Call service
 	err = h.reservation.CancelReservation(r.Context(), input)
 	if err != nil {
-		handleServiceError(w, err)
+		handleError(w, err)
 		return
 	}
 

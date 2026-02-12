@@ -5,14 +5,14 @@ import (
 	"database/sql"
 	"fmt"
 
-	"github.com/IbnBaqqi/book-me/internal/google"
 	"github.com/IbnBaqqi/book-me/internal/auth"
 	"github.com/IbnBaqqi/book-me/internal/config"
 	"github.com/IbnBaqqi/book-me/internal/database"
 	"github.com/IbnBaqqi/book-me/internal/email"
-	"github.com/IbnBaqqi/book-me/internal/service"
+	"github.com/IbnBaqqi/book-me/internal/google"
 	"github.com/IbnBaqqi/book-me/internal/logger"
-	"github.com/gorilla/sessions"
+	"github.com/IbnBaqqi/book-me/internal/oauth"
+	"github.com/IbnBaqqi/book-me/internal/service"
 	_ "github.com/lib/pq"
 	"golang.org/x/oauth2"
 )
@@ -21,12 +21,10 @@ import (
 type API struct {
 	DB               *database.Queries
 	dbConn           *sql.DB
-	SessionStore     *sessions.CookieStore
-	OAuthConfig      *oauth2.Config
+	Oauth            *oauth.Service
 	Auth             *auth.Service
 	EmailService     *email.Service
 	CalendarService  *google.CalendarService
-	UserService      *service.UserService
 	Reservation      *service.ReservationService
 }
 
@@ -86,11 +84,12 @@ func New(ctx context.Context, cfg *config.Config) (*API, error) {
 		},
 	}
 
+	// Initialize 42 oauth provider & service
+	oauth42 := oauth.NewProvider42(dbQueries, oauthConfig, cfg.App.SessionSecret, cfg.App.RedirectTokenURI,cfg.App.User42InfoURL)
+	oauthService := oauth.NewService(oauth42)
+
 	// Initialize auth service for app (JWT)
 	authService := auth.NewService(cfg.App.JWTSecret)
-
-	// Initialize user service
-	userService := service.NewUserService(dbQueries, cfg.App.RedirectTokenURI, cfg.App.User42InfoURL)
 	
 	// Initialize reservation service
 	reservationService := service.NewReservationService(dbQueries, emailService, calendarService)
@@ -98,12 +97,10 @@ func New(ctx context.Context, cfg *config.Config) (*API, error) {
 	return &API{
 		DB:               dbQueries,
 		dbConn:           dbConn,
-		SessionStore:     sessions.NewCookieStore([]byte(cfg.App.SessionSecret)),
-		OAuthConfig:      oauthConfig,
+		Oauth:            oauthService,
 		Auth:             authService,
 		EmailService:     emailService,
 		CalendarService:  calendarService,
-		UserService:      userService,
 		Reservation:      reservationService,
 	}, nil
 }
