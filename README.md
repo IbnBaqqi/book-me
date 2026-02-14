@@ -50,38 +50,55 @@ It supports calendar-based views, role-based access control (students & staff), 
 book-me/
 ├── cmd/
 │   └── api/
-│       └── main.go                 # Moved from root (TODO)
+│       └── main.go                 # Application entry point
 ├── internal/
-│   ├── auth/                       # Logic for JWT/Auth
+│   ├── api/                        # API server setup
+│   │   ├── api.go
+│   │   └── routes.go
+│   ├── auth/                       # JWT authentication
 │   │   ├── auth.go
 │   │   └── auth_test.go
+│   ├── config/                     # Configuration management
+│   │   └── config.go
 │   ├── database/                   # SQLC generated code
 │   │   ├── db.go
 │   │   ├── models.go
 │   │   ├── reservations.sql.go
 │   │   ├── rooms.sql.go
 │   │   └── users.sql.go
+│   ├── dto/                        # Data transfer objects
+│   │   └── reservation.go
 │   ├── email/                      # Email service & templates
 │   │   ├── email_service.go
 │   │   ├── email_service_test.go
 │   │   └── templates/
-│   ├── external/                   # Third-party integrations
-│   │   └── google/
-│   │       ├── auth.go
-│   │       ├── calender_service.go
-│   │       ├── models.go
-│   │       └── token_manager.go
-│   ├── handlers/                   # HTTP Handlers (moved from root) (TODO)
-│   │   ├── handler_callback.go
-│   │   ├── handler_login.go
-│   │   ├── handler_reservation_delete.go
+│   │       ├── confirmation_email_v1.html
+│   │       └── confirmation_email_v2.html
+│   ├── google/                     # Google Calendar integration
+│   │   └── calender.go
+│   ├── handler/                    # HTTP handlers
+│   │   ├── handler.go
+│   │   ├── handler_health.go
+│   │   ├── handler_oauth.go
 │   │   ├── handler_reservations.go
-│   │   ├── handler_get_reservations.go
-│   │   ├── health.go
-│   │   └── json.go                 # JSON helper utilities
-│   └── services/                   # Business logic layers
-│       ├── users_service.go        # Moved from root
-│       └── user_42.go              # Specific business logic
+│   │   ├── handler_reservations_test.go
+│   │   ├── parser.go
+│   │   ├── parser_test.go
+│   │   └── response.go
+│   ├── logger/                     # Logging utilities
+│   │   └── logger.go
+│   ├── oauth/                      # OAuth2 authentication
+│   │   ├── errors.go
+│   │   ├── provider42.go
+│   │   └── service.go
+│   ├── service/                    # Business logic layer
+│   │   ├── errors.go
+│   │   ├── reservation.go
+│   │   └── user.go
+│   └── validator/                  # Input validation
+│       ├── errors.go
+│       ├── validator.go
+│       └── validator_test.go
 ├── sql/                            # Database migrations and queries
 │   ├── queries/
 │   │   ├── reservations.sql
@@ -96,13 +113,17 @@ book-me/
 │   ├── api_overview.md
 │   ├── setup.md
 │   └── usage.md
+├── assets/                         # Static assets
+│   ├── book-me-service-account.json
+│   └── v3BookMe-whiteBg.png
+├── .env.example
 ├── .gitignore
 ├── go.mod
 ├── go.sum
 ├── LICENSE
+├── Makefile
 ├── sqlc.yaml
-├── README.md
-└── v3BookMe-whiteBg.png
+└── README.md
 ```
 
 ---
