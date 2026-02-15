@@ -3,7 +3,7 @@ package service
 import (
 	"context"
 	"database/sql"
-	"log"
+	"log/slog"
 	"time"
 
 	"github.com/IbnBaqqi/book-me/internal/database"
@@ -122,7 +122,7 @@ func (s *ReservationService) CreateReservation(
 
 		eventID, err := s.calendar.CreateGoogleEvent(ctx, calendarReservation)
 		if err != nil {
-			log.Printf("Failed to create Google Calendar event: %v", err)
+			slog.Error("Failed to create Google Calendar event", "error", err)
 			return
 		}
 
@@ -133,7 +133,7 @@ func (s *ReservationService) CreateReservation(
 				GcalEventID: sql.NullString{String: eventID, Valid: eventID != ""},
 			})
 			if updateErr != nil {
-				log.Printf("Failed to update reservation with calendar event ID: %v", updateErr)
+				slog.Warn("Failed to update reservation with calendar event ID", "error", updateErr)
 			}
 		}
 	}()
@@ -156,8 +156,8 @@ func (h *ReservationService) GetReservations(
 ) ([]dto.ReservedDto, error) {
 
 	// Convert dates to datetime range
-	startDateTime := input.StartDate              // Already at 00:00:00
-	endDateTime := input.EndDate.AddDate(0, 0, 1) // Add 1 day
+	startDateTime := input.StartDate
+	endDateTime := input.EndDate.AddDate(0, 0, 1)
 
 	// Check if user is a staff
 	isStaff := input.UserRole == "STAFF"

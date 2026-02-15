@@ -6,7 +6,7 @@ import (
 	"embed"
 	"fmt"
 	"html/template"
-	"log"
+	"log/slog"
 	"time"
 
 	"github.com/wneessen/go-mail"
@@ -78,7 +78,7 @@ func (s *Service) SendConfirmation(ctx context.Context, email, room, startTime, 
 		if err := s.sendConfirmationSync(email, room, startTime, endTime); err != nil {
 			// Log error but don't fail the whole operation
 			// TODO look into uber-go/zap for logging
-			log.Printf("Failed to send confirmation email: %v\n", err)
+			slog.Warn("Failed to send confirmation email", "error", err)
 		}
 	}()
 	return nil

@@ -3,7 +3,7 @@ package google
 import (
 	"context"
 	"fmt"
-	"log"
+	"log/slog"
 	"os"
 	"time"
 
@@ -79,7 +79,7 @@ func (s *CalendarService) CreateGoogleEvent(ctx context.Context, reservation *Re
     // Create the event
     createdEvent, err := s.service.Events.Insert(s.calendarID, event).Context(ctx).Do()
     if err != nil {
-        log.Printf("Failed to create calendar event: %v", err)
+        slog.Error("Failed to create calendar event", "error", err)
         return "", fmt.Errorf("failed to create event: %w", err)
     }
 
