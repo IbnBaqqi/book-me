@@ -81,7 +81,7 @@ func Load() (*Config, error) {
 			IdleTimeout:  getEnvAsDuration("SERVER_IDLE_TIMEOUT", "60s"),
 		},
 		App: AppConfig{
-			Env:              getEnv("ENVIRONMENT", "dev"),
+			Env:              getEnv("ENV", "dev"),
 			DBURL:            mustGetEnv("DB_URL"),
 			SessionSecret:    mustGetEnv("SESSION_SECRET"),
 			ClientID:         mustGetEnv("CLIENT_ID"),
