@@ -36,7 +36,8 @@ func main() {
 	ctx := context.Background()
 	apiCfg, err := api.New(ctx, cfg)
 	if err != nil {
-		logger.Log.Error("Failed to initialize api services:", "error", err)
+		logger.Log.Error("Failed to initialize api services", "error", err)
+		os.Exit(1)
 	}
 
 	// Ensure database connection close on exit
@@ -61,7 +62,7 @@ func main() {
 	go func() {
 		logger.Log.Info("Server listening", "address", server.Addr)
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			logger.Log.Error("Server failed to start:", "error", err)
+			logger.Log.Error("Server failed to start", "error", err)
 			os.Exit(1)
 		}
 	}()
@@ -79,7 +80,7 @@ func main() {
 
 	// Attempt graceful shutdown
 	if err := server.Shutdown(ctx); err != nil {
-		logger.Log.Error("Server forced to shutdown:", "error", err)
+		logger.Log.Error("Server forced to shutdown", "error", err)
 	}
 
 	logger.Log.Info("Server exited gracefully")
