@@ -47,36 +47,39 @@ func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
 	w.Write(data)
 }
 
-// handleError handles all application errors (validation + service)
+// handleError handles all application errors
 func handleError(w http.ResponseWriter, err error) {
-	// Check for validation errors (handler layer)
+
+	// Check for validation errors
 	var validationErr *appvalidator.ValidationError
 	if errors.As(err, &validationErr) {
 		respondWithValidationError(w, http.StatusBadRequest, validationErr.Message, validationErr.Fields)
 		return
 	}
 
-	// Check for service errors (service layer)
+	// Check for service errors, log 5xx errors
 	var serviceErr *service.ServiceError
 	if errors.As(err, &serviceErr) {
 		if serviceErr.StatusCode >= 500 {
 			slog.Error("service error",
 				"error", serviceErr,
-				"message", serviceErr.Message,
 			)
+			respondWithError(w, serviceErr.StatusCode, "Internal server error")
+			return
 		}
 		respondWithError(w, serviceErr.StatusCode, serviceErr.Message)
 		return
 	}
 
-	// Check for oauth errors (service layer)
+	// Check for oauth errors, log 5xx errors
 	var oauthErr *oauth.OauthError
 	if errors.As(err, &oauthErr){
 		if oauthErr.StatusCode >= 500 {
-			slog.Error("service error",
+			slog.Error("oauth error",
 				"error", oauthErr,
-				"message", oauthErr.Message,
 			)
+			respondWithError(w, oauthErr.StatusCode, "Internal server error")
+			return
 		}
 		respondWithError(w, oauthErr.StatusCode, oauthErr.Message)
 		return
