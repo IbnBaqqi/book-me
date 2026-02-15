@@ -3,7 +3,9 @@ package service
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"log/slog"
+	"net/http"
 	"time"
 
 	"github.com/IbnBaqqi/book-me/internal/database"
@@ -14,6 +16,7 @@ import (
 
 type ReservationService struct {
 	db       *database.Queries
+	sqlDB    *database.DB
 	email    *email.Service
 	calendar *google.CalendarService
 }
@@ -42,11 +45,13 @@ type CancelReservationInput struct {
 
 func NewReservationService(
 	db *database.Queries,
+	sqlDB *database.DB,
 	emailService *email.Service,
 	calendarService *google.CalendarService,
 ) *ReservationService {
 	return &ReservationService{
 		db:       db,
+		sqlDB:    sqlDB,
 		email:    emailService,
 		calendar: calendarService,
 	}
@@ -72,21 +77,7 @@ func (s *ReservationService) CreateReservation(
 		}
 		return nil, err
 	}
-
-	// Check for overlapping reservations
-	overlap, err := s.db.ExistsOverlappingReservation(ctx, database.ExistsOverlappingReservationParams{
-		RoomID:    input.RoomID,
-		StartTime: input.EndTime,
-		EndTime:   input.StartTime,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	if overlap {
-		return nil, ErrTimeSlotTaken
-	}
-
+	
 	// Validate duration (students only)
 	duration := input.EndTime.Sub(input.StartTime)
 	maxDuration := 4 * time.Hour
@@ -95,8 +86,37 @@ func (s *ReservationService) CreateReservation(
 		return nil, ErrExceedsMaxDuration
 	}
 
+	// Start transaction
+	tx, err := s.sqlDB.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, &ServiceError{
+			StatusCode:    http.StatusInternalServerError,
+			Message: fmt.Sprintf("failed to start transaction: %v", err),
+		}
+	}
+	defer func() {
+		_ = tx.Rollback() // rollback error is not critical in defer
+	}()
+
+	qtx := s.db.WithTx(tx.Tx)
+
+	// Check for overlapping reservations
+	overlap, err := qtx.ExistsOverlappingReservation(ctx, database.ExistsOverlappingReservationParams{
+		RoomID:      input.RoomID,
+		StartTime:   input.EndTime,
+		EndTime:     input.StartTime,
+	})
+	if err != nil {
+		slog.Error("database error", "error", err)
+		return nil, err
+	}
+
+	if overlap {
+		return nil, ErrTimeSlotTaken
+	}
+
 	// Create reservation
-	reservation, err := s.db.CreateReservation(ctx, database.CreateReservationParams{
+	reservation, err := qtx.CreateReservation(ctx, database.CreateReservationParams{
 		UserID:    input.UserID,
 		RoomID:    room.ID,
 		StartTime: input.StartTime,
@@ -105,6 +125,14 @@ func (s *ReservationService) CreateReservation(
 	})
 	if err != nil {
 		return nil, err
+	}
+
+	// Commit transaction
+	if err := tx.Commit(); err != nil {
+		return nil, &ServiceError{
+			StatusCode:  http.StatusInternalServerError,
+			Message:     fmt.Sprintf("failed to commit transaction: %v", err),
+		}
 	}
 
 	// Create Google Calendar event (async)
