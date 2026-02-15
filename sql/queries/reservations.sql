@@ -19,9 +19,10 @@ SELECT EXISTS (
     SELECT 1
     FROM reservations
     WHERE room_id = $1
-      AND start_time < $3
-      AND end_time > $2
-);
+      AND start_time < $2
+      AND end_time > $3
+	FOR UPDATE
+) AS overlap;
 
 -- name: GetAllBetweenDates :many
 SELECT 
