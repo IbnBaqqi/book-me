@@ -1,7 +1,6 @@
 package api
 
 import (
-	"context"
 	"database/sql"
 	"fmt"
 
@@ -10,7 +9,6 @@ import (
 	"github.com/IbnBaqqi/book-me/internal/database"
 	"github.com/IbnBaqqi/book-me/internal/email"
 	"github.com/IbnBaqqi/book-me/internal/google"
-	"github.com/IbnBaqqi/book-me/internal/logger"
 	"github.com/IbnBaqqi/book-me/internal/oauth"
 	"github.com/IbnBaqqi/book-me/internal/service"
 	_ "github.com/lib/pq"
@@ -20,7 +18,7 @@ import (
 // API holds all dependencies for the API handlers
 type API struct {
 	DB               *database.Queries
-	dbConn           *sql.DB
+	sqlDB            *sql.DB
 	Oauth            *oauth.Service
 	Auth             *auth.Service
 	EmailService     *email.Service
@@ -29,22 +27,10 @@ type API struct {
 }
 
 // New initializes all services and returns a pointer to API
-func New(ctx context.Context, cfg *config.Config) (*API, error) {
-	// Initialize database
-	dbConn, err := sql.Open("postgres", cfg.App.DBURL)
-	if err != nil {
-		return nil, fmt.Errorf("failed to open database: %w", err)
-	}
-
-	// Test the connection, ping with context
-	if err := dbConn.PingContext(ctx); err != nil {
-		dbConn.Close()
-		logger.Log.Error("failed to ping database", "error", err)
-		return nil, fmt.Errorf("failed to ping database: %w", err)
-	}
+func New(cfg *config.Config, db *database.DB) (*API, error) {
 
 	// Using SQLC generated database package to create a new *database.Queries,
-	dbQueries := database.New(dbConn)
+	dbQueries := database.New(db)
 
 	// Initialize Google Calendar service
 	calendarService, err := google.NewCalendarService(
@@ -92,26 +78,15 @@ func New(ctx context.Context, cfg *config.Config) (*API, error) {
 	authService := auth.NewService(cfg.App.JWTSecret)
 	
 	// Initialize reservation service
-	reservationService := service.NewReservationService(dbQueries, emailService, calendarService)
+	reservationService := service.NewReservationService(dbQueries, db, emailService, calendarService)
 
 	return &API{
 		DB:               dbQueries,
-		dbConn:           dbConn,
+		sqlDB:            db.DB,
 		Oauth:            oauthService,
 		Auth:             authService,
 		EmailService:     emailService,
 		CalendarService:  calendarService,
 		Reservation:      reservationService,
 	}, nil
-}
-
-// Close: close database connection
-func (a *API) Close() error {
-	if a.dbConn != nil {
-		if err := a.dbConn.Close(); err != nil {
-			return fmt.Errorf("failed to close database: %w", err)
-		}
-	}
-
-	return nil
 }
