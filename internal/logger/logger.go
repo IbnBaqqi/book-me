@@ -10,7 +10,7 @@ import (
 
 var Log *slog.Logger
 
-// RetryLogger adapts the retryablehttp.LeveledLogger interface to your slog logger
+// RetryLogger adapts the retryablehttp.LeveledLogger interface to slog logger
 type RetryLogger struct{}
 
 func (l *RetryLogger) Error(msg string, keysAndValues ...interface{}) {
