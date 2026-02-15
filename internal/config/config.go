@@ -1,7 +1,7 @@
 package config
 
 import (
-	"log"
+	"log/slog"
 	"os"
 	"strconv"
 	"time"
@@ -68,7 +68,9 @@ type EmailConfig struct {
 func Load() (*Config, error) {
 	// Load .env file if it exists
 	if err := godotenv.Load(); err != nil {
-		log.Println("No .env file found, relying on system environment variables")
+		slog.Warn("no .env file found, relying on system environment variables",
+			"error", err,
+		)
 	}
 
 	cfg := &Config{
@@ -123,7 +125,10 @@ func getEnv(key, defaultValue string) string {
 func mustGetEnv(key string) string {
 	value := os.Getenv(key)
 	if value == "" {
-		log.Fatalf("%s environment variable must be set", key)
+		slog.Error("required environment variable not set",
+			"key", key,
+		)
+		os.Exit(1)
 	}
 	return value
 }
@@ -135,7 +140,12 @@ func getEnvAsInt(key string, defaultValue int) int {
 	}
 	value, err := strconv.Atoi(valueStr)
 	if err != nil {
-		log.Printf("Invalid value for %s, using default: %d", key, defaultValue)
+		slog.Warn("invalid int environment variable, using default",
+			"key", key,
+			"value", valueStr,
+			"default", defaultValue,
+			"error", err,
+		)
 		return defaultValue
 	}
 	return value
@@ -148,7 +158,12 @@ func getEnvAsInt64(key string, defaultValue int64) int64 {
 	}
 	value, err := strconv.ParseInt(valueStr, 10, 64)
 	if err != nil {
-		log.Printf("Invalid value for %s, using default: %d", key, defaultValue)
+		slog.Warn("invalid int environment variable, using default",
+			"key", key,
+			"value", valueStr,
+			"default", defaultValue,
+			"error", err,
+		)
 		return defaultValue
 	}
 	return value
