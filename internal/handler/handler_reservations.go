@@ -30,7 +30,7 @@ func (h *Handler) CreateReservation(w http.ResponseWriter, r *http.Request) {
 	req := dto.CreateReservationRequest{}
 	err := decoder.Decode(&req)
 	if err != nil {
-		respondWithError(w, http.StatusBadRequest, "Invalid request body", err)
+		respondWithError(w, http.StatusBadRequest, "Invalid request body")
 		return
 	}
 
@@ -115,7 +115,7 @@ func (h *Handler) CancelReservation(w http.ResponseWriter, r *http.Request) {
 	// Get authenticated user from context
 	currentUser, ok := auth.UserFromContext(r.Context())
 	if !ok {
-		respondWithError(w, http.StatusUnauthorized, "unauthorized", nil)
+		respondWithError(w, http.StatusUnauthorized, "unauthorized")
 		return
 	}
 
