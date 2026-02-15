@@ -13,14 +13,14 @@ import (
 
 // Oauth Service orchestrates the OAuth authentication flow
 type Service struct {
-	provider   *Provider42
+	provider *Provider42
 }
 
 // NewService creates a new OAuth service
 func NewService(provider *Provider42) *Service {
-	
+
 	return &Service{
-		provider:   provider,
+		provider: provider,
 	}
 }
 
@@ -28,7 +28,7 @@ const sessionName = "bookme-session"
 
 // InitiateLogin generates a state token and returns the OAuth authorization URL
 func (s *Service) InitiateLogin(w http.ResponseWriter, r *http.Request) (string, error) {
-	
+
 	state := generateRandomState()
 
 	// Store state in session to prevent CSRF
@@ -52,7 +52,7 @@ func (s *Service) Handlecallback(r *http.Request) (database.User, error) {
 		return database.User{}, ErrOAuthExchangeFailed
 	}
 
-	ctx, cancel := context.WithTimeout(r.Context(), 15 * time.Second)
+	ctx, cancel := context.WithTimeout(r.Context(), 15*time.Second)
 	defer cancel()
 
 	// Get loggedIn User Info from 42
@@ -63,8 +63,8 @@ func (s *Service) Handlecallback(r *http.Request) (database.User, error) {
 		}
 		return database.User{}, &OauthError{ //Fix
 			StatusCode: http.StatusBadGateway,
-        	Message:    err.Error(),
-        	Err:        err,
+			Message:    err.Error(),
+			Err:        err,
 		}
 	}
 
@@ -94,7 +94,7 @@ func (s *Service) Handlecallback(r *http.Request) (database.User, error) {
 // validateState checks CSRF protection state
 func (s *Service) ValidateState(w http.ResponseWriter, r *http.Request) error {
 	session, _ := s.provider.session.Get(r, sessionName)
-	
+
 	// get saved state and compare with incoming state
 	expectedState, ok := session.Values["oauth_state"].(string)
 	if !ok || expectedState != r.URL.Query().Get("state") {
@@ -104,13 +104,13 @@ func (s *Service) ValidateState(w http.ResponseWriter, r *http.Request) error {
 	// Clear state from session
 	delete(session.Values, "oauth_state")
 	session.Save(r, w)
-	
+
 	return nil
 }
 
 // GetAuthURL returns the OAuth authorization URL with state
 func (s *Service) GetRedirectTokenURL() string {
-	return s.provider.redirectTokenURI
+	return s.provider.redirectTokenURL
 }
 
 // generateRandomState generates a cryptograph secure random state token

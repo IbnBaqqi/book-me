@@ -1,12 +1,13 @@
 package oauth
 
 import (
-	"errors"
-	"net/http"
 	"context"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"log/slog"
+	"net/http"
 	"time"
 
 	"github.com/IbnBaqqi/book-me/internal/database"
@@ -30,30 +31,30 @@ type CampusUsers struct {
 	Primary bool `json:"is_primary"`
 }
 
-// Provider42 implements the Provider interface for 42 OAuth
+// Provider42 represents the info & dependencies for 42 OAuth
 type Provider42 struct {
 	db               *database.Queries
 	config           *oauth2.Config
 	session          *sessions.CookieStore
-	redirectTokenURI string
+	redirectTokenURL string
 	userInfoURL      string
 	httpClient       *retryablehttp.Client
 }
 
 // NewProvider42 creates a new 42 OAuth provider
 func NewProvider42(
-	db               *database.Queries,
-	config           *oauth2.Config,
-	sessionSecret    string,
-	redirectTokenURI string,
-	userInfoURL      string,
+	db *database.Queries,
+	config *oauth2.Config,
+	sessionSecret string,
+	redirectTokenURL string,
+	userInfoURL string,
 ) *Provider42 {
 
 	return &Provider42{
 		db:               db,
 		config:           config,
 		session:          sessions.NewCookieStore([]byte(sessionSecret)),
-		redirectTokenURI: redirectTokenURI,
+		redirectTokenURL: redirectTokenURL,
 		userInfoURL:      userInfoURL,
 	}
 }
@@ -73,20 +74,20 @@ func (p *Provider42) Fetch42UserData(ctx context.Context, oauthConfig *oauth2.Co
 	// A specialized HTTP client that handles the Authorization header and token refreshing automatically.
 	oauthClient := oauthConfig.Client(ctx, token)
 
-	// Create retry client for this request to avoid race condition
+	// Create retry client for request
 	retryClient := p.NewRetryClient(oauthClient.Transport)
 
 	// Create retryable request
-	req, err := retryablehttp.NewRequestWithContext(ctx, "GET", "http://jihgcrrttricvogle.com", nil)
+	req, err := retryablehttp.NewRequestWithContext(ctx, "GET", p.userInfoURL, nil)
 	if err != nil {
-		logger.Log.Error("failed to create request", "error", err)
+		slog.Error("failed to create request", "error", err)
 		return nil, fmt.Errorf("failed to create request") // change
 	}
 
 	// RetryClient handles retries on 429 & 5xx reponse exponentially
 	res, err := retryClient.Do(req)
 	if err != nil {
-		logger.Log.Error("failed to fetch user data from 42 intra", "err", err)
+		slog.Error("failed to fetch user data from 42 intra", "err", err)
 		return nil, fmt.Errorf("failed to fetch user data from 42 intra")
 	}
 	defer res.Body.Close()
@@ -109,13 +110,13 @@ func (p *Provider42) Fetch42UserData(ctx context.Context, oauthConfig *oauth2.Co
 func (p *Provider42) NewRetryClient(oauthTransport http.RoundTripper) *retryablehttp.Client {
 	client := retryablehttp.NewClient()
 
-	client.RetryMax =      3
-	client.RetryWaitMin =  1 * time.Second
-	client.RetryWaitMax =  5 * time.Second
-	client.Logger =        &logger.RetryLogger{}
-	client.Backoff =       retryablehttp.DefaultBackoff
+	client.RetryMax = 3
+	client.RetryWaitMin = 1 * time.Second
+	client.RetryWaitMax = 5 * time.Second
+	client.Logger = &logger.RetryLogger{}
+	client.Backoff = retryablehttp.DefaultBackoff
 	client.HTTPClient.Transport = oauthTransport
-	
+
 	return client
 }
 
@@ -124,7 +125,7 @@ func (p *Provider42) FindOrCreateUser(ctx context.Context, user42 *User42) (data
 	// Try to find existing user
 	user, err := p.db.GetUserByEmail(ctx, user42.Email)
 	if err == nil {
-		return user, nil 
+		return user, nil
 	}
 
 	// If not found, create new user
