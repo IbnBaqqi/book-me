@@ -44,10 +44,6 @@ func (s *Service) InitiateLogin(w http.ResponseWriter, r *http.Request) (string,
 	return url, nil
 }
 
-// func (s *Service) HandleCallback(ctx context.Context, code, state string) (*UserInfo, error) {
-
-// }
-
 func (s *Service) Handlecallback(r *http.Request) (database.User, error) {
 
 	// Exchange authorization code for token
@@ -65,7 +61,7 @@ func (s *Service) Handlecallback(r *http.Request) (database.User, error) {
 		if errors.Is(err, context.DeadlineExceeded) {
 			return database.User{}, ErrOAuthTimeout
 		}
-		return database.User{}, &OauthError{
+		return database.User{}, &OauthError{ //Fix
 			StatusCode: http.StatusBadGateway,
         	Message:    err.Error(),
         	Err:        err,
