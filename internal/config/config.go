@@ -1,7 +1,8 @@
+// Package config provides application configuration loading.
 package config
 
 import (
-	"log"
+	"log/slog"
 	"os"
 	"strconv"
 	"time"
@@ -46,14 +47,14 @@ type AppConfig struct {
 	OAuthTokenURI    string
 }
 
-// Google Calendar config
+// GoogleConfig holds Google Calendar configuration.
 type GoogleConfig struct {
 	CredentialsFile string
 	CalendarScope   string
 	CalendarID      string
 }
 
-// Email config
+// EmailConfig holds email service configuration.
 type EmailConfig struct {
 	SMTPHost     string
 	SMTPPort     int
@@ -64,11 +65,13 @@ type EmailConfig struct {
 	UseTLS       bool
 }
 
-// LoadConfig loads configuration from environment variables
+// Load loads configuration from environment variables
 func Load() (*Config, error) {
 	// Load .env file if it exists
 	if err := godotenv.Load(); err != nil {
-		log.Println("No .env file found, relying on system environment variables")
+		slog.Warn("no .env file found, relying on system environment variables",
+			"error", err,
+		)
 	}
 
 	cfg := &Config{
@@ -79,7 +82,7 @@ func Load() (*Config, error) {
 			IdleTimeout:  getEnvAsDuration("SERVER_IDLE_TIMEOUT", "60s"),
 		},
 		App: AppConfig{
-			Env:              getEnv("ENVIRONMENT", "dev"),
+			Env:              getEnv("ENV", "dev"),
 			DBURL:            mustGetEnv("DB_URL"),
 			SessionSecret:    mustGetEnv("SESSION_SECRET"),
 			ClientID:         mustGetEnv("CLIENT_ID"),
@@ -123,7 +126,10 @@ func getEnv(key, defaultValue string) string {
 func mustGetEnv(key string) string {
 	value := os.Getenv(key)
 	if value == "" {
-		log.Fatalf("%s environment variable must be set", key)
+		slog.Error("required environment variable not set",
+			"key", key,
+		)
+		os.Exit(1)
 	}
 	return value
 }
@@ -135,12 +141,18 @@ func getEnvAsInt(key string, defaultValue int) int {
 	}
 	value, err := strconv.Atoi(valueStr)
 	if err != nil {
-		log.Printf("Invalid value for %s, using default: %d", key, defaultValue)
+		slog.Warn("invalid int environment variable, using default",
+			"key", key,
+			"value", valueStr,
+			"default", defaultValue,
+			"error", err,
+		)
 		return defaultValue
 	}
 	return value
 }
 
+//nolint:unused // kept for future use
 func getEnvAsInt64(key string, defaultValue int64) int64 {
 	valueStr := os.Getenv(key)
 	if valueStr == "" {
@@ -148,7 +160,12 @@ func getEnvAsInt64(key string, defaultValue int64) int64 {
 	}
 	value, err := strconv.ParseInt(valueStr, 10, 64)
 	if err != nil {
-		log.Printf("Invalid value for %s, using default: %d", key, defaultValue)
+		slog.Warn("invalid int environment variable, using default",
+			"key", key,
+			"value", valueStr,
+			"default", defaultValue,
+			"error", err,
+		)
 		return defaultValue
 	}
 	return value

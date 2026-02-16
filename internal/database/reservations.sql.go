@@ -63,22 +63,23 @@ SELECT EXISTS (
     SELECT 1
     FROM reservations
     WHERE room_id = $1
-      AND start_time < $3
-      AND end_time > $2
-)
+      AND start_time < $2
+      AND end_time > $3
+	FOR UPDATE
+) AS overlap
 `
 
 type ExistsOverlappingReservationParams struct {
 	RoomID    int64
-	EndTime   time.Time
 	StartTime time.Time
+	EndTime   time.Time
 }
 
 func (q *Queries) ExistsOverlappingReservation(ctx context.Context, arg ExistsOverlappingReservationParams) (bool, error) {
-	row := q.db.QueryRowContext(ctx, existsOverlappingReservation, arg.RoomID, arg.EndTime, arg.StartTime)
-	var exists bool
-	err := row.Scan(&exists)
-	return exists, err
+	row := q.db.QueryRowContext(ctx, existsOverlappingReservation, arg.RoomID, arg.StartTime, arg.EndTime)
+	var overlap bool
+	err := row.Scan(&overlap)
+	return overlap, err
 }
 
 const getAllBetweenDates = `-- name: GetAllBetweenDates :many

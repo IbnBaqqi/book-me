@@ -6,12 +6,14 @@ import (
 )
 
 // ServiceError represents a business logic error with a status code
+//nolint:revive // intentional naming for clarity
 type ServiceError struct {
 	Err        error
 	Message    string
 	StatusCode int
 }
 
+// Error implements the error interface
 func (e *ServiceError) Error() string {
 	if e.Err != nil {
 		return fmt.Sprintf("%s: %v", e.Message, e.Err)
@@ -24,6 +26,7 @@ func (e *ServiceError) Unwrap() error {
 	return e.Err
 }
 
+// Predefined errors - Service errors
 var (
 	ErrGetUserFailed = &ServiceError{
 		Message:    "failed to get User",
@@ -53,9 +56,8 @@ var (
 		Message:    "failed to fetch reservations",
 		StatusCode: http.StatusInternalServerError,
 	}
-	ErrUnauthorizedCancellation  = &ServiceError{
+	ErrUnauthorizedCancellation = &ServiceError{
 		Message:    "unauthorized to cancel this reservation",
 		StatusCode: http.StatusInternalServerError,
 	}
-	
 )

@@ -1,3 +1,4 @@
+// Package main is the entry point for the book-me server.
 package main
 
 import (
@@ -12,6 +13,7 @@ import (
 
 	"github.com/IbnBaqqi/book-me/internal/api"
 	"github.com/IbnBaqqi/book-me/internal/config"
+	"github.com/IbnBaqqi/book-me/internal/database"
 	"github.com/IbnBaqqi/book-me/internal/logger"
 )
 
@@ -24,27 +26,34 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Setup structured logging
+	// Initialize & Setup global structured logging
 	logger.Init(&cfg.Logger, cfg.App.Env)
 
-	logger.Log.Info("starting book-me server",
+	slog.Info("starting book-me server",
 		"port", cfg.Server.Port,
 		"log_level", cfg.Logger.Level,
 	)
 
-	// Initialize database & services
+	// Initialize database
 	ctx := context.Background()
-	apiCfg, err := api.New(ctx, cfg)
+	db, err := database.Connect(ctx, &cfg.App)
 	if err != nil {
-		logger.Log.Error("Failed to initialize api services:", "error", err)
+		slog.Error("failed to connect to database", "error", err)
+		os.Exit(1)
 	}
-
 	// Ensure database connection close on exit
 	defer func() {
-		if err = apiCfg.Close(); err != nil {
-			logger.Log.Error("failed to close database connection", "error", err)
+		if err = db.Close(); err != nil {
+			slog.Error("failed to close database connection", "error", err)
 		}
 	}()
+
+	// Initialize & setup rservices
+	apiCfg, err := api.New(cfg, db)
+	if err != nil {
+		slog.Error("Failed to initialize api services", "error", err)
+		os.Exit(1)
+	}
 
 	// Setup routes
 	mux := api.SetupRoutes(apiCfg)
@@ -59,9 +68,9 @@ func main() {
 
 	// Start server in a goroutine
 	go func() {
-		logger.Log.Info("Server listening", "address", server.Addr)
+		slog.Info("Server listening", "address", server.Addr)
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			logger.Log.Error("Server failed to start:", "error", err)
+			slog.Error("Server failed to start", "error", err)
 			os.Exit(1)
 		}
 	}()
@@ -71,17 +80,17 @@ func main() {
 	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
 	<-quit
 
-	logger.Log.Info("Server is shutting down...")
+	slog.Info("Server is shutting down...")
 
 	// Create a deadline for shutdown
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
 	// Attempt graceful shutdown
 	if err := server.Shutdown(ctx); err != nil {
-		logger.Log.Error("Server forced to shutdown:", "error", err)
+		slog.Error("Server forced to shutdown", "error", err)
 	}
 
-	logger.Log.Info("Server exited gracefully")
+	slog.Info("Server exited gracefully")
 
 }

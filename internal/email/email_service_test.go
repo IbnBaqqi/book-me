@@ -105,7 +105,7 @@ func TestTemplateRendering(t *testing.T) {
 	}
 
 	// Save to file for manual inspection
-	err = os.WriteFile("test_output.html", body.Bytes(), 0644)
+	err = os.WriteFile("test_output.html", body.Bytes(), 0600)
 	if err != nil {
 		t.Logf("Warning: Failed to write debug file: %v", err)
 	} else {

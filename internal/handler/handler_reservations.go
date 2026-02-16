@@ -10,7 +10,9 @@ import (
 	appvalidator "github.com/IbnBaqqi/book-me/internal/validator"
 )
 
-// Handler to create a new reservation
+// CreateReservation is handler to handles creation of a new reservation
+// 
+// POST /reservations
 func (h *Handler) CreateReservation(w http.ResponseWriter, r *http.Request) {
 
 	// Get authenticated user from context
@@ -30,7 +32,7 @@ func (h *Handler) CreateReservation(w http.ResponseWriter, r *http.Request) {
 	req := dto.CreateReservationRequest{}
 	err := decoder.Decode(&req)
 	if err != nil {
-		respondWithError(w, http.StatusBadRequest, "Invalid request body", err)
+		respondWithError(w, http.StatusBadRequest, "Invalid request body")
 		return
 	}
 
@@ -67,7 +69,9 @@ func (h *Handler) CreateReservation(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// Handler to Fetch reservations and group them
+// GetReservations Handler handles fetching reservations and group them
+// 
+// GET /reservations
 func (h *Handler) GetReservations(w http.ResponseWriter, r *http.Request) {
 
 	// Validate & parse query parameters
@@ -102,7 +106,10 @@ func (h *Handler) GetReservations(w http.ResponseWriter, r *http.Request) {
 	respondWithJSON(w, http.StatusOK, reserved)
 }
 
-// Handler to cancel reservation
+
+// CancelReservation handler handles cancelling a reservation.
+// 
+// DELETE /reservations/{id}
 func (h *Handler) CancelReservation(w http.ResponseWriter, r *http.Request) {
 
 	// Extract & validate ID from path parameter
@@ -115,7 +122,7 @@ func (h *Handler) CancelReservation(w http.ResponseWriter, r *http.Request) {
 	// Get authenticated user from context
 	currentUser, ok := auth.UserFromContext(r.Context())
 	if !ok {
-		respondWithError(w, http.StatusUnauthorized, "unauthorized", nil)
+		respondWithError(w, http.StatusUnauthorized, "unauthorized")
 		return
 	}
 

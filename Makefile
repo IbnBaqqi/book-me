@@ -2,7 +2,7 @@
 
 # Run the application
 run:
-	@go run ./cmd/api
+	@go run ./cmd/server
 
 # Run with hot reload (requires air: go install github.com/cosmtrek/air@latest)
 dev:

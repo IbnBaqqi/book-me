@@ -6,6 +6,7 @@ import (
 )
 
 // OauthError represents an oauth error with a status code
+//nolint:revive // intentional naming for clarity
 type OauthError struct {
 	Err        error
 	Message    string
@@ -130,11 +131,11 @@ var (
 		StatusCode: http.StatusBadRequest,
 	}
 	ErrOAuthTimeout = &OauthError{
-		Message:    "OAuth request timeout",
+		Message:    "oauth request timeout",
 		StatusCode: http.StatusGatewayTimeout,
 	}
 	ErrInvalidCampus = &OauthError{
-		Message:    "Access Denied: Only Helsinki Campus Student Allowed",
+		Message:    "access denied: only helsinki campus student allowed",
 		StatusCode: http.StatusForbidden,
 	}
 	ErrOAuthStateFailed = &OauthError{

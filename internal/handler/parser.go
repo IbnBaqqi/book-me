@@ -11,11 +11,11 @@ import (
 // Query parameter validation structs
 type dateRangeQuery struct {
 	StartDate time.Time `validate:"required"`
-	EndDate   time.Time `validate:"required,gtfield=StartDate"`
+	EndDate   time.Time `validate:"required,gtefield=StartDate"`
 }
 
 type reservationIDParam struct {
-	ID int64 `validate:"required,gt=0"`
+	ID int64 `validate:"gt=0"`
 }
 
 // parseDateRange extracts and validates start/end dates from query params

@@ -1,13 +1,16 @@
+// Package dto contains data transfer objects.
 package dto
 
 import "time"
 
+// ReservedDto represents a room with its reservation slots
 type ReservedDto struct {
 	RoomID   int64             `json:"roomId"`
 	RoomName string            `json:"roomName"`
 	Slots    []ReservedSlotDto `json:"slots"`
 }
 
+// ReservedSlotDto represents a single reservation time slot.
 type ReservedSlotDto struct {
 	ID        int64     `json:"id"`
 	StartTime time.Time `json:"startTime"`
@@ -15,7 +18,7 @@ type ReservedSlotDto struct {
 	BookedBy  *string   `json:"bookedBy,omitempty"`
 }
 
-// ReservationDto return dto after reservation creation
+// ReservationDto is the returned dto after reservation creation.
 type ReservationDto struct {
 	ID        int64     `json:"Id"`
 	RoomID    int64     `json:"roomId"`
