@@ -2,6 +2,7 @@ package email
 
 import (
 	"bytes"
+	"context"
 	"html/template"
 	"os"
 	"strings"
@@ -36,7 +37,8 @@ func TestRealEmailSending(t *testing.T) {
 		testEmail = cfg.SMTPUsername // Send to self
 	}
 
-	err = svc.sendConfirmationSync(
+	err = svc.SendConfirmation(
+		context.Background(),
 		testEmail,
 		"Test Conference Room",
 		time.Now().Format("Monday, January 2, 2006 at 3:04 PM"),
