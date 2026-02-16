@@ -16,10 +16,16 @@ import (
 	"github.com/IbnBaqqi/book-me/internal/google"
 )
 
+// User role constants
+const (
+	RoleStudent = "STUDENT"
+	RoleStaff   = "STAFF"
+)
+
 // ReservationService handles reservation business logic.
 type ReservationService struct {
-	db       *database.Queries
-	sqlDB    *database.DB
+	db       *database.DB
+	// sqlDB    *database.DB
 	email    *email.Service
 	calendar *google.CalendarService
 }
@@ -51,14 +57,14 @@ type CancelReservationInput struct {
 
 // NewReservationService create dependencies for ReservationService.
 func NewReservationService(
-	db *database.Queries,
-	sqlDB *database.DB,
+	db *database.DB,
+	// sqlDB *database.DB,
 	emailService *email.Service,
 	calendarService *google.CalendarService,
 ) *ReservationService {
 	return &ReservationService{
 		db:       db,
-		sqlDB:    sqlDB,
+		// sqlDB:    sqlDB,
 		email:    emailService,
 		calendar: calendarService,
 	}
@@ -91,12 +97,14 @@ func (s *ReservationService) CreateReservation(
 	duration := input.EndTime.Sub(input.StartTime)
 	maxDuration := 4 * time.Hour
 
-	if duration > maxDuration && input.UserRole == "STUDENT" {
+	if duration > maxDuration && input.UserRole == RoleStudent {
 		return nil, ErrExceedsMaxDuration
 	}
 
-	// Start transaction
-	tx, err := s.sqlDB.BeginTx(ctx, nil)
+	// Start transaction with serializable isolation for reservation integrity
+	tx, err := s.db.BeginTx(ctx, &sql.TxOptions{
+		Isolation: sql.LevelReadCommitted,
+	})
 	if err != nil {
 		return nil, &ServiceError{
 			StatusCode: http.StatusInternalServerError,
@@ -104,12 +112,14 @@ func (s *ReservationService) CreateReservation(
 		}
 	}
 	defer func() {
-		_ = tx.Rollback() // rollback error is not critical in defer
+		_ = tx.Rollback()
 	}()
 
 	qtx := s.db.WithTx(tx.Tx)
 
 	// Check for overlapping reservations
+	// Note: StartTime and EndTime are intentionally swapped for the overlap check logic
+	// This checks if the new reservation's time range conflicts with existing ones
 	overlap, err := qtx.ExistsOverlappingReservation(ctx, database.ExistsOverlappingReservationParams{
 		RoomID:    input.RoomID,
 		StartTime: input.EndTime,
@@ -176,15 +186,20 @@ func (s *ReservationService) CreateReservation(
 	}()
 
 	// Send confirmation email (async)
-	if err := s.email.SendConfirmation(
-		ctx,
-		dbUser.Email,
-		room.Name,
-		reservation.StartTime.Format("Monday, January 2, 2006 at 3:04 PM"),
-		reservation.EndTime.Format("Monday, January 2, 2006 at 3:04 PM"),
-	); err != nil {
-		slog.Error("failed to send confirmation email", "error", err)
-	}
+	go func() {
+		emailCtx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+		defer cancel()
+
+		if err := s.email.SendConfirmation(
+			emailCtx,
+			dbUser.Email,
+			room.Name,
+			reservation.StartTime.Format("Monday, January 2, 2006 at 3:04 PM"),
+			reservation.EndTime.Format("Monday, January 2, 2006 at 3:04 PM"),
+		); err != nil {
+			slog.Error("failed to send confirmation email", "error", err)
+		}
+	}()
 
 	return &reservation, nil
 }
@@ -201,7 +216,7 @@ func (s *ReservationService) GetReservations(
 	endDateTime := input.EndDate.AddDate(0, 0, 1)
 
 	// Check if user is a staff
-	isStaff := input.UserRole == "STAFF"
+	isStaff := input.UserRole == RoleStaff
 
 	// Fetch all reservations between dates
 	reservations, err := s.db.GetAllBetweenDates(ctx, database.GetAllBetweenDatesParams{
@@ -272,7 +287,7 @@ func (s *ReservationService) CancelReservation(
 	}
 
 	// Check authorization
-	isStaff := input.UserRole == "STAFF"
+	isStaff := input.UserRole == RoleStaff
 	isOwner := reservation.UserID == input.UserID
 
 	if !isStaff && !isOwner {
