@@ -4,7 +4,6 @@
 package api
 
 import (
-	"database/sql"
 	"fmt"
 
 	"github.com/IbnBaqqi/book-me/internal/auth"
@@ -19,20 +18,19 @@ import (
 
 // API holds all dependencies for the API handlers
 type API struct {
-	DB               *database.Queries
-	sqlDB            *sql.DB
-	Oauth            *oauth.Service
-	Auth             *auth.Service
-	EmailService     *email.Service
-	CalendarService  *google.CalendarService
-	Reservation      *service.ReservationService
+	DB              *database.DB
+	Oauth           *oauth.Service
+	Auth            *auth.Service
+	EmailService    *email.Service
+	CalendarService *google.CalendarService
+	Reservation     *service.ReservationService
 }
 
 // New initializes all services and returns a pointer to API
 func New(cfg *config.Config, db *database.DB) (*API, error) {
 
 	// Using SQLC generated database package to create a new *database.Queries,
-	dbQueries := database.New(db)
+	// dbQueries := database.New(db)
 
 	// Initialize Google Calendar service
 	calendarService, err := google.NewCalendarService(
@@ -73,22 +71,21 @@ func New(cfg *config.Config, db *database.DB) (*API, error) {
 	}
 
 	// Initialize 42 oauth provider & service
-	oauth42 := oauth.NewProvider42(dbQueries, oauthConfig, cfg.App.SessionSecret, cfg.App.RedirectTokenURI,cfg.App.User42InfoURL)
+	oauth42 := oauth.NewProvider42(db, oauthConfig, cfg.App.SessionSecret, cfg.App.RedirectTokenURI, cfg.App.User42InfoURL)
 	oauthService := oauth.NewService(oauth42)
 
 	// Initialize auth service for app (JWT)
 	authService := auth.NewService(cfg.App.JWTSecret)
-	
+
 	// Initialize reservation service
-	reservationService := service.NewReservationService(dbQueries, db, emailService, calendarService)
+	reservationService := service.NewReservationService(db, emailService, calendarService)
 
 	return &API{
-		DB:               dbQueries,
-		sqlDB:            db.DB,
-		Oauth:            oauthService,
-		Auth:             authService,
-		EmailService:     emailService,
-		CalendarService:  calendarService,
-		Reservation:      reservationService,
+		DB:              db,
+		Oauth:           oauthService,
+		Auth:            authService,
+		EmailService:    emailService,
+		CalendarService: calendarService,
+		Reservation:     reservationService,
 	}, nil
 }
