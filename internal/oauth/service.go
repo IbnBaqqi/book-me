@@ -70,11 +70,9 @@ func (s *Service) HandleCallback(r *http.Request) (database.User, error) {
 		if errors.Is(err, context.DeadlineExceeded) {
 			return database.User{}, ErrOAuthTimeout
 		}
-		return database.User{}, &OauthError{ //Fix
-			StatusCode: http.StatusBadGateway,
-			Message:    err.Error(),
-			Err:        err,
-		}
+		// Log the actual error for debugging, but return generic error to client
+		slog.Error("failed to fetch user data from 42 intra", "error", err)
+		return database.User{}, ErrOAuthUserInfoFailed
 	}
 
 	// Validate Campus
