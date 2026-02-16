@@ -12,6 +12,7 @@ import (
 
 	"github.com/IbnBaqqi/book-me/internal/database"
 	"github.com/IbnBaqqi/book-me/internal/logger"
+	"github.com/IbnBaqqi/book-me/internal/service"
 	"github.com/gorilla/sessions"
 	"github.com/hashicorp/go-retryablehttp"
 	"golang.org/x/oauth2"
@@ -33,7 +34,7 @@ type CampusUsers struct {
 
 // Provider42 represents the info & dependencies for 42 OAuth
 type Provider42 struct {
-	db               *database.Queries
+	db               *database.DB
 	config           *oauth2.Config
 	session          *sessions.CookieStore
 	redirectTokenURL string
@@ -42,7 +43,7 @@ type Provider42 struct {
 
 // NewProvider42 creates a new 42 OAuth provider
 func NewProvider42(
-	db *database.Queries,
+	db *database.DB,
 	config *oauth2.Config,
 	sessionSecret string,
 	redirectTokenURL string,
@@ -142,9 +143,9 @@ func (p *Provider42) FindOrCreateUser(ctx context.Context, user42 *User42) (data
 
 // createUser creates a new user from 42 data
 func (p *Provider42) createUser(ctx context.Context, user42 *User42) (database.User, error) {
-	role := "STUDENT"
+	role := service.RoleStudent
 	if user42.Staff {
-		role = "STAFF"
+		role = service.RoleStaff
 	}
 
 	user, err := p.db.CreateUser(ctx, database.CreateUserParams{
