@@ -9,8 +9,8 @@ import (
 )
 
 func TestRateLimiter(t *testing.T) {
-	// Create a rate limiter: 2 requests per second, burst of 2
-	limiter := NewRateLimiter(rate.Limit(2), 2)
+	// Create a rate limiter: 2 requests per second, burst of 2, no proxy trust
+	limiter := NewRateLimiter(rate.Limit(2), 2, false)
 
 	// Create a simple handler
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -94,36 +94,70 @@ func TestGetIP(t *testing.T) {
 		remoteAddr     string
 		xForwardedFor  string
 		xRealIP        string
+		trustProxy     bool
 		expectedIP     string
 	}{
 		{
-			name:       "from RemoteAddr",
+			name:       "from RemoteAddr when not trusting proxy",
 			remoteAddr: "192.168.1.1:1234",
+			trustProxy: false,
 			expectedIP: "192.168.1.1",
 		},
 		{
-			name:          "from X-Real-IP",
-			remoteAddr:    "192.168.1.1:1234",
-			xRealIP:       "10.0.0.1",
-			expectedIP:    "10.0.0.1",
+			name:       "ignores X-Real-IP when not trusting proxy",
+			remoteAddr: "192.168.1.1:1234",
+			xRealIP:    "10.0.0.1",
+			trustProxy: false,
+			expectedIP: "192.168.1.1",
 		},
 		{
-			name:          "from X-Forwarded-For",
+			name:          "ignores X-Forwarded-For when not trusting proxy",
 			remoteAddr:    "192.168.1.1:1234",
 			xForwardedFor: "10.0.0.2",
+			trustProxy:    false,
+			expectedIP:    "192.168.1.1",
+		},
+		{
+			name:       "from RemoteAddr when trusting proxy but no headers",
+			remoteAddr: "192.168.1.1:1234",
+			trustProxy: true,
+			expectedIP: "192.168.1.1",
+		},
+		{
+			name:       "from X-Real-IP when trusting proxy",
+			remoteAddr: "192.168.1.1:1234",
+			xRealIP:    "10.0.0.1",
+			trustProxy: true,
+			expectedIP: "10.0.0.1",
+		},
+		{
+			name:          "from X-Forwarded-For when trusting proxy",
+			remoteAddr:    "192.168.1.1:1234",
+			xForwardedFor: "10.0.0.2",
+			trustProxy:    true,
 			expectedIP:    "10.0.0.2",
 		},
 		{
-			name:          "X-Forwarded-For takes precedence",
+			name:          "X-Forwarded-For takes precedence when trusting proxy",
 			remoteAddr:    "192.168.1.1:1234",
 			xForwardedFor: "10.0.0.2",
 			xRealIP:       "10.0.0.1",
+			trustProxy:    true,
+			expectedIP:    "10.0.0.2",
+		},
+		{
+			name:          "X-Forwarded-For with multiple IPs takes first",
+			remoteAddr:    "192.168.1.1:1234",
+			xForwardedFor: "10.0.0.2, 10.0.0.3, 10.0.0.4",
+			trustProxy:    true,
 			expectedIP:    "10.0.0.2",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			limiter := NewRateLimiter(rate.Limit(1), 1, tt.trustProxy)
+			
 			req := httptest.NewRequest("GET", "/test", nil)
 			req.RemoteAddr = tt.remoteAddr
 
@@ -134,7 +168,7 @@ func TestGetIP(t *testing.T) {
 				req.Header.Set("X-Real-IP", tt.xRealIP)
 			}
 
-			ip := getIP(req)
+			ip := limiter.getIP(req)
 			if ip != tt.expectedIP {
 				t.Errorf("expected IP %s, got %s", tt.expectedIP, ip)
 			}

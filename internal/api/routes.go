@@ -25,20 +25,17 @@ func SetupRoutes(cfg *API) *http.ServeMux {
 	)
 
 	// Create rate limiters
-	// OAuth endpoints: 5 requests per minute (prevent brute force)
-	oauthLimiter := middleware.NewRateLimiter(rate.Every(12*time.Second), 5)
-	
-	// API endpoints: 30 requests per minute (normal usage)
-	apiLimiter := middleware.NewRateLimiter(rate.Every(2*time.Second), 30)
+	oauthLimiter := middleware.NewRateLimiter(rate.Every(12*time.Second), 5, false)
+	apiLimiter := middleware.NewRateLimiter(rate.Every(2*time.Second), 30, false)
 
-	// Health check (public, no rate limit)
+	// Health check
 	mux.HandleFunc("GET /health", h.Health)
 
-	// Authentication routes (rate limited)
+	// Authentication routes
 	mux.Handle("GET /oauth/login", oauthLimiter.Limit(http.HandlerFunc(h.Login)))
 	mux.Handle("GET /oauth/callback", oauthLimiter.Limit(http.HandlerFunc(h.Callback)))
 
-	// Reservation routes (authenticated + rate limited)
+	// Reservation routes
 	mux.Handle(
 		"POST /api/v1/reservations",
 		apiLimiter.Limit(
