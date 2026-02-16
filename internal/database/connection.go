@@ -1,3 +1,4 @@
+// Package database provides database connection, queries and transaction management.
 package database
 
 import (
@@ -8,6 +9,7 @@ import (
 	"log/slog"
 
 	"github.com/IbnBaqqi/book-me/internal/config"
+	_ "github.com/lib/pq" // PostgreSQL driver registration
 )
 
 // DB wraps the database connection pool
@@ -30,7 +32,9 @@ func Connect(ctx context.Context, cfg *config.AppConfig) (*DB, error) {
 
 	// Test the connection, ping with context
 	if err := dbConn.PingContext(ctx); err != nil {
-		dbConn.Close()
+		if err = dbConn.Close(); err != nil {
+			slog.Error("failed to close database connection", "error", err)
+		}
 		slog.Error("failed to ping database", "error", err)
 		return nil, fmt.Errorf("failed to ping database: %w", err)
 	}

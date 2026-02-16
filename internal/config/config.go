@@ -1,3 +1,4 @@
+// Package config provides application configuration loading.
 package config
 
 import (
@@ -46,14 +47,14 @@ type AppConfig struct {
 	OAuthTokenURI    string
 }
 
-// Google Calendar config
+// GoogleConfig holds Google Calendar configuration.
 type GoogleConfig struct {
 	CredentialsFile string
 	CalendarScope   string
 	CalendarID      string
 }
 
-// Email config
+// EmailConfig holds email service configuration.
 type EmailConfig struct {
 	SMTPHost     string
 	SMTPPort     int
@@ -64,7 +65,7 @@ type EmailConfig struct {
 	UseTLS       bool
 }
 
-// LoadConfig loads configuration from environment variables
+// Load loads configuration from environment variables
 func Load() (*Config, error) {
 	// Load .env file if it exists
 	if err := godotenv.Load(); err != nil {
@@ -151,6 +152,7 @@ func getEnvAsInt(key string, defaultValue int) int {
 	return value
 }
 
+//nolint:unused // kept for future use
 func getEnvAsInt64(key string, defaultValue int64) int64 {
 	valueStr := os.Getenv(key)
 	if valueStr == "" {

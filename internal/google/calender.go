@@ -1,3 +1,4 @@
+// Package google provides Google Calendar integration.
 package google
 
 import (
@@ -12,6 +13,7 @@ import (
 	"google.golang.org/api/option"
 )
 
+// Reservation represents the data needed to create a calendar event.
 type Reservation struct {
 	StartTime time.Time
 	EndTime   time.Time
@@ -19,6 +21,7 @@ type Reservation struct {
 	Room string
 }
 
+// CalendarService manages Google Calendar operations.
 type CalendarService struct {
     service    *calendar.Service
     calendarID string
@@ -30,7 +33,7 @@ func NewCalendarService(credentialsFile, calendarScope, calendarID string) (*Cal
     ctx := context.Background()
 
 	// Read the entire service account JSON file
-	credentialsJSON, err := os.ReadFile(credentialsFile)
+	credentialsJSON, err := os.ReadFile(credentialsFile) //nolint:gosec // file path comes from config, not user input
 	if err != nil {
 		return nil, fmt.Errorf("failed to read credentials file: %w", err)
 	}
@@ -79,12 +82,12 @@ func (s *CalendarService) CreateGoogleEvent(ctx context.Context, reservation *Re
     // Create the event
     createdEvent, err := s.service.Events.Insert(s.calendarID, event).Context(ctx).Do()
     if err != nil {
-        slog.Error("Failed to create calendar event", "error", err)
+        slog.Error("failed to create calendar event", "error", err)
         return "", fmt.Errorf("failed to create event: %w", err)
     }
 
     if createdEvent.Id == "" {
-        return "", fmt.Errorf("Google Calendar event creation failed: no ID returned")
+        return "", fmt.Errorf("google calendar event creation failed: no ID returned")
     }
 
     return createdEvent.Id, nil

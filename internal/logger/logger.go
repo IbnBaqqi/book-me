@@ -1,3 +1,4 @@
+// Package logger provides structured logging utilities.
 package logger
 
 import (
@@ -8,23 +9,28 @@ import (
 	"github.com/IbnBaqqi/book-me/internal/config"
 )
 
+// Log is the global structured logger instance.
 var Log *slog.Logger
 
 // RetryLogger adapts the retryablehttp.LeveledLogger interface to slog logger
 type RetryLogger struct{}
 
+// Error logs a error-level message.
 func (l *RetryLogger) Error(msg string, keysAndValues ...interface{}) {
 	Log.Error(msg, keysAndValues...)
 }
 
+// Info logs an info-level message.
 func (l *RetryLogger) Info(msg string, keysAndValues ...interface{}) {
 	Log.Info(msg, keysAndValues...)
 }
 
+// Debug logs a debug-level message.
 func (l *RetryLogger) Debug(msg string, keysAndValues ...interface{}) {
 	Log.Debug(msg, keysAndValues...)
 }
 
+// Warn logs a warning-level message.
 func (l *RetryLogger) Warn(msg string, keysAndValues ...interface{}) {
 	Log.Warn(msg, keysAndValues...)
 }

@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-// Handler to handle login
+// Login handles user login / sign-in
 func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 
 	// Initiate oauth2 flow (login)
@@ -21,17 +21,17 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, url, http.StatusFound)
 }
 
-// Handler to handle callback from Oauth flow
+// Callback handles callback from Oauth flow
 func (h *Handler) Callback(w http.ResponseWriter, r *http.Request) {
 
 	// Validate CSRF state
 	if err := h.oauth.ValidateState(w, r); err != nil {
-		respondWithError(w, http.StatusForbidden, "Invalid or missing state")
+		handleError(w, err)
 		return
 	}
 
 	// Oauth 42 service handles callback
-	user, err := h.oauth.Handlecallback(r)
+	user, err := h.oauth.HandleCallback(r)
 	if err != nil {
 		handleError(w, err)
 		return

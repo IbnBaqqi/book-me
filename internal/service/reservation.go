@@ -1,8 +1,10 @@
+// Package service contains business logic for the application.
 package service
 
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -14,6 +16,7 @@ import (
 	"github.com/IbnBaqqi/book-me/internal/google"
 )
 
+// ReservationService handles reservation business logic.
 type ReservationService struct {
 	db       *database.Queries
 	sqlDB    *database.DB
@@ -21,6 +24,7 @@ type ReservationService struct {
 	calendar *google.CalendarService
 }
 
+// CreateReservationInput contains the input parameters for creating a reservation.
 type CreateReservationInput struct {
 	UserID    int64
 	UserName  string
@@ -30,6 +34,7 @@ type CreateReservationInput struct {
 	EndTime   time.Time
 }
 
+// GetReservationsInput contains the input parameters for fetching reservations.
 type GetReservationsInput struct {
 	StartDate time.Time
 	EndDate   time.Time
@@ -37,12 +42,14 @@ type GetReservationsInput struct {
 	UserRole  string
 }
 
+// CancelReservationInput contains the input parameters for cancelling a reservation.
 type CancelReservationInput struct {
-	ID  int64
-	UserID int64
+	ID       int64
+	UserID   int64
 	UserRole string
 }
 
+// NewReservationService create dependencies for ReservationService.
 func NewReservationService(
 	db *database.Queries,
 	sqlDB *database.DB,
@@ -57,12 +64,14 @@ func NewReservationService(
 	}
 }
 
+// CreateReservation is a service layer function that handles
+// creating of reservation.
 func (s *ReservationService) CreateReservation(
 	ctx context.Context,
 	input CreateReservationInput,
 ) (*database.Reservation, error) {
 
-	// Get user email for sending email 
+	// Get user email for sending email
 	// TODO use redis instead
 	dbUser, err := s.db.GetUser(ctx, input.UserID)
 	if err != nil {
@@ -72,12 +81,12 @@ func (s *ReservationService) CreateReservation(
 	// Fetch room
 	room, err := s.db.GetRoomByID(ctx, input.RoomID)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrRoomNotFound
 		}
 		return nil, err
 	}
-	
+
 	// Validate duration (students only)
 	duration := input.EndTime.Sub(input.StartTime)
 	maxDuration := 4 * time.Hour
@@ -90,8 +99,8 @@ func (s *ReservationService) CreateReservation(
 	tx, err := s.sqlDB.BeginTx(ctx, nil)
 	if err != nil {
 		return nil, &ServiceError{
-			StatusCode:    http.StatusInternalServerError,
-			Message: fmt.Sprintf("failed to start transaction: %v", err),
+			StatusCode: http.StatusInternalServerError,
+			Message:    fmt.Sprintf("failed to start transaction: %v", err),
 		}
 	}
 	defer func() {
@@ -102,9 +111,9 @@ func (s *ReservationService) CreateReservation(
 
 	// Check for overlapping reservations
 	overlap, err := qtx.ExistsOverlappingReservation(ctx, database.ExistsOverlappingReservationParams{
-		RoomID:      input.RoomID,
-		StartTime:   input.EndTime,
-		EndTime:     input.StartTime,
+		RoomID:    input.RoomID,
+		StartTime: input.EndTime,
+		EndTime:   input.StartTime,
 	})
 	if err != nil {
 		slog.Error("database error", "error", err)
@@ -130,8 +139,8 @@ func (s *ReservationService) CreateReservation(
 	// Commit transaction
 	if err := tx.Commit(); err != nil {
 		return nil, &ServiceError{
-			StatusCode:  http.StatusInternalServerError,
-			Message:     fmt.Sprintf("failed to commit transaction: %v", err),
+			StatusCode: http.StatusInternalServerError,
+			Message:    fmt.Sprintf("failed to commit transaction: %v", err),
 		}
 	}
 
@@ -167,18 +176,22 @@ func (s *ReservationService) CreateReservation(
 	}()
 
 	// Send confirmation email (async)
-	s.email.SendConfirmation(
+	if err := s.email.SendConfirmation(
 		ctx,
 		dbUser.Email,
 		room.Name,
 		reservation.StartTime.Format("Monday, January 2, 2006 at 3:04 PM"),
 		reservation.EndTime.Format("Monday, January 2, 2006 at 3:04 PM"),
-	)
+	); err != nil {
+		slog.Error("failed to send confirmation email", "error", err)
+	}
 
 	return &reservation, nil
 }
 
-func (h *ReservationService) GetReservations(
+// GetReservations is a service layer function that handles
+// fetching of reservation, grouping & formatting.
+func (s *ReservationService) GetReservations(
 	ctx context.Context,
 	input GetReservationsInput,
 ) ([]dto.ReservedDto, error) {
@@ -191,7 +204,7 @@ func (h *ReservationService) GetReservations(
 	isStaff := input.UserRole == "STAFF"
 
 	// Fetch all reservations between dates
-	reservations, err := h.db.GetAllBetweenDates(ctx, database.GetAllBetweenDatesParams{
+	reservations, err := s.db.GetAllBetweenDates(ctx, database.GetAllBetweenDatesParams{
 		StartTime: startDateTime,
 		EndTime:   endDateTime,
 	})
@@ -242,15 +255,17 @@ func (h *ReservationService) GetReservations(
 	return result, nil
 }
 
-func (h *ReservationService) CancelReservation(
+// CancelReservation is a service layer function that handles
+// cancelling of reservation.
+func (s *ReservationService) CancelReservation(
 	ctx context.Context,
 	input CancelReservationInput,
 ) error {
 
 	// Find reservation by ID
-	reservation, err := h.db.GetReservationByID(ctx, input.ID)
+	reservation, err := s.db.GetReservationByID(ctx, input.ID)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return ErrReservationNotFound
 		}
 		return err
@@ -265,16 +280,19 @@ func (h *ReservationService) CancelReservation(
 	}
 
 	// Delete from database
-	err = h.db.DeleteReservation(ctx, input.ID)
+	err = s.db.DeleteReservation(ctx, input.ID)
 	if err != nil {
 		return err
 	}
 
-	go func ()  {
-		ctx, cancel := context.WithTimeout(context.Background(), 15 * time.Second)
+	// Delete google calender event
+	go func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 		defer cancel()
-		h.calendar.DeleteGoogleEvent(ctx, reservation.GcalEventID.String)
+		if err := s.calendar.DeleteGoogleEvent(ctx, reservation.GcalEventID.String); err != nil {
+			slog.Error("failed to delete google calendar event", "error", err)
+		}
 	}()
-	
+
 	return nil
 }

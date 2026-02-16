@@ -1,3 +1,4 @@
+// Package auth provides JWT authentication and authorization.
 package auth
 
 import (
@@ -16,17 +17,20 @@ import (
 	"github.com/google/uuid"
 )
 
+// CustomClaims represents custom JWT claims.
 type CustomClaims struct {
 	Name string `json:"name"`
 	Role string `json:"role"`
 	jwt.RegisteredClaims
 }
 
+// Service handles JWT authentication.
 type Service struct {
 	JwtSecret         string
 	AccessTokenTTL time.Duration
 }
 
+// User represents an authenticated User.
 type User struct {
 	ID		int64
 	Role	string
@@ -37,10 +41,11 @@ type contextKey struct{}
 
 var userKey = contextKey{}
 
-type TokenType string
+type tokenType string
 
-const TokenTypeAccess TokenType = "access"
+const tokenTypeAccess tokenType = "access"
 
+// Predefined errors - Auth errors
 var (
 	ErrInvalidToken			= errors.New("invalid token")
 	ErrExpiredToken			= errors.New("expired token")
@@ -49,17 +54,18 @@ var (
 	ErrNoAuthHeaderIncluded = errors.New("no auth header included in request")
 )
 
-
+// WithUser save user into context
 func WithUser(ctx context.Context, user User) context.Context {
 	return context.WithValue(ctx, userKey, user)
 }
 
+// UserFromContext get the saved user during Auth from context
 func UserFromContext(ctx context.Context) (User, bool) {
 	user, ok := ctx.Value(userKey).(User)
 	return user, ok
 }
 
-// to create a new auth service
+// NewService creates a new auth service(JWT).
 func NewService(secret string) *Service {
 	return &Service{
 		JwtSecret:         secret,
@@ -67,7 +73,7 @@ func NewService(secret string) *Service {
 	}
 }
 
-// Authentication middleware
+// Authenticate is an Authentication middleware
 func (s *Service) Authenticate(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
@@ -104,7 +110,7 @@ func (s *Service) Authenticate(next http.Handler) http.Handler {
 	})
 }
 
-// Authorization middleware
+// RequireAuth is Authorization middleware
 func RequireAuth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if _, ok := UserFromContext(r.Context()); !ok {
@@ -116,7 +122,7 @@ func RequireAuth(next http.Handler) http.Handler {
 }
 
 
-// This create a jwt token
+// IssueAccessToken create a jwt token
 func (s *Service) IssueAccessToken(user database.User) (string, error) {
 	
 	claims := CustomClaims{
@@ -126,7 +132,7 @@ func (s *Service) IssueAccessToken(user database.User) (string, error) {
 			Subject:   strconv.FormatInt(user.ID, 10),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(s.AccessTokenTTL)),
-			Issuer:    string(TokenTypeAccess),
+			Issuer:    string(tokenTypeAccess),
 		},
 	}
 	signingKey := []byte(s.JwtSecret)
@@ -138,7 +144,7 @@ func (s *Service) IssueAccessToken(user database.User) (string, error) {
 	return jwtToken, nil
 }
 
-// This validate the signature of the JWT and extract the claims
+// VerifyAccessToken validate the signature of the JWT and extract the claims
 func (s *Service) VerifyAccessToken(tokenStr string) (*CustomClaims, error) {
 	token, err := jwt.ParseWithClaims(
 		tokenStr,
@@ -167,7 +173,7 @@ func (s *Service) VerifyAccessToken(tokenStr string) (*CustomClaims, error) {
 	return claims, nil
 }
 
-
+// GetBearerToken return the Bearer Token from request header
 func GetBearerToken(headers http.Header) (string, error) {
 	authHeader := headers.Get("Authorization")
 	if authHeader == "" {
@@ -186,20 +192,22 @@ func GetBearerToken(headers http.Header) (string, error) {
 // MakeRefreshToken makes a random 256 bit token encoded in hex
 func MakeRefreshToken() string {
 	tokenBytes := make([]byte, 32)
-	rand.Read(tokenBytes) // no error check as Read always succeeds
+	_, _ = rand.Read(tokenBytes) // no error check as Read always succeeds
 	return hex.EncodeToString(tokenBytes)
 }
 
-// (Depreciated) This validate the signature of the JWT and extract the claims(userId)
+// ValidateJWT validates the signature of the JWT and extracts the claims(userID).
+// 
+// Deprecated: Use VerifyAccessToken instead.
 func ValidateJWT(tokenString, tokenSecret string) (uuid.UUID, error) {
-	token, err := jwt.ParseWithClaims(tokenString, &CustomClaims{}, func(t *jwt.Token) (any, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &CustomClaims{}, func(_ *jwt.Token) (any, error) {
 		return []byte(tokenSecret), nil
 	})
 	if err != nil {
 		return uuid.Nil, err
 	}
 
-	userIdString, err := token.Claims.GetSubject()
+	userIDString, err := token.Claims.GetSubject()
 	if err != nil {
 		return uuid.Nil, err
 	}
@@ -208,13 +216,13 @@ func ValidateJWT(tokenString, tokenSecret string) (uuid.UUID, error) {
 	if err != nil {
 		return uuid.Nil, err
 	}
-	if issuer != string(TokenTypeAccess) {
+	if issuer != string(tokenTypeAccess) {
 		return uuid.Nil, errors.New("invalid issuer")
 	}
 
-	userId, err := uuid.Parse(userIdString)
+	userID, err := uuid.Parse(userIDString)
 	if err != nil {
 		return uuid.Nil, fmt.Errorf("invalid user ID: %w", err)
 	}
-	return userId, nil
+	return userID, nil
 }

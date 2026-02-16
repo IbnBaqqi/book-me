@@ -1,3 +1,6 @@
+// Package api wires up dependencies and defines HTTP routes for the book-me server.
+//
+//nolint:revive // api is a clear and intentional package name
 package api
 
 import (
@@ -11,7 +14,6 @@ import (
 	"github.com/IbnBaqqi/book-me/internal/google"
 	"github.com/IbnBaqqi/book-me/internal/oauth"
 	"github.com/IbnBaqqi/book-me/internal/service"
-	_ "github.com/lib/pq"
 	"golang.org/x/oauth2"
 )
 

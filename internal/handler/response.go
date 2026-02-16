@@ -44,7 +44,10 @@ func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
 		return
 	}
 	w.WriteHeader(code)
-	w.Write(data)
+	if _, err := w.Write(data); err != nil {
+		slog.Error("failed to write response", "error", err)
+	}
+
 }
 
 // handleError handles all application errors
@@ -73,7 +76,7 @@ func handleError(w http.ResponseWriter, err error) {
 
 	// Check for oauth errors, log 5xx errors
 	var oauthErr *oauth.OauthError
-	if errors.As(err, &oauthErr){
+	if errors.As(err, &oauthErr) {
 		if oauthErr.StatusCode >= 500 {
 			slog.Error("oauth error",
 				"error", oauthErr,

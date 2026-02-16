@@ -1,3 +1,4 @@
+// Package main is the entry point for the book-me server.
 package main
 
 import (
@@ -82,7 +83,7 @@ func main() {
 	slog.Info("Server is shutting down...")
 
 	// Create a deadline for shutdown
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
 	// Attempt graceful shutdown

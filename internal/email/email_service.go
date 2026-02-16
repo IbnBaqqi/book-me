@@ -1,3 +1,4 @@
+// Package email provides email notification services.
 package email
 
 import (

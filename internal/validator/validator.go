@@ -1,11 +1,12 @@
+// Package validator provides request validation utilities.
 package validator
 
-
 import (
-    "fmt"
-    "time"
+	"errors"
+	"fmt"
+	"time"
 
-    "github.com/go-playground/validator/v10"
+	"github.com/go-playground/validator/v10"
 )
 
 var validate *validator.Validate
@@ -14,9 +15,13 @@ func init() {
     validate = validator.New()
     
     // Register custom validators
-    validate.RegisterValidation("futureTime", validateFutureTime)
-	validate.RegisterValidation("schoolHours", validateSchoolHours)
-	validate.RegisterValidation("maxDateRange", validateMaxDateRange) 
+	// I ignored errors because In practice,
+	// RegisterValidation only fails if you pass an empty tag or nil function
+	// so this will essentially never fail
+	// but the linter is happy because the error is handled.
+    _ = validate.RegisterValidation("futureTime", validateFutureTime)
+	_ = validate.RegisterValidation("schoolHours", validateSchoolHours)
+	_ = validate.RegisterValidation("maxDateRange", validateMaxDateRange) 
 }
 
 // Validate validates a struct and returns ValidationError if validation fails
@@ -27,13 +32,12 @@ func Validate(s interface{}) error {
     }
 
     // Convert validator errors to a map of field errors
-    validationErrs, ok := err.(validator.ValidationErrors)
-	if !ok {
-		return err
+	var validationErrs validator.ValidationErrors
+	if errors.As(err, &validationErrs) {
+		fields := FormatValidationErrors(validationErrs)
+		return NewValidationError(fields)
 	}
-
-    fields := FormatValidationErrors(validationErrs)
-	return NewValidationError(fields)
+	return err
 }
 
 // ValidateVar validates a single variable
@@ -87,15 +91,16 @@ func validateMaxDateRange(fl validator.FieldLevel) bool {
 
 // FormatValidationErrors formats validator errors into user-friendly messages
 func FormatValidationErrors(err error) map[string]string {
-    errors := make(map[string]string)
-    
-    if validationErrs, ok := err.(validator.ValidationErrors); ok {
+	errs := make(map[string]string)
+
+    var validationErrs validator.ValidationErrors
+    if errors.As(err, &validationErrs) {
         for _, fieldErr := range validationErrs {
-            errors[fieldErr.Field()] = formatFieldError(fieldErr)
+            errs[fieldErr.Field()] = formatFieldError(fieldErr)
         }
     }
-    
-    return errors
+
+    return errs
 }
 
 func formatFieldError(err validator.FieldError) string {

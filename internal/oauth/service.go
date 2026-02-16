@@ -1,3 +1,4 @@
+// Package oauth provides OAuth authentication flow.
 package oauth
 
 import (
@@ -5,18 +6,19 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"errors"
+	"log/slog"
 	"net/http"
 	"time"
 
 	"github.com/IbnBaqqi/book-me/internal/database"
 )
 
-// Oauth Service orchestrates the OAuth authentication flow
+// Service orchestrates the OAuth authentication flow.
 type Service struct {
 	provider *Provider42
 }
 
-// NewService creates a new OAuth service
+// NewService creates a new OAuth service for a provider.
 func NewService(provider *Provider42) *Service {
 
 	return &Service{
@@ -26,7 +28,7 @@ func NewService(provider *Provider42) *Service {
 
 const sessionName = "bookme-session"
 
-// InitiateLogin generates a state token and returns the OAuth authorization URL
+// InitiateLogin generates a state token and returns the OAuth authorization URL.
 func (s *Service) InitiateLogin(w http.ResponseWriter, r *http.Request) (string, error) {
 
 	state := generateRandomState()
@@ -37,14 +39,21 @@ func (s *Service) InitiateLogin(w http.ResponseWriter, r *http.Request) (string,
 		return "", ErrOAuthSessionFailed
 	}
 	session.Values["oauth_state"] = state
-	session.Save(r, w)
+	if err := session.Save(r, w); err != nil {
+		slog.Error("failed to save session", "error", err)
+		return "", &OauthError{
+			Err:        err,
+			StatusCode: http.StatusInternalServerError,
+		}
+	}
 
 	url := s.provider.config.AuthCodeURL(state)
 
 	return url, nil
 }
 
-func (s *Service) Handlecallback(r *http.Request) (database.User, error) {
+// HandleCallback is a service layer function that handles Oauth callback.
+func (s *Service) HandleCallback(r *http.Request) (database.User, error) {
 
 	// Exchange authorization code for token
 	token, err := s.provider.ExchangeCode(r)
@@ -91,31 +100,41 @@ func (s *Service) Handlecallback(r *http.Request) (database.User, error) {
 	return user, nil
 }
 
-// validateState checks CSRF protection state
+// ValidateState checks CSRF protection state.
 func (s *Service) ValidateState(w http.ResponseWriter, r *http.Request) error {
 	session, _ := s.provider.session.Get(r, sessionName)
 
 	// get saved state and compare with incoming state
 	expectedState, ok := session.Values["oauth_state"].(string)
 	if !ok || expectedState != r.URL.Query().Get("state") {
-		return errors.New("state mismatch")
+		slog.Error("invalid or missing state")
+		return &OauthError{
+			Err:        errors.New("invalid or missing state"),
+			StatusCode: http.StatusForbidden,
+		}
 	}
 
 	// Clear state from session
 	delete(session.Values, "oauth_state")
-	session.Save(r, w)
+	if err := session.Save(r, w); err != nil {
+		slog.Error("failed to save session", "error", err)
+		return &OauthError{
+			Err:        err,
+			StatusCode: http.StatusInternalServerError,
+		}
+	}
 
 	return nil
 }
 
-// GetAuthURL returns the OAuth authorization URL with state
+// GetRedirectTokenURL returns the OAuth provider redirect URL.
 func (s *Service) GetRedirectTokenURL() string {
 	return s.provider.redirectTokenURL
 }
 
-// generateRandomState generates a cryptograph secure random state token
+// generateRandomState generates a cryptograph secure random state token.
 func generateRandomState() string {
 	b := make([]byte, 32)
-	rand.Read(b) // no error check as Read always succeeds
+	_, _ = rand.Read(b) // no error check as Read always succeeds
 	return hex.EncodeToString(b)
 }
