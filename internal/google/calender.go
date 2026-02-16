@@ -93,6 +93,16 @@ func (s *CalendarService) CreateGoogleEvent(ctx context.Context, reservation *Re
     return createdEvent.Id, nil
 }
 
+// HealthCheck verifies the calendar service is accessible
+func (s *CalendarService) HealthCheck(ctx context.Context) error {
+	// Simple check: try to get calendar metadata
+	_, err := s.service.Calendars.Get(s.calendarID).Context(ctx).Do()
+	if err != nil {
+		return fmt.Errorf("calendar API unreachable: %w", err)
+	}
+	return nil
+}
+
 // DeleteGoogleEvent deletes a calendar event
 func (s *CalendarService) DeleteGoogleEvent(ctx context.Context, eventID string) error {
     err := s.service.Events.Delete(s.calendarID, eventID).Context(ctx).Do()
