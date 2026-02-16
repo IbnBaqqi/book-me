@@ -10,6 +10,8 @@ import (
 	appvalidator "github.com/IbnBaqqi/book-me/internal/validator"
 )
 
+const MaxRequestBodySize int64 = 1 * 1024 * 1024 // 1MB
+
 // CreateReservation is handler to handles creation of a new reservation
 // 
 // POST /reservations
@@ -23,7 +25,7 @@ func (h *Handler) CreateReservation(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Limit request body size
-	r.Body = http.MaxBytesReader(w, r.Body, 1048576) // 1MB
+	r.Body = http.MaxBytesReader(w, r.Body, MaxRequestBodySize)
 
 	// Decode with strict validation
 	decoder := json.NewDecoder(r.Body)
