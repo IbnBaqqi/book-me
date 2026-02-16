@@ -1,0 +1,58 @@
+version: "2"
+
+run:
+  timeout: 5m
+  go: '1.25'
+
+linters:
+  enable:
+    - errcheck      # Check for unchecked errors
+    - govet         # Reports suspicious constructs (e.g. Printf format mismatches)
+    - staticcheck   # Advanced Go linter (catches bugs, performance issues, dead code)
+    - unused        # Detects unused variables, functions, types
+    - ineffassign   # Detects assignments to variables that are never read afterward
+    - misspell      # Catches typos in comments, strings, and variable names
+    - revive        # Replacement for golint — configurable style and correctness checks
+    - gosec         # Finds security issues (SQL injection, hardcoded credentials, weak crypto)
+    - gocritic      # Catches common mistakes and suggests better patterns
+    - bodyclose     # Ensures http.Response.Body is closed (prevents resource leaks)
+    - nilerr        # Catches when you check err != nil but still return nil instead of err
+    - errorlint     # Ensures you use errors.Is/errors.As instead of == for error comparison
+    - exhaustive    # Warns when a switch on an enum type is missing cases
+
+issues:
+  exclude-use-default: false
+
+  settings:
+    errcheck:
+      check-type-assertions: true
+      check-blank: true
+
+    govet:
+      enable-all: true
+
+    revive:
+      confidence: 0.8
+
+    gosec:
+      excludes:
+        - G104 # Audit errors not checked (errcheck handles this)
+
+    gocritic:
+      enabled-tags:
+        - diagnostic
+        - style
+        - performance
+      disabled-checks:
+        - commentedOutCode
+
+  exclusions:
+    rules:
+      # Less strict linting for test files
+      - path: '_test\.go$'
+        linters:
+          - gocritic  # Style checks less important in tests
+      # Exclude linting for generated or temporary files
+      - path: '(^|/)tmp/'
+        linters:
+          - all
