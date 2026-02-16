@@ -12,9 +12,10 @@ import (
 	_ "github.com/lib/pq" // PostgreSQL driver registration
 )
 
-// DB wraps the database connection pool
+// DB wraps the database connection pool & queries
 type DB struct {
 	*sql.DB
+	*Queries
 }
 
 // Tx wraps a database transaction
@@ -41,6 +42,7 @@ func Connect(ctx context.Context, cfg *config.AppConfig) (*DB, error) {
 
 	return &DB{
 		DB: dbConn,
+		Queries: New(dbConn),
 	}, nil
 }
 
