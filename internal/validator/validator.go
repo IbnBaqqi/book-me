@@ -114,7 +114,7 @@ func formatFieldError(err validator.FieldError) string {
     case "gtfield":
         return fmt.Sprintf("Must be after %s", err.Param())
     case "gtefield":
-        return fmt.Sprintf("Must be after %s", err.Param()) //TODO
+        return fmt.Sprintf("Must be after %s", err.Param()) // TODO
     case "datetime":
         return "Invalid date/time format"
 	case "schoolHours":
