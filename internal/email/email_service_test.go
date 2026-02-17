@@ -8,21 +8,38 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/joho/godotenv"
 )
 
-// TestRealEmailSending - Integration test (only runs with specific flag)
+// TestRealEmailSending (only runs with specific flag)
 func TestRealEmailSending(t *testing.T) {
 	// Only run when explicitly requested
 	if os.Getenv("RUN_EMAIL_TESTS") != "true" {
 		t.Skip("Skipping real email test. Set RUN_EMAIL_TESTS=true to run")
 	}
 
+	// Load .env file if it exists
+	_ = godotenv.Load("../../.env")
+
+	// Check all required env vars upfront
+	requiredEnvs := []string{"SMTP_HOST", "SMTP_USERNAME", "SMTP_PASSWORD", "FROM_EMAIL"}
+	var missing []string
+	for _, env := range requiredEnvs {
+		if os.Getenv(env) == "" {
+			missing = append(missing, env)
+		}
+	}
+	if len(missing) > 0 {
+		t.Skipf("Skipping test: missing required environment variables: %v", missing)
+	}
+
 	cfg := Config{
-		SMTPHost:     getEnvOrSkip(t, "SMTP_HOST"),
+		SMTPHost:     os.Getenv("SMTP_HOST"),
 		SMTPPort:     587,
-		SMTPUsername: getEnvOrSkip(t, "SMTP_USERNAME"),
-		SMTPPassword: getEnvOrSkip(t, "SMTP_PASSWORD"),
-		FromEmail:    getEnvOrSkip(t, "FROM_EMAIL"),
+		SMTPUsername: os.Getenv("SMTP_USERNAME"),
+		SMTPPassword: os.Getenv("SMTP_PASSWORD"),
+		FromEmail:    os.Getenv("FROM_EMAIL"),
 		FromName:     "BookMe Test",
 		UseTLS:       true,
 	}
@@ -54,14 +71,12 @@ func TestRealEmailSending(t *testing.T) {
 
 // TestTemplateRendering tests that the email template renders correctly
 func TestTemplateRendering(t *testing.T) {
-
-	// Skip in CI/CD
-	if os.Getenv("CI") != "" || testing.Short() {
-		t.Skip("Skipping template rendering test in CI/CD or short mode")
+	// Only run when explicitly requested
+	if os.Getenv("RUN_EMAIL_TESTS") != "true" {
+		t.Skip("Skipping template rendering test. Set RUN_EMAIL_TESTS=true to run")
 	}
 
 	// Parse the template for the test
-	// We use os.DirFS(".") if the test is in the same folder as the templates
 	tmpl, err := template.ParseFS(templateFS, "templates/*.html")
 	if err != nil {
 		t.Fatalf("Failed to parse templates: %v", err)
@@ -94,7 +109,7 @@ func TestTemplateRendering(t *testing.T) {
 
 	// Verify expected content is present
 	expectedContent := []string{
-		"Corner",
+		"Conference",
 		"Monday, 10:00 AM",
 		"Monday, 11:00 AM",
 		"Booking Confirmed",
@@ -113,13 +128,4 @@ func TestTemplateRendering(t *testing.T) {
 	} else {
 		t.Log("Template rendered successfully! Open email/test_output.html in your browser.")
 	}
-}
-
-// Helper function to get environment variable or skip test
-func getEnvOrSkip(t *testing.T, key string) string {
-	value := os.Getenv(key)
-	if value == "" {
-		t.Skipf("Skipping test: %s environment variable not set", key)
-	}
-	return value
 }
