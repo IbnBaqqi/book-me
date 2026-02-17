@@ -4,7 +4,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/IbnBaqqi/book-me/internal/auth"
 	"github.com/IbnBaqqi/book-me/internal/handler"
 	"github.com/IbnBaqqi/book-me/internal/middleware"
 	"golang.org/x/time/rate"
@@ -28,8 +27,11 @@ func SetupRoutes(cfg *API) *http.ServeMux {
 	oauthLimiter := middleware.NewRateLimiter(rate.Every(12*time.Second), 5, false)
 	apiLimiter := middleware.NewRateLimiter(rate.Every(2*time.Second), 30, false)
 
+	// Create auth middleware
+	authenticate := middleware.Authenticate(cfg.Auth)
+
 	// Health check
-	mux.HandleFunc("GET /health", h.Health)
+	mux.HandleFunc("GET api/v1/health", h.Health)
 
 	// Authentication routes
 	mux.Handle("GET /oauth/login", oauthLimiter.Limit(http.HandlerFunc(h.Login)))
@@ -39,22 +41,22 @@ func SetupRoutes(cfg *API) *http.ServeMux {
 	mux.Handle(
 		"POST /api/v1/reservations",
 		apiLimiter.Limit(
-			cfg.Auth.Authenticate(
-				auth.RequireAuth(
+			authenticate(
+				middleware.RequireAuth(
 					http.HandlerFunc(h.CreateReservation)))))
 
 	mux.Handle(
 		"GET /api/v1/reservations",
 		apiLimiter.Limit(
-			cfg.Auth.Authenticate(
-				auth.RequireAuth(
+			authenticate(
+				middleware.RequireAuth(
 					http.HandlerFunc(h.GetReservations)))))
 
 	mux.Handle(
 		"DELETE /api/v1/reservations/{id}",
 		apiLimiter.Limit(
-			cfg.Auth.Authenticate(
-				auth.RequireAuth(
+			authenticate(
+				middleware.RequireAuth(
 					http.HandlerFunc(h.CancelReservation)))))
 
 	return mux
