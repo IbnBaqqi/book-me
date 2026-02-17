@@ -155,14 +155,12 @@ func TestValidate_FutureTime(t *testing.T) {
 				if _, exists := valErr.Fields[tt.errField]; !exists {
 					t.Errorf("expected error for field %s, got fields: %v", tt.errField, valErr.Fields)
 				}
-			} else {
-				if err != nil {
-					var valErr *ValidationError
-					if errors.As(err, &valErr) {
-						t.Errorf("expected no error, got validation errors: %v", valErr.Fields)
-					} else {
-						t.Errorf("expected no error, got: %v", err)
-					}
+			} else if err != nil {
+				var valErr *ValidationError
+				if errors.As(err, &valErr) {
+					t.Errorf("expected no error, got validation errors: %v", valErr.Fields)
+				} else {
+					t.Errorf("expected no error, got: %v", err)
 				}
 			}
 		})
@@ -223,14 +221,12 @@ func TestValidate_GtField(t *testing.T) {
 				if valErr.Fields["EndTime"] != expectedMsg {
 					t.Errorf("expected '%s', got: %s", expectedMsg, valErr.Fields["EndTime"])
 				}
-			} else {
-				if err != nil {
-					var valErr *ValidationError
-					if errors.As(err, &valErr) {
-						t.Errorf("expected no error, got validation errors: %v", valErr.Fields)
-					} else {
-						t.Errorf("expected no error, got: %v", err)
-					}
+			} else if err != nil {
+				var valErr *ValidationError
+				if errors.As(err, &valErr) {
+					t.Errorf("expected no error, got validation errors: %v", valErr.Fields)
+				} else {
+					t.Errorf("expected no error, got: %v", err)
 				}
 			}
 		})
@@ -301,10 +297,8 @@ func TestValidate_SchoolHours(t *testing.T) {
 				if _, exists := valErr.Fields[tt.errField]; !exists {
 					t.Errorf("expected error for field %s, got fields: %v", tt.errField, valErr.Fields)
 				}
-			} else {
-				if err != nil {
-					t.Errorf("expected no error, got: %v", err)
-				}
+			} else if err != nil {
+				t.Errorf("expected no error, got: %v", err)
 			}
 		})
 	}
@@ -398,14 +392,12 @@ func TestValidate_MaxDateRange(t *testing.T) {
 				if valErr.Fields["EndDate"] != expectedMsg {
 					t.Errorf("expected '%s', got: %s", expectedMsg, valErr.Fields["EndDate"])
 				}
-			} else {
-				if err != nil {
-					var valErr *ValidationError
-					if errors.As(err, &valErr) {
-						t.Errorf("expected no error, got validation errors: %v", valErr.Fields)
-					} else {
-						t.Errorf("expected no error, got: %v", err)
-					}
+			} else if err != nil {
+				var valErr *ValidationError
+				if errors.As(err, &valErr) {
+					t.Errorf("expected no error, got validation errors: %v", valErr.Fields)
+				} else {
+					t.Errorf("expected no error, got: %v", err)
 				}
 			}
 		})
@@ -478,10 +470,8 @@ func TestValidate_DateRangeWithMultipleValidations(t *testing.T) {
 				if tt.expectedErr != "" && valErr.Fields["EndDate"] != tt.expectedErr {
 					t.Errorf("expected '%s', got: %s", tt.expectedErr, valErr.Fields["EndDate"])
 				}
-			} else {
-				if err != nil {
-					t.Errorf("expected no error, got: %v", err)
-				}
+			} else if err != nil {
+				t.Errorf("expected no error, got: %v", err)
 			}
 		})
 	}

@@ -13,9 +13,9 @@ func TestRateLimiter(t *testing.T) {
 	limiter := NewRateLimiter(rate.Limit(2), 2, false)
 
 	// Create a simple handler
-	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	handler := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("OK"))
+		_, _ = w.Write([]byte("OK"))
 	})
 
 	// Wrap with rate limiter

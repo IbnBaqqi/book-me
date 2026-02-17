@@ -29,10 +29,10 @@ func TestAuthenticate(t *testing.T) {
 		user, ok := auth.UserFromContext(r.Context())
 		if ok {
 			w.WriteHeader(http.StatusOK)
-			w.Write([]byte(user.Name))
+			_, _ = w.Write([]byte(user.Name))
 		} else {
 			w.WriteHeader(http.StatusOK)
-			w.Write([]byte("anonymous"))
+			_, _ = w.Write([]byte("anonymous"))
 		}
 	})
 
@@ -102,9 +102,9 @@ func TestAuthenticate(t *testing.T) {
 
 func TestRequireAuth(t *testing.T) {
 	// Create test handler
-	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	handler := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("protected"))
+		_, _ = w.Write([]byte("protected"))
 	})
 
 	// Wrap with RequireAuth
@@ -167,7 +167,7 @@ func TestAuthenticateAndRequireAuth(t *testing.T) {
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		user, _ := auth.UserFromContext(r.Context())
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(user.Role))
+		_, _ = w.Write([]byte(user.Role))
 	})
 
 	// Chain both middlewares

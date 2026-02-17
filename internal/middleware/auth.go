@@ -57,7 +57,7 @@ func RequireAuth(next http.Handler) http.Handler {
 			slog.Warn("unauthorized access attempt", "path", r.URL.Path, "method", r.Method)
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusUnauthorized)
-			w.Write([]byte(`{"error":"unauthorized"}`))
+			_, _ = w.Write([]byte(`{"error":"unauthorized"}`))
 			return
 		}
 

@@ -2,6 +2,7 @@ package auth
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"testing"
 	"time"
@@ -142,7 +143,7 @@ func TestVerifyAccessToken_ExpiredToken(t *testing.T) {
 	token, _ := service.IssueAccessToken(testUser)
 
 	_, err := service.VerifyAccessToken(token)
-	if err != ErrExpiredToken {
+	if !errors.Is(err, ErrExpiredToken) {
 		t.Errorf("expected ErrExpiredToken, got %v", err)
 	}
 }
@@ -196,7 +197,7 @@ func TestGetBearerToken(t *testing.T) {
 			token, err := GetBearerToken(tt.header)
 
 			if tt.wantErr != nil {
-				if err != tt.wantErr {
+				if !errors.Is(err, tt.wantErr) {
 					t.Errorf("expected error %v, got %v", tt.wantErr, err)
 				}
 				return
