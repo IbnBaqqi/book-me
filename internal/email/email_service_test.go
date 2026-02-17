@@ -19,7 +19,6 @@ func TestRealEmailSending(t *testing.T) {
 		t.Skip("Skipping real email test. Set RUN_EMAIL_TESTS=true to run")
 	}
 
-	// Load .env file if it exists
 	_ = godotenv.Load("../../.env")
 
 	// Check all required env vars upfront

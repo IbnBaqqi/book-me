@@ -16,7 +16,6 @@ import (
 	"github.com/IbnBaqqi/book-me/internal/google"
 )
 
-// User role constants
 const (
 	RoleStudent = "STUDENT"
 	RoleStaff   = "STAFF"
@@ -25,7 +24,6 @@ const (
 // ReservationService handles reservation business logic.
 type ReservationService struct {
 	db       *database.DB
-	// sqlDB    *database.DB
 	email    *email.Service
 	calendar *google.CalendarService
 }
@@ -64,7 +62,6 @@ func NewReservationService(
 ) *ReservationService {
 	return &ReservationService{
 		db:       db,
-		// sqlDB:    sqlDB,
 		email:    emailService,
 		calendar: calendarService,
 	}
@@ -101,7 +98,7 @@ func (s *ReservationService) CreateReservation(
 		return nil, ErrExceedsMaxDuration
 	}
 
-	// Start transaction with serializable isolation for reservation integrity
+	// Start transaction
 	tx, err := s.db.BeginTx(ctx, &sql.TxOptions{
 		Isolation: sql.LevelReadCommitted,
 	})

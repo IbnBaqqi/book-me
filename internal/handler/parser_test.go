@@ -1,4 +1,3 @@
-// internal/handler/parser_test.go
 package handler
 
 import (

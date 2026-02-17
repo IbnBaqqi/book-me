@@ -72,7 +72,6 @@ func run() error {
 
 	// Channel to catch server errors
 	errCh := make(chan error, 1)
-	// Start server in a goroutine
 	go func() {
 		slog.Info("Server listening", "address", server.Addr)
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {

@@ -9,13 +9,12 @@ import (
 )
 
 // Authenticate extracts and validates JWT token, adding user to context if valid.
-// Allows request to continue even without valid token (for public endpoints).
+// Allows request to continue even without valid token for public endpoints.
 func Authenticate(authService *auth.Service) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			tokenStr, err := auth.GetBearerToken(r.Header)
 			if err != nil {
-				// No token or malformed - continue without auth
 				slog.Debug("no auth token", "path", r.URL.Path, "error", err.Error())
 				next.ServeHTTP(w, r)
 				return
