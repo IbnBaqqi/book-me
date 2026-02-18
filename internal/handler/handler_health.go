@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"time"
@@ -24,7 +25,7 @@ func (h *Handler) Health(w http.ResponseWriter, r *http.Request) {
 
 	// Check database connectivity
 	if err := h.checkDatabase(ctx); err != nil {
-		checks["database"] = "unhealthy: " + err.Error()
+		checks["database"] = "unhealthy"
 		allHealthy = false
 		slog.Error("health check: database unhealthy", "error", err)
 	} else {
@@ -34,7 +35,7 @@ func (h *Handler) Health(w http.ResponseWriter, r *http.Request) {
 	// Check Google Calendar API
 	// (calendar is non-critical so it doesn't fail health check)
 	if err := h.checkCalendar(ctx); err != nil {
-		checks["calendar"] = "degraded: " + err.Error()
+		checks["calendar"] = "degraded"
 		slog.Warn("health check: calendar degraded", "error", err)
 	} else {
 		checks["calendar"] = "healthy"
@@ -80,7 +81,7 @@ func (h *Handler) checkDatabase(ctx context.Context) error {
 // checkCalendar verifies Google Calendar API is reachable
 func (h *Handler) checkCalendar(ctx context.Context) error {
 	if h.calendar == nil {
-		return nil
+		return fmt.Errorf("database connection not initialized")
 	}
 
 	return h.calendar.HealthCheck(ctx)

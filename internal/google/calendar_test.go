@@ -16,8 +16,8 @@ const testCalendarScope = "https://www.googleapis.com/auth/calendar"
 func setupIntegrationTest(t *testing.T) *CalendarService {
 	t.Helper()
 
-	if os.Getenv("RUN_CALENDAR_TESTS") == "" {
-		t.Skip("skipping calendar integration test (set RUN_CALENDAR_TESTS=1 to run)")
+	if os.Getenv("RUN_CALENDAR_TESTS") != "true" {
+		t.Skip("skipping calendar integration test. Set RUN_CALENDAR_TESTS=true to run)")
 	}
 
 	_ = godotenv.Load("../../.env")
@@ -60,12 +60,13 @@ func TestNewCalendarService_InvalidJSON(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create temp file: %v", err)
 	}
-	defer os.Remove(tmpFile.Name())
-
+	defer func() {
+		_ = os.Remove(tmpFile.Name())
+	}()
 	if _, err := tmpFile.WriteString("not valid json"); err != nil {
 		t.Fatalf("failed to write temp file: %v", err)
 	}
-	tmpFile.Close()
+	_ = tmpFile.Close()
 
 	_, err = NewCalendarService(tmpFile.Name(), testCalendarScope, "some-id")
 	if err == nil {
