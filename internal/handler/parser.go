@@ -11,7 +11,7 @@ import (
 // Query parameter validation structs
 type dateRangeQuery struct {
 	StartDate time.Time `validate:"required"`
-	EndDate   time.Time `validate:"required,gtefield=StartDate"`
+	EndDate   time.Time `validate:"required,gtefield=StartDate,maxDateRange"`
 }
 
 type reservationIDParam struct {
