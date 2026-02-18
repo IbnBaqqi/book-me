@@ -14,14 +14,13 @@ import (
 
 // TestRealEmailSending (only runs with specific flag)
 func TestRealEmailSending(t *testing.T) {
-	// Only run when explicitly requested
+
 	if os.Getenv("RUN_EMAIL_TESTS") != "true" {
 		t.Skip("Skipping real email test. Set RUN_EMAIL_TESTS=true to run")
 	}
 
 	_ = godotenv.Load("../../.env")
 
-	// Check all required env vars upfront
 	requiredEnvs := []string{"SMTP_HOST", "SMTP_USERNAME", "SMTP_PASSWORD", "FROM_EMAIL"}
 	var missing []string
 	for _, env := range requiredEnvs {
@@ -50,7 +49,7 @@ func TestRealEmailSending(t *testing.T) {
 
 	testEmail := os.Getenv("TEST_RECIPIENT_EMAIL")
 	if testEmail == "" {
-		testEmail = cfg.SMTPUsername // Send to self
+		testEmail = cfg.SMTPUsername
 	}
 
 	err = svc.SendConfirmation(
@@ -70,12 +69,11 @@ func TestRealEmailSending(t *testing.T) {
 
 // TestTemplateRendering tests that the email template renders correctly
 func TestTemplateRendering(t *testing.T) {
-	// Only run when explicitly requested
+
 	if os.Getenv("RUN_EMAIL_TESTS") != "true" {
 		t.Skip("Skipping template rendering test. Set RUN_EMAIL_TESTS=true to run")
 	}
 
-	// Parse the template for the test
 	tmpl, err := template.ParseFS(templateFS, "templates/*.html")
 	if err != nil {
 		t.Fatalf("Failed to parse templates: %v", err)
@@ -88,25 +86,21 @@ func TestTemplateRendering(t *testing.T) {
 		EndTime:   "Monday, 11:00 AM",
 	}
 
-	// Execute the template into a buffer
 	var body bytes.Buffer
 	err = tmpl.ExecuteTemplate(&body, "confirmation_email_v2.html", data)
 	if err != nil {
 		t.Fatalf("Failed to execute template: %v", err)
 	}
 
-	// Verify template rendered something
 	if body.Len() == 0 {
 		t.Fatal("Template rendered empty body")
 	}
 
-	// Verify all variables were replaced
 	renderedHTML := body.String()
 	if strings.Contains(renderedHTML, "{{") {
 		t.Error("Template contains unreplaced variables")
 	}
 
-	// Verify expected content is present
 	expectedContent := []string{
 		"Conference",
 		"Monday, 10:00 AM",
@@ -120,7 +114,6 @@ func TestTemplateRendering(t *testing.T) {
 		}
 	}
 
-	// Save to file for manual inspection
 	err = os.WriteFile("test_output.html", body.Bytes(), 0600)
 	if err != nil {
 		t.Logf("Warning: Failed to write debug file: %v", err)

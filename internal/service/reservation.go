@@ -15,7 +15,7 @@ import (
 	"github.com/IbnBaqqi/book-me/internal/email"
 	"github.com/IbnBaqqi/book-me/internal/google"
 )
-
+// User roles
 const (
 	RoleStudent = "STUDENT"
 	RoleStaff   = "STAFF"
@@ -56,7 +56,6 @@ type CancelReservationInput struct {
 // NewReservationService create dependencies for ReservationService.
 func NewReservationService(
 	db *database.DB,
-	// sqlDB *database.DB,
 	emailService *email.Service,
 	calendarService *google.CalendarService,
 ) *ReservationService {
@@ -151,12 +150,11 @@ func (s *ReservationService) CreateReservation(
 		}
 	}
 
-	// Create Google Calendar event (async)
+	// Create Google Calendar event
 	go func() {
 		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 		defer cancel()
 
-		// Build reservation object for calendar service
 		calendarReservation := &google.Reservation{
 			StartTime: reservation.StartTime,
 			EndTime:   reservation.EndTime,
@@ -182,7 +180,7 @@ func (s *ReservationService) CreateReservation(
 		}
 	}()
 
-	// Send confirmation email (async)
+	// Send confirmation email
 	go func() {
 		emailCtx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 		defer cancel()
@@ -212,7 +210,6 @@ func (s *ReservationService) GetReservations(
 	startDateTime := input.StartDate
 	endDateTime := input.EndDate.AddDate(0, 0, 1)
 
-	// Check if user is a staff
 	isStaff := input.UserRole == RoleStaff
 
 	// Fetch all reservations between dates
@@ -283,7 +280,6 @@ func (s *ReservationService) CancelReservation(
 		return err
 	}
 
-	// Check authorization
 	isStaff := input.UserRole == RoleStaff
 	isOwner := reservation.UserID == input.UserID
 

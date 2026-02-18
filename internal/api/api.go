@@ -1,6 +1,4 @@
 // Package api wires up dependencies and defines HTTP routes for the book-me server.
-//
-//nolint:revive // api is a clear and intentional package name
 package api
 
 import (
@@ -28,9 +26,6 @@ type API struct {
 
 // New initializes all services and returns a pointer to API
 func New(cfg *config.Config, db *database.DB) (*API, error) {
-
-	// Using SQLC generated database package to create a new *database.Queries,
-	// dbQueries := database.New(db)
 
 	// Initialize Google Calendar service
 	calendarService, err := google.NewCalendarService(

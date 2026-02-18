@@ -1,3 +1,4 @@
+// Package handler contains http routing for the application.
 package handler
 
 import (

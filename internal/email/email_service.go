@@ -42,7 +42,7 @@ type BookingData struct {
 
 // NewService creates a new email service
 func NewService(cfg Config) (*Service, error) {
-	// Create mail client with TLS
+	
 	client, err := mail.NewClient(
 		cfg.SMTPHost,
 		mail.WithPort(cfg.SMTPPort),
@@ -72,20 +72,17 @@ func NewService(cfg Config) (*Service, error) {
 
 // SendConfirmation sends a confirmation email for reservation
 func (s *Service) SendConfirmation(ctx context.Context, toEmail, room, startTime, endTime string) error {
-	// Create new message
+
 	msg := mail.NewMsg()
 
-	// Set sender
 	if err := msg.From(fmt.Sprintf("%s <%s>", s.fromName, s.from)); err != nil {
 		return fmt.Errorf("failed to set sender: %w", err)
 	}
 
-	// Set recipient
 	if err := msg.To(toEmail); err != nil {
 		return fmt.Errorf("failed to set recipient: %w", err)
 	}
 
-	// Set subject
 	msg.Subject("Hive / Meeting Room Confirmation")
 
 	// Prepare template data
@@ -95,13 +92,11 @@ func (s *Service) SendConfirmation(ctx context.Context, toEmail, room, startTime
 		EndTime:   endTime,
 	}
 
-	// Render HTML template
 	var htmlBody bytes.Buffer
 	if err := s.templates.ExecuteTemplate(&htmlBody, "confirmation_email_v2.html", data); err != nil {
 		return fmt.Errorf("failed to render email template: %w", err)
 	}
 
-	// Set HTML body
 	msg.SetBodyString(mail.TypeTextHTML, htmlBody.String())
 
 	// plain text fallback

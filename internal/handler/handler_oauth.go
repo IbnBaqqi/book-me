@@ -30,7 +30,6 @@ func (h *Handler) Callback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Oauth 42 service handles callback
 	user, err := h.oauth.HandleCallback(r)
 	if err != nil {
 		handleError(w, err)
