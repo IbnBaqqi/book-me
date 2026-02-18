@@ -73,55 +73,6 @@ func NewService(secret string) *Service {
 	}
 }
 
-// Authenticate is an Authentication middleware
-func (s *Service) Authenticate(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-
-		tokenStr, err := GetBearerToken(r.Header)
-		if err != nil {
-			// No token or malformed token - unauthenticated request
-			next.ServeHTTP(w, r)
-			return
-		}
-
-		claims, err := s.VerifyAccessToken(tokenStr)
-		if err != nil {
-			// public endpoints
-			// Invalid or expired token - unauthenticated request
-			next.ServeHTTP(w, r)
-			return
-		}
-
-		// Convert claims.Subject (string) to int64 for User.ID
-		id, err := strconv.ParseInt(claims.Subject, 10, 64)
-		if err != nil {
-			// If conversion fails, treat as unauthenticated
-			next.ServeHTTP(w, r)
-			return
-		}
-		user := User{
-			ID:		id,
-			Role:	claims.Role,
-			Name:	claims.Name,
-		}
-
-		ctx := WithUser(r.Context(), user)
-		next.ServeHTTP(w, r.WithContext(ctx))
-	})
-}
-
-// RequireAuth is Authorization middleware
-func RequireAuth(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if _, ok := UserFromContext(r.Context()); !ok {
-			http.Error(w, "unauthorized", http.StatusUnauthorized)
-			return
-		}
-		next.ServeHTTP(w, r)
-	})
-}
-
-
 // IssueAccessToken create a jwt token
 func (s *Service) IssueAccessToken(user database.User) (string, error) {
 	

@@ -12,9 +12,10 @@ import (
 	_ "github.com/lib/pq" // PostgreSQL driver registration
 )
 
-// DB wraps the database connection pool
+// DB wraps the database connection pool & queries
 type DB struct {
 	*sql.DB
+	*Queries
 }
 
 // Tx wraps a database transaction
@@ -30,7 +31,6 @@ func Connect(ctx context.Context, cfg *config.AppConfig) (*DB, error) {
 		return nil, fmt.Errorf("failed to open database: %w", err)
 	}
 
-	// Test the connection, ping with context
 	if err := dbConn.PingContext(ctx); err != nil {
 		if err = dbConn.Close(); err != nil {
 			slog.Error("failed to close database connection", "error", err)
@@ -39,8 +39,11 @@ func Connect(ctx context.Context, cfg *config.AppConfig) (*DB, error) {
 		return nil, fmt.Errorf("failed to ping database: %w", err)
 	}
 
+	queries := New(dbConn)
+	
 	return &DB{
 		DB: dbConn,
+		Queries: queries,
 	}, nil
 }
 

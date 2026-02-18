@@ -7,8 +7,6 @@ import (
 	"embed"
 	"fmt"
 	"html/template"
-	"log/slog"
-	"time"
 
 	"github.com/wneessen/go-mail"
 )
@@ -44,7 +42,7 @@ type BookingData struct {
 
 // NewService creates a new email service
 func NewService(cfg Config) (*Service, error) {
-	// Create mail client with TLS
+	
 	client, err := mail.NewClient(
 		cfg.SMTPHost,
 		mail.WithPort(cfg.SMTPPort),
@@ -71,36 +69,20 @@ func NewService(cfg Config) (*Service, error) {
 	}, nil
 }
 
-// SendConfirmation sends a booking confirmation email
-// This runs asynchronously to not block the HTTP response
-func (s *Service) SendConfirmation(ctx context.Context, email, room, startTime, endTime string) error {
-	// Run in goroutine for async sending
-	go func() {
-		if err := s.sendConfirmationSync(email, room, startTime, endTime); err != nil {
-			// Log error but don't fail the whole operation
-			// TODO look into uber-go/zap for logging
-			slog.Warn("Failed to send confirmation email", "error", err)
-		}
-	}()
-	return nil
-}
 
-// sendConfirmationSync is the synchronous version for actual email sending
-func (s *Service) sendConfirmationSync(toEmail, room, startTime, endTime string) error {
-	// Create new message
+// SendConfirmation sends a confirmation email for reservation
+func (s *Service) SendConfirmation(ctx context.Context, toEmail, room, startTime, endTime string) error {
+
 	msg := mail.NewMsg()
 
-	// Set sender
 	if err := msg.From(fmt.Sprintf("%s <%s>", s.fromName, s.from)); err != nil {
 		return fmt.Errorf("failed to set sender: %w", err)
 	}
 
-	// Set recipient
 	if err := msg.To(toEmail); err != nil {
 		return fmt.Errorf("failed to set recipient: %w", err)
 	}
 
-	// Set subject
 	msg.Subject("Hive / Meeting Room Confirmation")
 
 	// Prepare template data
@@ -110,13 +92,11 @@ func (s *Service) sendConfirmationSync(toEmail, room, startTime, endTime string)
 		EndTime:   endTime,
 	}
 
-	// Render HTML template
 	var htmlBody bytes.Buffer
 	if err := s.templates.ExecuteTemplate(&htmlBody, "confirmation_email_v2.html", data); err != nil {
 		return fmt.Errorf("failed to render email template: %w", err)
 	}
 
-	// Set HTML body
 	msg.SetBodyString(mail.TypeTextHTML, htmlBody.String())
 
 	// plain text fallback
@@ -126,10 +106,7 @@ func (s *Service) sendConfirmationSync(toEmail, room, startTime, endTime string)
 	// )
 	// msg.AddAlternativeString(mail.TypeTextPlain, plainText)
 
-	// Send email with timeout
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
+	// Send email with context
 	if err := s.client.DialAndSendWithContext(ctx, msg); err != nil {
 		return fmt.Errorf("failed to send email: %w", err)
 	}

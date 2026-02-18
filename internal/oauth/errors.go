@@ -35,15 +35,6 @@ func (e *OauthError) Wrap(err error) *OauthError {
 	}
 }
 
-// WithMessage returns a new error with a custom message
-// func (e *OauthError) WithMessage(msg string) *OauthError {
-// 	return &OauthError{
-// 		Err:        e.Err,
-// 		Message:    msg,
-// 		StatusCode: e.StatusCode,
-// 	}
-// }
-
 // Predefined errors - Auth errors
 var (
 	ErrInvalidToken = &OauthError{

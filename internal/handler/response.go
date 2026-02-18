@@ -88,7 +88,6 @@ func handleError(w http.ResponseWriter, err error) {
 		return
 	}
 
-	// Unexpected errors
 	slog.Error("unexpected error", "error", err)
 	respondWithError(w, http.StatusInternalServerError, "Internal server error")
 }

@@ -10,22 +10,20 @@ import (
 	appvalidator "github.com/IbnBaqqi/book-me/internal/validator"
 )
 
+const maxRequestBodySize int64 = 1 * 1024 * 1024 // 1MB
+
 // CreateReservation is handler to handles creation of a new reservation
 // 
 // POST /reservations
 func (h *Handler) CreateReservation(w http.ResponseWriter, r *http.Request) {
 
-	// Get authenticated user from context
 	currentUser, ok := auth.UserFromContext(r.Context())
 	if !ok {
 		http.Error(w, "unauthorized", http.StatusUnauthorized)
 		return
 	}
 
-	// Limit request body size
-	r.Body = http.MaxBytesReader(w, r.Body, 1048576) // 1MB
-
-	// Decode with strict validation
+	r.Body = http.MaxBytesReader(w, r.Body, maxRequestBodySize)
 	decoder := json.NewDecoder(r.Body)
 	decoder.DisallowUnknownFields()
 
@@ -119,14 +117,12 @@ func (h *Handler) CancelReservation(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Get authenticated user from context
 	currentUser, ok := auth.UserFromContext(r.Context())
 	if !ok {
 		respondWithError(w, http.StatusUnauthorized, "unauthorized")
 		return
 	}
 
-	// Build service input
 	input := service.CancelReservationInput{
 		ID:       id,
 		UserID:   currentUser.ID,

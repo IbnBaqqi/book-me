@@ -64,17 +64,13 @@ func (s *Service) HandleCallback(r *http.Request) (database.User, error) {
 	ctx, cancel := context.WithTimeout(r.Context(), 15*time.Second)
 	defer cancel()
 
-	// Get loggedIn User Info from 42
 	user42, err := s.provider.Fetch42UserData(ctx, s.provider.config, token)
 	if err != nil {
 		if errors.Is(err, context.DeadlineExceeded) {
 			return database.User{}, ErrOAuthTimeout
 		}
-		return database.User{}, &OauthError{ //Fix
-			StatusCode: http.StatusBadGateway,
-			Message:    err.Error(),
-			Err:        err,
-		}
+		slog.Error("failed to fetch user data from 42 intra", "error", err)
+		return database.User{}, ErrOAuthUserInfoFailed
 	}
 
 	// Validate Campus
@@ -92,9 +88,11 @@ func (s *Service) HandleCallback(r *http.Request) (database.User, error) {
 	// Find or create user - might use redis later for this TODO
 	user, err := s.provider.FindOrCreateUser(r.Context(), user42)
 	if err != nil {
-		// TODO need to find a way to return the error and also log like respondWithError
-		// respondWithError(w, http.StatusInternalServerError, "failed to get or create user", err)
-		return database.User{}, err
+		slog.Error("Unable to Find or create user", "error", err)
+		return database.User{}, &OauthError{
+			Message: "failed to find or create user",
+			StatusCode: http.StatusInternalServerError,
+		}
 	}
 
 	return user, nil
@@ -114,7 +112,6 @@ func (s *Service) ValidateState(w http.ResponseWriter, r *http.Request) error {
 		}
 	}
 
-	// Clear state from session
 	delete(session.Values, "oauth_state")
 	if err := session.Save(r, w); err != nil {
 		slog.Error("failed to save session", "error", err)
@@ -135,6 +132,6 @@ func (s *Service) GetRedirectTokenURL() string {
 // generateRandomState generates a cryptograph secure random state token.
 func generateRandomState() string {
 	b := make([]byte, 32)
-	_, _ = rand.Read(b) // no error check as Read always succeeds
+	_, _ = rand.Read(b)
 	return hex.EncodeToString(b)
 }

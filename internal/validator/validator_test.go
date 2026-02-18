@@ -4,14 +4,9 @@ import (
 	"errors"
 	"testing"
 	"time"
-)
 
-// Test structs
-type reservationRequest struct {
-	RoomID    int64     `validate:"required,gt=0"`
-	StartTime time.Time `validate:"required,futureTime,schoolHours"`
-	EndTime   time.Time `validate:"required,gtfield=StartTime,schoolHours"`
-}
+	"github.com/IbnBaqqi/book-me/internal/dto"
+)
 
 // TestValidate_Success tests successful validation scenarios
 func TestValidate_Success(t *testing.T) {
@@ -23,7 +18,7 @@ func TestValidate_Success(t *testing.T) {
 	}{
 		{
 			name: "valid reservation",
-			input: reservationRequest{
+			input: dto.CreateReservationRequest{
 				RoomID:    1,
 				StartTime: time.Date(tomorrow.Year(), tomorrow.Month(), tomorrow.Day(), 10, 0, 0, 0, time.UTC),
 				EndTime:   time.Date(tomorrow.Year(), tomorrow.Month(), tomorrow.Day(), 12, 0, 0, 0, time.UTC),
@@ -31,7 +26,7 @@ func TestValidate_Success(t *testing.T) {
 		},
 		{
 			name: "reservation at school start time (6 AM)",
-			input: reservationRequest{
+			input: dto.CreateReservationRequest{
 				RoomID:    5,
 				StartTime: time.Date(tomorrow.Year(), tomorrow.Month(), tomorrow.Day(), 6, 0, 0, 0, time.UTC),
 				EndTime:   time.Date(tomorrow.Year(), tomorrow.Month(), tomorrow.Day(), 8, 0, 0, 0, time.UTC),
@@ -39,7 +34,7 @@ func TestValidate_Success(t *testing.T) {
 		},
 		{
 			name: "reservation just before school end (7:59 PM)",
-			input: reservationRequest{
+			input: dto.CreateReservationRequest{
 				RoomID:    3,
 				StartTime: time.Date(tomorrow.Year(), tomorrow.Month(), tomorrow.Day(), 18, 0, 0, 0, time.UTC),
 				EndTime:   time.Date(tomorrow.Year(), tomorrow.Month(), tomorrow.Day(), 19, 59, 0, 0, time.UTC),
@@ -66,7 +61,7 @@ func TestValidate_RequiredFields(t *testing.T) {
 	}{
 		{
 			name: "missing room ID",
-			input: reservationRequest{
+			input: dto.CreateReservationRequest{
 				StartTime: time.Now().Add(24 * time.Hour),
 				EndTime:   time.Now().Add(25 * time.Hour),
 			},
@@ -74,7 +69,7 @@ func TestValidate_RequiredFields(t *testing.T) {
 		},
 		{
 			name: "missing start time",
-			input: reservationRequest{
+			input: dto.CreateReservationRequest{
 				RoomID:  1,
 				EndTime: time.Now().Add(25 * time.Hour),
 			},
@@ -137,7 +132,7 @@ func TestValidate_FutureTime(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			req := reservationRequest{
+			req := dto.CreateReservationRequest{
 				RoomID:    1,
 				StartTime: tt.startTime,
 				EndTime:   tt.endTime,
@@ -155,14 +150,12 @@ func TestValidate_FutureTime(t *testing.T) {
 				if _, exists := valErr.Fields[tt.errField]; !exists {
 					t.Errorf("expected error for field %s, got fields: %v", tt.errField, valErr.Fields)
 				}
-			} else {
-				if err != nil {
-					var valErr *ValidationError
-					if errors.As(err, &valErr) {
-						t.Errorf("expected no error, got validation errors: %v", valErr.Fields)
-					} else {
-						t.Errorf("expected no error, got: %v", err)
-					}
+			} else if err != nil {
+				var valErr *ValidationError
+				if errors.As(err, &valErr) {
+					t.Errorf("expected no error, got validation errors: %v", valErr.Fields)
+				} else {
+					t.Errorf("expected no error, got: %v", err)
 				}
 			}
 		})
@@ -201,7 +194,7 @@ func TestValidate_GtField(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			req := reservationRequest{
+			req := dto.CreateReservationRequest{
 				RoomID:    1,
 				StartTime: tt.startTime,
 				EndTime:   tt.endTime,
@@ -223,14 +216,12 @@ func TestValidate_GtField(t *testing.T) {
 				if valErr.Fields["EndTime"] != expectedMsg {
 					t.Errorf("expected '%s', got: %s", expectedMsg, valErr.Fields["EndTime"])
 				}
-			} else {
-				if err != nil {
-					var valErr *ValidationError
-					if errors.As(err, &valErr) {
-						t.Errorf("expected no error, got validation errors: %v", valErr.Fields)
-					} else {
-						t.Errorf("expected no error, got: %v", err)
-					}
+			} else if err != nil {
+				var valErr *ValidationError
+				if errors.As(err, &valErr) {
+					t.Errorf("expected no error, got validation errors: %v", valErr.Fields)
+				} else {
+					t.Errorf("expected no error, got: %v", err)
 				}
 			}
 		})
@@ -284,7 +275,7 @@ func TestValidate_SchoolHours(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			req := reservationRequest{
+			req := dto.CreateReservationRequest{
 				RoomID:    1,
 				StartTime: tt.startTime,
 				EndTime:   tt.endTime,
@@ -301,10 +292,8 @@ func TestValidate_SchoolHours(t *testing.T) {
 				if _, exists := valErr.Fields[tt.errField]; !exists {
 					t.Errorf("expected error for field %s, got fields: %v", tt.errField, valErr.Fields)
 				}
-			} else {
-				if err != nil {
-					t.Errorf("expected no error, got: %v", err)
-				}
+			} else if err != nil {
+				t.Errorf("expected no error, got: %v", err)
 			}
 		})
 	}
@@ -398,14 +387,12 @@ func TestValidate_MaxDateRange(t *testing.T) {
 				if valErr.Fields["EndDate"] != expectedMsg {
 					t.Errorf("expected '%s', got: %s", expectedMsg, valErr.Fields["EndDate"])
 				}
-			} else {
-				if err != nil {
-					var valErr *ValidationError
-					if errors.As(err, &valErr) {
-						t.Errorf("expected no error, got validation errors: %v", valErr.Fields)
-					} else {
-						t.Errorf("expected no error, got: %v", err)
-					}
+			} else if err != nil {
+				var valErr *ValidationError
+				if errors.As(err, &valErr) {
+					t.Errorf("expected no error, got validation errors: %v", valErr.Fields)
+				} else {
+					t.Errorf("expected no error, got: %v", err)
 				}
 			}
 		})
@@ -478,10 +465,8 @@ func TestValidate_DateRangeWithMultipleValidations(t *testing.T) {
 				if tt.expectedErr != "" && valErr.Fields["EndDate"] != tt.expectedErr {
 					t.Errorf("expected '%s', got: %s", tt.expectedErr, valErr.Fields["EndDate"])
 				}
-			} else {
-				if err != nil {
-					t.Errorf("expected no error, got: %v", err)
-				}
+			} else if err != nil {
+				t.Errorf("expected no error, got: %v", err)
 			}
 		})
 	}
@@ -491,7 +476,7 @@ func TestValidate_DateRangeWithMultipleValidations(t *testing.T) {
 func TestValidate_MultipleErrors(t *testing.T) {
 	yesterday := time.Now().Add(-24 * time.Hour)
 	
-	req := reservationRequest{
+	req := dto.CreateReservationRequest{
 		RoomID:    0, // Invalid: must be > 0
 		StartTime: yesterday, // Invalid: past time
 		EndTime:   yesterday.Add(-1 * time.Hour), // Invalid: past time & before start
@@ -580,7 +565,7 @@ func TestValidateVar(t *testing.T) {
 // TestFormatValidationErrors tests error message formatting
 func TestFormatValidationErrors(t *testing.T) {
 	// This is more of an integration test
-	req := reservationRequest{
+	req := dto.CreateReservationRequest{
 		RoomID: 0,
 	}
 

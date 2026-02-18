@@ -1,4 +1,3 @@
-// internal/handler/parser_test.go
 package handler
 
 import (
@@ -92,7 +91,23 @@ func TestParseDateRange(t *testing.T) {
 			endParam:     "2026-02-01",
 			wantErr:      true,
 			errorField:   "EndDate",
-			errorMessage: "Must be after StartDate",
+			errorMessage: "Must be after or equal to StartDate",
+		},
+		{
+			name:         "date range exceeds 60 days",
+			startParam:   "2026-02-01",
+			endParam:     "2026-04-15",
+			wantErr:      true,
+			errorField:   "EndDate",
+			errorMessage: "Date range cannot exceed 60 days",
+		},
+		{
+			name:          "date range exactly 60 days",
+			startParam:    "2026-02-01",
+			endParam:      "2026-04-02",
+			wantErr:       false,
+			expectedStart: time.Date(2026, 2, 1, 0, 0, 0, 0, time.UTC),
+			expectedEnd:   time.Date(2026, 4, 2, 0, 0, 0, 0, time.UTC),
 		},
 	}
 

@@ -1,10 +1,13 @@
+//nolint:revive // api is a clear and intentional package name
 package api
 
 import (
 	"net/http"
+	"time"
 
-	"github.com/IbnBaqqi/book-me/internal/auth"
 	"github.com/IbnBaqqi/book-me/internal/handler"
+	"github.com/IbnBaqqi/book-me/internal/middleware"
+	"golang.org/x/time/rate"
 )
 
 // SetupRoutes configures all HTTP routes and middleware
@@ -13,6 +16,7 @@ func SetupRoutes(cfg *API) *http.ServeMux {
 
 	// Create handlers with injected dependencies
 	h := handler.New(
+		cfg.DB,
 		cfg.Oauth,
 		cfg.Auth,
 		cfg.EmailService,
@@ -20,31 +24,41 @@ func SetupRoutes(cfg *API) *http.ServeMux {
 		cfg.Reservation,
 	)
 
-	// Health check (public)
-	mux.HandleFunc("GET /health", h.Health)
+	// Create rate limiters
+	oauthLimiter := middleware.NewRateLimiter(rate.Every(12*time.Second), 5, false)
+	apiLimiter := middleware.NewRateLimiter(rate.Every(2*time.Second), 30, false)
 
-	// Authentication routes (public)
-	mux.HandleFunc("GET /oauth/login", h.Login)
-	mux.HandleFunc("GET /oauth/callback", h.Callback)
+	// Create auth middleware
+	authenticate := middleware.Authenticate(cfg.Auth)
 
-	// Reservation routes (authenticated)
+	// Health check
+	mux.HandleFunc("GET api/v1/health", h.Health)
+
+	// Authentication routes
+	mux.Handle("GET /oauth/login", oauthLimiter.Limit(http.HandlerFunc(h.Login)))
+	mux.Handle("GET /oauth/callback", oauthLimiter.Limit(http.HandlerFunc(h.Callback)))
+
+	// Reservation routes
 	mux.Handle(
 		"POST /api/v1/reservations",
-		cfg.Auth.Authenticate(
-			auth.RequireAuth(
-				http.HandlerFunc(h.CreateReservation))))
+		apiLimiter.Limit(
+			authenticate(
+				middleware.RequireAuth(
+					http.HandlerFunc(h.CreateReservation)))))
 
 	mux.Handle(
 		"GET /api/v1/reservations",
-		cfg.Auth.Authenticate(
-			auth.RequireAuth(
-				http.HandlerFunc(h.GetReservations))))
+		apiLimiter.Limit(
+			authenticate(
+				middleware.RequireAuth(
+					http.HandlerFunc(h.GetReservations)))))
 
 	mux.Handle(
 		"DELETE /api/v1/reservations/{id}",
-		cfg.Auth.Authenticate(
-			auth.RequireAuth(
-				http.HandlerFunc(h.CancelReservation))))
+		apiLimiter.Limit(
+			authenticate(
+				middleware.RequireAuth(
+					http.HandlerFunc(h.CancelReservation)))))
 
 	return mux
 }
