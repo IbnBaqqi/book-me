@@ -7,7 +7,10 @@ import (
 	"embed"
 	"fmt"
 	"html/template"
+	"log/slog"
+	"time"
 
+	"github.com/avast/retry-go/v5"
 	"github.com/wneessen/go-mail"
 )
 
@@ -85,7 +88,6 @@ func (s *Service) SendConfirmation(ctx context.Context, toEmail, room, startTime
 
 	msg.Subject("Hive / Meeting Room Confirmation")
 
-	// Prepare template data
 	data := BookingData{
 		RoomName:  room,
 		StartTime: startTime,
@@ -106,16 +108,27 @@ func (s *Service) SendConfirmation(ctx context.Context, toEmail, room, startTime
 	// )
 	// msg.AddAlternativeString(mail.TypeTextPlain, plainText)
 
-	// Send email with context
-	if err := s.client.DialAndSendWithContext(ctx, msg); err != nil {
-		return fmt.Errorf("failed to send email: %w", err)
-	}
-
-	return nil
+	// Send email with context and backoff retries
+	return retry.Do(
+		func() error {
+			return s.client.DialAndSendWithContext(ctx, msg)
+		},
+		retry.Attempts(3),
+		retry.Delay(4*time.Second),
+		retry.MaxDelay(10*time.Second),
+		retry.DelayType(retry.BackOffDelay),
+		retry.Context(ctx),
+		retry.OnRetry(func(n uint, err error) {
+			slog.Warn("retrying email send", 
+				"attempt", n+1, 
+				"to", toEmail,
+				"error", err)
+		}),
+	)
 }
 
 // Close closes the email client connection
+// wneessen/go-mail client doesn't need explicit closing
 func (s *Service) Close() error {
-	// wneessen/go-mail client doesn't need explicit closing
 	return nil
 }
