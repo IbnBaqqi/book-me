@@ -109,22 +109,17 @@ func (s *Service) SendConfirmation(ctx context.Context, toEmail, room, startTime
 	// msg.AddAlternativeString(mail.TypeTextPlain, plainText)
 
 	// Send email with context and backoff retries
-	return retry.Do(
-		func() error {
-			return s.client.DialAndSendWithContext(ctx, msg)
-		},
-		retry.Attempts(3),
-		retry.Delay(4*time.Second),
-		retry.MaxDelay(10*time.Second),
-		retry.DelayType(retry.BackOffDelay),
-		retry.Context(ctx),
-		retry.OnRetry(func(n uint, err error) {
-			slog.Warn("retrying email send", 
-				"attempt", n+1, 
-				"to", toEmail,
-				"error", err)
-		}),
-	)
+	return retry.New(
+        retry.Attempts(3),
+        retry.Delay(4*time.Second),
+        retry.MaxDelay(10*time.Second),
+        retry.Context(ctx),
+        retry.OnRetry(func(n uint, err error) {
+            slog.Warn("retrying email send", "attempt", n+1, "error", err)
+        }),
+    ).Do(func() error {
+        return s.client.DialAndSendWithContext(ctx, msg)
+    })
 }
 
 // Close closes the email client connection
