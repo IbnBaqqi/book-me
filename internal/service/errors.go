@@ -58,6 +58,6 @@ var (
 	}
 	ErrUnauthorizedCancellation = &ServiceError{
 		Message:    "unauthorized to cancel this reservation",
-		StatusCode: http.StatusInternalServerError,
+		StatusCode: http.StatusForbidden,
 	}
 )
