@@ -11,8 +11,8 @@ import (
 
 // HealthResponse represents the health check response
 type HealthResponse struct {
-	Status   string            `json:"status"`
-	Checks   map[string]string `json:"checks"`
+	Status string            `json:"status"`
+	Checks map[string]string `json:"checks"`
 }
 
 // Health returns the server and dependencies health status.

@@ -15,6 +15,7 @@ import (
 	"github.com/IbnBaqqi/book-me/internal/email"
 	"github.com/IbnBaqqi/book-me/internal/google"
 )
+
 // User roles
 const (
 	RoleStudent = "STUDENT"
@@ -77,6 +78,7 @@ func (s *ReservationService) CreateReservation(
 	// TODO use redis instead
 	dbUser, err := s.db.GetUser(ctx, input.UserID)
 	if err != nil {
+		slog.Error("failed to get user from db", "error", err)
 		return nil, ErrGetUserFailed
 	}
 
@@ -152,7 +154,7 @@ func (s *ReservationService) CreateReservation(
 
 	// Create Google Calendar event
 	go func() {
-		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), 40*time.Second)
 		defer cancel()
 
 		calendarReservation := &google.Reservation{
@@ -182,7 +184,7 @@ func (s *ReservationService) CreateReservation(
 
 	// Send confirmation email
 	go func() {
-		emailCtx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+		emailCtx, cancel := context.WithTimeout(context.Background(), 40*time.Second)
 		defer cancel()
 
 		if err := s.email.SendConfirmation(
@@ -218,6 +220,7 @@ func (s *ReservationService) GetReservations(
 		EndTime:   endDateTime,
 	})
 	if err != nil {
+		slog.Error("failed to fetch reservations from db", "error", err)
 		return nil, ErrReservationFetchFailed
 	}
 	// Group reservations by room ID
@@ -295,7 +298,7 @@ func (s *ReservationService) CancelReservation(
 
 	// Delete google calender event
 	go func() {
-		ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), 40*time.Second)
 		defer cancel()
 		if err := s.calendar.DeleteGoogleEvent(ctx, reservation.GcalEventID.String); err != nil {
 			slog.Error("failed to delete google calendar event", "error", err)

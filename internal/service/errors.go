@@ -6,6 +6,7 @@ import (
 )
 
 // ServiceError represents a business logic error with a status code
+//
 //nolint:revive // intentional naming for clarity
 type ServiceError struct {
 	Err        error
@@ -58,6 +59,6 @@ var (
 	}
 	ErrUnauthorizedCancellation = &ServiceError{
 		Message:    "unauthorized to cancel this reservation",
-		StatusCode: http.StatusInternalServerError,
+		StatusCode: http.StatusForbidden,
 	}
 )

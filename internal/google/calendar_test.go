@@ -21,7 +21,7 @@ func setupIntegrationTest(t *testing.T) *CalendarService {
 	}
 
 	_ = godotenv.Load("../../.env")
-	
+
 	credFile := os.Getenv("GOOGLE_CREDENTIALS_FILE")
 	calID := os.Getenv("GOOGLE_CALENDAR_ID")
 

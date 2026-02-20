@@ -13,7 +13,7 @@ import (
 const maxRequestBodySize int64 = 1 * 1024 * 1024 // 1MB
 
 // CreateReservation is handler to handles creation of a new reservation
-// 
+//
 // POST /reservations
 func (h *Handler) CreateReservation(w http.ResponseWriter, r *http.Request) {
 
@@ -68,7 +68,7 @@ func (h *Handler) CreateReservation(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetReservations Handler handles fetching reservations and group them
-// 
+//
 // GET /reservations
 func (h *Handler) GetReservations(w http.ResponseWriter, r *http.Request) {
 
@@ -104,9 +104,8 @@ func (h *Handler) GetReservations(w http.ResponseWriter, r *http.Request) {
 	respondWithJSON(w, http.StatusOK, reserved)
 }
 
-
 // CancelReservation handler handles cancelling a reservation.
-// 
+//
 // DELETE /reservations/{id}
 func (h *Handler) CancelReservation(w http.ResponseWriter, r *http.Request) {
 

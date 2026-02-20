@@ -126,7 +126,7 @@ func TestRequireAuth(t *testing.T) {
 
 	t.Run("allows authenticated request", func(t *testing.T) {
 		req := httptest.NewRequest("GET", "/test", nil)
-		
+
 		// Add user to context
 		user := auth.User{
 			ID:   123,

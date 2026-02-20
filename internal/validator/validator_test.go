@@ -11,7 +11,7 @@ import (
 // TestValidate_Success tests successful validation scenarios
 func TestValidate_Success(t *testing.T) {
 	tomorrow := time.Now().Add(24 * time.Hour)
-	
+
 	tests := []struct {
 		name  string
 		input interface{}
@@ -80,7 +80,7 @@ func TestValidate_RequiredFields(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := Validate(tt.input)
-			
+
 			var valErr *ValidationError
 			if !errors.As(err, &valErr) {
 				t.Fatalf("expected ValidationError, got: %T", err)
@@ -231,7 +231,7 @@ func TestValidate_GtField(t *testing.T) {
 // TestValidate_SchoolHours tests schoolHours custom validator
 func TestValidate_SchoolHours(t *testing.T) {
 	tomorrow := time.Now().Add(24 * time.Hour)
-	
+
 	tests := []struct {
 		name      string
 		startTime time.Time
@@ -475,10 +475,10 @@ func TestValidate_DateRangeWithMultipleValidations(t *testing.T) {
 // TestValidate_MultipleErrors tests multiple validation errors
 func TestValidate_MultipleErrors(t *testing.T) {
 	yesterday := time.Now().Add(-24 * time.Hour)
-	
+
 	req := dto.CreateReservationRequest{
-		RoomID:    0, // Invalid: must be > 0
-		StartTime: yesterday, // Invalid: past time
+		RoomID:    0,                             // Invalid: must be > 0
+		StartTime: yesterday,                     // Invalid: past time
 		EndTime:   yesterday.Add(-1 * time.Hour), // Invalid: past time & before start
 	}
 

@@ -91,7 +91,7 @@ func (p *Provider42) Fetch42UserData(ctx context.Context, oauthConfig *oauth2.Co
 		slog.Error("failed to fetch user data from 42 intra", "err", err)
 		return nil, fmt.Errorf("failed to fetch user data from 42 intra")
 	}
-	
+
 	defer func() {
 		_ = res.Body.Close()
 	}()

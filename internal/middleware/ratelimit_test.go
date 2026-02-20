@@ -90,12 +90,12 @@ func TestRateLimiter(t *testing.T) {
 
 func TestGetIP(t *testing.T) {
 	tests := []struct {
-		name           string
-		remoteAddr     string
-		xForwardedFor  string
-		xRealIP        string
-		trustProxy     bool
-		expectedIP     string
+		name          string
+		remoteAddr    string
+		xForwardedFor string
+		xRealIP       string
+		trustProxy    bool
+		expectedIP    string
 	}{
 		{
 			name:       "from RemoteAddr when not trusting proxy",
@@ -157,7 +157,7 @@ func TestGetIP(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			limiter := NewRateLimiter(rate.Limit(1), 1, tt.trustProxy)
-			
+
 			req := httptest.NewRequest("GET", "/test", nil)
 			req.RemoteAddr = tt.remoteAddr
 
