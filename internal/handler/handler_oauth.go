@@ -15,6 +15,7 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	url, err := h.oauth.InitiateLogin(w, r)
 	if err != nil {
 		handleError(w, err)
+		return
 	}
 
 	// redirect to oauth2 authorization server
