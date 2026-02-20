@@ -235,7 +235,7 @@ func TestParseReservationID(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create request
 			req := httptest.NewRequest(http.MethodDelete, "/reservations/"+tt.pathValue, nil)
-			
+
 			// Set path value using SetPathValue
 			req.SetPathValue("id", tt.pathValue)
 

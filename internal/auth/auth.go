@@ -26,15 +26,15 @@ type CustomClaims struct {
 
 // Service handles JWT authentication.
 type Service struct {
-	JwtSecret         string
+	JwtSecret      string
 	AccessTokenTTL time.Duration
 }
 
 // User represents an authenticated User.
 type User struct {
-	ID		int64
-	Role	string
-	Name	string
+	ID   int64
+	Role string
+	Name string
 }
 
 type contextKey struct{}
@@ -47,8 +47,8 @@ const tokenTypeAccess tokenType = "access"
 
 // Predefined errors - Auth errors
 var (
-	ErrInvalidToken			= errors.New("invalid token")
-	ErrExpiredToken			= errors.New("expired token")
+	ErrInvalidToken         = errors.New("invalid token")
+	ErrExpiredToken         = errors.New("expired token")
 	ErrEmptyBearerToken     = errors.New("bearer token is empty")
 	ErrInvalidBearerToken   = errors.New("bearer token is incorrect")
 	ErrNoAuthHeaderIncluded = errors.New("no auth header included in request")
@@ -68,14 +68,14 @@ func UserFromContext(ctx context.Context) (User, bool) {
 // NewService creates a new auth service(JWT).
 func NewService(secret string) *Service {
 	return &Service{
-		JwtSecret:         secret,
+		JwtSecret:      secret,
 		AccessTokenTTL: time.Hour,
 	}
 }
 
 // IssueAccessToken create a jwt token
 func (s *Service) IssueAccessToken(user database.User) (string, error) {
-	
+
 	claims := CustomClaims{
 		Name: user.Name,
 		Role: user.Role,
@@ -148,7 +148,7 @@ func MakeRefreshToken() string {
 }
 
 // ValidateJWT validates the signature of the JWT and extracts the claims(userID).
-// 
+//
 // Deprecated: Use VerifyAccessToken instead.
 func ValidateJWT(tokenString, tokenSecret string) (uuid.UUID, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &CustomClaims{}, func(_ *jwt.Token) (any, error) {

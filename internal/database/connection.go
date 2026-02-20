@@ -40,9 +40,9 @@ func Connect(ctx context.Context, cfg *config.AppConfig) (*DB, error) {
 	}
 
 	queries := New(dbConn)
-	
+
 	return &DB{
-		DB: dbConn,
+		DB:      dbConn,
 		Queries: queries,
 	}, nil
 }

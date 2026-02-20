@@ -15,6 +15,7 @@ import (
 	"github.com/IbnBaqqi/book-me/internal/email"
 	"github.com/IbnBaqqi/book-me/internal/google"
 )
+
 // User roles
 const (
 	RoleStudent = "STUDENT"

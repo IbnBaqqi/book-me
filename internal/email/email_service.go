@@ -19,9 +19,9 @@ var templateFS embed.FS
 
 // Service handles email operations
 type Service struct {
-	client   *mail.Client
-	from     string
-	fromName string
+	client    *mail.Client
+	from      string
+	fromName  string
 	templates *template.Template
 }
 
@@ -45,7 +45,7 @@ type BookingData struct {
 
 // NewService creates a new email service
 func NewService(cfg Config) (*Service, error) {
-	
+
 	client, err := mail.NewClient(
 		cfg.SMTPHost,
 		mail.WithPort(cfg.SMTPPort),
@@ -71,7 +71,6 @@ func NewService(cfg Config) (*Service, error) {
 		templates: tmpl,
 	}, nil
 }
-
 
 // SendConfirmation sends a confirmation email for reservation
 func (s *Service) SendConfirmation(ctx context.Context, toEmail, room, startTime, endTime string) error {
@@ -110,16 +109,16 @@ func (s *Service) SendConfirmation(ctx context.Context, toEmail, room, startTime
 
 	// Send email with context and backoff retries
 	return retry.New(
-        retry.Attempts(3),
-        retry.Delay(4*time.Second),
-        retry.MaxDelay(10*time.Second),
-        retry.Context(ctx),
-        retry.OnRetry(func(n uint, err error) {
-            slog.Warn("retrying email send", "attempt", n+1, "error", err)
-        }),
-    ).Do(func() error {
-        return s.client.DialAndSendWithContext(ctx, msg)
-    })
+		retry.Attempts(3),
+		retry.Delay(4*time.Second),
+		retry.MaxDelay(10*time.Second),
+		retry.Context(ctx),
+		retry.OnRetry(func(n uint, err error) {
+			slog.Warn("retrying email send", "attempt", n+1, "error", err)
+		}),
+	).Do(func() error {
+		return s.client.DialAndSendWithContext(ctx, msg)
+	})
 }
 
 // Close closes the email client connection

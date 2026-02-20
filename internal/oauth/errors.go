@@ -6,6 +6,7 @@ import (
 )
 
 // OauthError represents an oauth error with a status code
+//
 //nolint:revive // intentional naming for clarity
 type OauthError struct {
 	Err        error

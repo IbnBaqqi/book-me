@@ -6,6 +6,7 @@ import (
 )
 
 // ServiceError represents a business logic error with a status code
+//
 //nolint:revive // intentional naming for clarity
 type ServiceError struct {
 	Err        error

@@ -12,29 +12,29 @@ import (
 
 // Handler holds all dependencies for HTTP handlers
 type Handler struct {
-	db               *database.DB
-	oauth            *oauth.Service
-	auth             *auth.Service
-	email            *email.Service
-	calendar         *google.CalendarService
-	reservation		 *service.ReservationService
+	db          *database.DB
+	oauth       *oauth.Service
+	auth        *auth.Service
+	email       *email.Service
+	calendar    *google.CalendarService
+	reservation *service.ReservationService
 }
 
 // New creates a new Handler with all dependencies injected
 func New(
-	db                   *database.DB,
-	oauthService         *oauth.Service,
-	authService          *auth.Service,
-	emailService         *email.Service,
-	calendarService      *google.CalendarService,
-	reservationService   *service.ReservationService,
+	db *database.DB,
+	oauthService *oauth.Service,
+	authService *auth.Service,
+	emailService *email.Service,
+	calendarService *google.CalendarService,
+	reservationService *service.ReservationService,
 ) *Handler {
 	return &Handler{
-		db:               db,
-		oauth:            oauthService,
-		auth:             authService,
-		email:            emailService,
-		calendar:         calendarService,
-		reservation: 	  reservationService,
+		db:          db,
+		oauth:       oauthService,
+		auth:        authService,
+		email:       emailService,
+		calendar:    calendarService,
+		reservation: reservationService,
 	}
 }

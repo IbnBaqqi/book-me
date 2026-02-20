@@ -90,7 +90,7 @@ func (s *Service) HandleCallback(r *http.Request) (database.User, error) {
 	if err != nil {
 		slog.Error("Unable to Find or create user", "error", err)
 		return database.User{}, &OauthError{
-			Message: "failed to find or create user",
+			Message:    "failed to find or create user",
 			StatusCode: http.StatusInternalServerError,
 		}
 	}
