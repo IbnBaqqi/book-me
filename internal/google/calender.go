@@ -8,6 +8,8 @@ import (
 	"os"
 	"time"
 
+	"github.com/IbnBaqqi/book-me/internal/logger"
+	"github.com/hashicorp/go-retryablehttp"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/calendar/v3"
 	"google.golang.org/api/option"
@@ -44,8 +46,20 @@ func NewCalendarService(credentialsFile, calendarScope, calendarID string) (*Cal
         return nil, fmt.Errorf("failed to create JWT config: %w", err)
     }
 
-    // Create calendar service with authenticated client
-    service, err := calendar.NewService(ctx, option.WithHTTPClient(config.Client(ctx)))
+	// Create retry-enabled HTTP client
+	retryClient := retryablehttp.NewClient()
+	retryClient.RetryMax = 3
+	retryClient.RetryWaitMin = 4 * time.Second
+	retryClient.RetryWaitMax = 10 * time.Second
+	retryClient.Logger = &logger.RetryLogger{}
+	
+	// Wrap jwt httpclient with retry
+	jwtClient := config.Client(ctx)
+	retryClient.HTTPClient = jwtClient
+	retryableClient := retryClient.StandardClient()
+
+    // Create calendar service with retry enabled authenticated client
+    service, err := calendar.NewService(ctx, option.WithHTTPClient(retryableClient))
     if err != nil {
         return nil, fmt.Errorf("failed to create calendar service: %w", err)
     }
@@ -93,9 +107,9 @@ func (s *CalendarService) CreateGoogleEvent(ctx context.Context, reservation *Re
     return createdEvent.Id, nil
 }
 
-// HealthCheck verifies the calendar service is accessible
+// HealthCheck verifies the calendar service is accessible.
+// Simple check to try to get calendar metadata
 func (s *CalendarService) HealthCheck(ctx context.Context) error {
-	// Simple check: try to get calendar metadata
 	_, err := s.service.Calendars.Get(s.calendarID).Context(ctx).Do()
 	if err != nil {
 		return fmt.Errorf("calendar API unreachable: %w", err)
