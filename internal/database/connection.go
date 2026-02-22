@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"time"
 
 	"github.com/IbnBaqqi/book-me/internal/config"
 	_ "github.com/lib/pq" // PostgreSQL driver registration
@@ -38,6 +39,10 @@ func Connect(ctx context.Context, cfg *config.AppConfig) (*DB, error) {
 		slog.Error("failed to ping database", "error", err)
 		return nil, fmt.Errorf("failed to ping database: %w", err)
 	}
+	
+	dbConn.SetMaxOpenConns(25)
+	dbConn.SetMaxIdleConns(5)
+	dbConn.SetConnMaxLifetime(5 * time.Minute)
 
 	queries := New(dbConn)
 

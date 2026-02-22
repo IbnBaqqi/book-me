@@ -4,7 +4,7 @@
 
 [![Go Version](https://img.shields.io/github/go-mod/go-version/ibnbaqqi/book-me?style=flat&logo=go&color=00ADD8)](https://github.com/ibnbaqqi/book-me/blob/main/go.mod)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-18.1-336791?logo=postgresql)
-[![Go Report Card](https://goreportcard.com/badge/github.com/ibnbaqqi/book-me?style=flat)](https://goreportcard.com/report/github.com/ibnbaqqi/book-me)
+[![Go Report Card](https://goreportcard.com/badge/github.com/IbnBaqqi/book-me?style=flat)](https://goreportcard.com/report/github.com/IbnBaqqi/book-me)
 ![Google Calendar](https://img.shields.io/badge/Google_Cal-API-4285F4?style=flat&logo=google-calendar)
 ![Keycloak](https://img.shields.io/badge/Keycloak-v21+-662222?style=flat&logo=keycloak)
 

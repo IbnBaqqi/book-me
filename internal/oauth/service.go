@@ -41,10 +41,7 @@ func (s *Service) InitiateLogin(w http.ResponseWriter, r *http.Request) (string,
 	session.Values["oauth_state"] = state
 	if err := session.Save(r, w); err != nil {
 		slog.Error("failed to save session", "error", err)
-		return "", &OauthError{
-			Err:        err,
-			StatusCode: http.StatusInternalServerError,
-		}
+		return "", ErrFailedToSaveSession
 	}
 
 	url := s.provider.config.AuthCodeURL(state)
@@ -58,6 +55,7 @@ func (s *Service) HandleCallback(r *http.Request) (database.User, error) {
 	// Exchange authorization code for token
 	token, err := s.provider.ExchangeCode(r)
 	if err != nil {
+		slog.Error("oauth code exchange failed", "error", err)
 		return database.User{}, ErrOAuthExchangeFailed
 	}
 
@@ -88,11 +86,8 @@ func (s *Service) HandleCallback(r *http.Request) (database.User, error) {
 	// Find or create user - might use redis later for this TODO
 	user, err := s.provider.FindOrCreateUser(r.Context(), user42)
 	if err != nil {
-		slog.Error("Unable to Find or create user", "error", err)
-		return database.User{}, &OauthError{
-			Message:    "failed to find or create user",
-			StatusCode: http.StatusInternalServerError,
-		}
+		slog.Error("unable to find or create user", "error", err)
+		return database.User{}, ErrFailedToFindorCreateUser
 	}
 
 	return user, nil
@@ -106,19 +101,13 @@ func (s *Service) ValidateState(w http.ResponseWriter, r *http.Request) error {
 	expectedState, ok := session.Values["oauth_state"].(string)
 	if !ok || expectedState != r.URL.Query().Get("state") {
 		slog.Error("invalid or missing state")
-		return &OauthError{
-			Err:        errors.New("invalid or missing state"),
-			StatusCode: http.StatusForbidden,
-		}
+		return ErrInvalidOrMissingState
 	}
 
 	delete(session.Values, "oauth_state")
 	if err := session.Save(r, w); err != nil {
 		slog.Error("failed to save session", "error", err)
-		return &OauthError{
-			Err:        err,
-			StatusCode: http.StatusInternalServerError,
-		}
+		return ErrFailedToSaveSession
 	}
 
 	return nil

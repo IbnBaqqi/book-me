@@ -63,7 +63,7 @@ func NewProvider42(
 func (p *Provider42) ExchangeCode(r *http.Request) (*oauth2.Token, error) {
 	code := r.URL.Query().Get("code")
 	if code == "" {
-		return nil, errors.New("missing authorization code")
+		return nil, ErrInvalidOAuthCode
 	}
 
 	return p.config.Exchange(r.Context(), code)
@@ -82,10 +82,10 @@ func (p *Provider42) Fetch42UserData(ctx context.Context, oauthConfig *oauth2.Co
 	req, err := retryablehttp.NewRequestWithContext(ctx, "GET", p.userInfoURL, nil)
 	if err != nil {
 		slog.Error("failed to create request", "error", err)
-		return nil, fmt.Errorf("failed to create request") // change
+		return nil, fmt.Errorf("failed to create request")
 	}
 
-	// RetryClient handles retries on 429 & 5xx response exponentially
+	// RetryClient handles retries
 	res, err := retryClient.Do(req)
 	if err != nil {
 		slog.Error("failed to fetch user data from 42 intra", "err", err)
@@ -137,7 +137,6 @@ func (p *Provider42) FindOrCreateUser(ctx context.Context, user42 *User42) (data
 		return p.createUser(ctx, user42)
 	}
 
-	// Database error
 	return database.User{}, fmt.Errorf("database error: %w", err)
 }
 

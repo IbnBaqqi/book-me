@@ -36,74 +36,6 @@ func (e *OauthError) Wrap(err error) *OauthError {
 	}
 }
 
-// Predefined errors - Auth errors
-var (
-	ErrInvalidToken = &OauthError{
-		Message:    "invalid token",
-		StatusCode: http.StatusUnauthorized,
-	}
-	ErrExpiredToken = &OauthError{
-		Message:    "token has expired",
-		StatusCode: http.StatusUnauthorized,
-	}
-	ErrUnauthorized = &OauthError{
-		Message:    "unauthorized",
-		StatusCode: http.StatusUnauthorized,
-	}
-	ErrInvalidCredentials = &OauthError{
-		Message:    "invalid credentials",
-		StatusCode: http.StatusUnauthorized,
-	}
-	ErrTokenRevoked = &OauthError{
-		Message:    "token has been revoked",
-		StatusCode: http.StatusUnauthorized,
-	}
-	ErrInvalidTokenType = &OauthError{
-		Message:    "invalid token type",
-		StatusCode: http.StatusUnauthorized,
-	}
-	ErrMissingAuthHeader = &OauthError{
-		Message:    "missing authorization header",
-		StatusCode: http.StatusUnauthorized,
-	}
-	ErrInvalidAuthHeader = &OauthError{
-		Message:    "invalid authorization header format",
-		StatusCode: http.StatusUnauthorized,
-	}
-	ErrEmptyBearerToken = &OauthError{
-		Message:    "bearer token is empty",
-		StatusCode: http.StatusUnauthorized,
-	}
-	ErrAuthenticationRequired = &OauthError{
-		Message:    "authentication required",
-		StatusCode: http.StatusUnauthorized,
-	}
-	ErrInsufficientPermissions = &OauthError{
-		Message:    "insufficient permissions",
-		StatusCode: http.StatusForbidden,
-	}
-)
-
-// Predefined errors - User errors
-var (
-	ErrUserNotFound = &OauthError{
-		Message:    "user not found",
-		StatusCode: http.StatusNotFound,
-	}
-	ErrUserAlreadyExists = &OauthError{
-		Message:    "user already exists",
-		StatusCode: http.StatusBadRequest,
-	}
-	ErrInvalidRole = &OauthError{
-		Message:    "invalid role",
-		StatusCode: http.StatusBadRequest,
-	}
-	ErrGetUserFailed = &OauthError{
-		Message:    "failed to get user",
-		StatusCode: http.StatusInternalServerError,
-	}
-)
-
 // Predefined errors - OAuth errors
 var (
 	ErrOAuthStateMismatch = &OauthError{
@@ -112,14 +44,14 @@ var (
 	}
 	ErrOAuthExchangeFailed = &OauthError{
 		Message:    "oauth token exchange failed",
-		StatusCode: http.StatusUnauthorized,
+		StatusCode: http.StatusInternalServerError,
 	}
 	ErrOAuthUserInfoFailed = &OauthError{
-		Message:    "failed to fetch user info from OAuth provider",
+		Message:    "failed to fetch user info from oauth provider",
 		StatusCode: http.StatusInternalServerError,
 	}
 	ErrInvalidOAuthCode = &OauthError{
-		Message:    "invalid or missing OAuth code",
+		Message:    "invalid or missing oauth code",
 		StatusCode: http.StatusBadRequest,
 	}
 	ErrOAuthTimeout = &OauthError{
@@ -130,12 +62,20 @@ var (
 		Message:    "access denied: only helsinki campus student allowed",
 		StatusCode: http.StatusForbidden,
 	}
-	ErrOAuthStateFailed = &OauthError{
-		Message:    "failed to generate or store OAuth state",
-		StatusCode: http.StatusInternalServerError,
-	}
 	ErrOAuthSessionFailed = &OauthError{
 		Message:    "failed to get session",
 		StatusCode: http.StatusInternalServerError,
+	}
+	ErrFailedToSaveSession = &OauthError{
+		Message:    "failed to save session",
+		StatusCode: http.StatusInternalServerError,
+	}
+	ErrFailedToFindorCreateUser = &OauthError{
+		Message:    "failed to find or create user",
+		StatusCode: http.StatusInternalServerError,
+	}
+	ErrInvalidOrMissingState = &OauthError{
+		Message:    "invalid or missing state",
+		StatusCode: http.StatusForbidden,
 	}
 )
