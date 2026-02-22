@@ -17,22 +17,58 @@ Authentication Flow
 
 | Method | Endpoint              | Description                 | Auth Required |
 |------|-----------------------|-----------------------------|---------------|
-| GET  | /api/oauth/login      | Initiate OAuth login        | No            |
+| GET  | /oauth/login          | Initiate OAuth login        | No            |
 | GET  | /oauth/callback       | OAuth callback handler      | No            |
 
 ### Reservations
 
 | Method | Endpoint                         | Description                         | Auth Required |
 |------|----------------------------------|-------------------------------------|---------------|
-| POST | /reservation                     | Create a new reservation            | Yes           |
-| GET  | /reservation                     | Get unavailable time slots          | Optional      |
-| DELETE | /reservation/{id}              | Cancel a reservation                | Yes           |
+| POST | /api/v1/reservations             | Create a new reservation            | Yes           |
+| GET  | /api/v1/reservations             | Get unavailable time slots          | Yes           |
+| DELETE | /api/v1/reservations/{id}      | Cancel a reservation                | Yes           |
 
 ### Health Check
 
 | Method | Endpoint        | Description             | Auth Required |
 |------|-----------------|-------------------------|---------------|
-| GET  | /api/healthz    | Health check endpoint   | No            |
+| GET  | /api/v1/health  | Health check endpoint   | No            |
+
+---
+
+## Health Check Response
+
+The health endpoint checks the status of critical services:
+
+```bash
+curl http://localhost:8080/api/v1/health
+```
+
+**Response (Healthy)**
+
+```json
+{
+	"status": "healthy",
+	"checks": {
+        "calendar": "healthy",
+        "database": "healthy",
+        "email": "healthy"
+    }
+}
+```
+
+**Response (Unhealthy)**
+
+```json
+{
+    "status": "unhealthy",
+    "checks": {
+        "calendar": "healthy",
+        "database": "unhealthy",
+        "email": "healthy"
+    }
+}
+```
 
 ---
 
@@ -41,7 +77,7 @@ Authentication Flow
 ### Create a Reservation
 
 ```bash
-curl -X POST http://localhost:8080/reservation \
+curl -X POST http://localhost:8080/api/v1/reservations \
   -H "Authorization: Bearer YOUR_JWT_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -71,7 +107,8 @@ curl -X POST http://localhost:8080/reservation \
 ### Get Unavailable Slots
 
 ```bash
-curl "http://localhost:8080/reservation?start=2025-01-28&end=2025-02-01"
+curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  "http://localhost:8080/api/v1/reservations?start=2025-01-28&end=2025-02-01"
 ```
 
 **Response**
@@ -80,13 +117,19 @@ curl "http://localhost:8080/reservation?start=2025-01-28&end=2025-02-01"
 [
   {
     "roomId": 1,
-    "roomName": "Conference Room A",
+    "roomName": "Big Conference Room",
     "slots": [
       {
         "id": 123,
         "startTime": "2025-01-28T14:00:00Z",
         "endTime": "2025-01-28T16:00:00Z",
         "bookedBy": "John Doe"
+      },
+	  {
+        "id": 124,
+        "startTime": "2025-01-29T14:00:00Z",
+        "endTime": "2025-01-29T16:00:00Z",
+        "bookedBy": "null"
       }
     ]
   }
@@ -98,7 +141,7 @@ curl "http://localhost:8080/reservation?start=2025-01-28&end=2025-02-01"
 ### Cancel a Reservation
 
 ```bash
-curl -X DELETE http://localhost:8080/reservation/123 \
+curl -X DELETE http://localhost:8080/api/v1/reservations/123 \
   -H "Authorization: Bearer YOUR_JWT_TOKEN"
 ```
 
@@ -110,7 +153,7 @@ curl -X DELETE http://localhost:8080/reservation/123 \
 
 ---
 
-## Business Rules 📐
+## Business Rules
 
 ### Reservation Rules
 
@@ -118,9 +161,11 @@ curl -X DELETE http://localhost:8080/reservation/123 \
 
 - Cannot book past times
 - End time must be after start time
+- Bookings must be within school hours (6:00 AM - 8:00 PM)
 - Maximum duration:
   - **Students**: 4 hours
   - **Staff**: Unlimited
+- Date range queries cannot exceed 60 days
 
 ---
 
@@ -167,5 +212,26 @@ The system automatically sends emails for:
 ```bash
 SMTP_PASSWORD=your-gmail-app-password
 ```
+
+---
+
+## Rate Limiting 🛡️
+
+The API implements rate limiting to prevent abuse:
+
+### OAuth Endpoints
+- **Rate**: 5 requests per 12 seconds per IP
+- **Applies to**:
+  - `/oauth/login`
+  - `/oauth/callback`
+
+### API Endpoints
+- **Rate**: 30 requests per 2 seconds per IP
+- **Applies to**:
+  - `/api/v1/reservations` (all methods)
+
+When rate limit is exceeded, the API returns:
+- **Status Code**: `429 Too Many Requests`
+- **Retry-After**: Header indicating when to retry
 
 ---

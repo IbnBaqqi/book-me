@@ -49,20 +49,21 @@ CREATE DATABASE bookme;
 cp .env.example .env
 ```
 
-#### 42 CREDENTIALS
+### 2. Configure Environment Variables
 
-1. Generate a new API application on the [42 intranet](https://profile.intra.42.fr/oauth/applications/new)
-2. In the field Redirect URI add: http://localhost:8080/oauth/callback
-3. From the available scopes, choose "Access the user public data" and then proceed to submit.
+#### Server Configuration
+```bash
+PORT=8080
+SERVER_READ_TIMEOUT=15s
+SERVER_WRITE_TIMEOUT=15s
+SERVER_IDLE_TIMEOUT=60s
+LOG_LEVEL=info
+```
 
-- Environment variables:
-- `CLIENT_ID`: 42 API client ID
-- `SECRET`: 42 API client secret
-- `REDIRECT_URI`: http://localhost:8080/oauth/callback
-- `OAUTH_AUTH_URI`: https://api.intra.42.fr/oauth/authorize
-- `OAUTH_TOKEN_URI`: https://api.intra.42.fr/oauth/token
-- `JWT_SECRET`: YOUR JWT_SECRET
-- `REDIRECT_TOKEN_URI`: http://localhost:8080/?token=
+#### App Configuration
+```bash
+ENV=dev
+```
 
 #### Database
 
@@ -89,7 +90,8 @@ SESSION_SECRET=another-generated-secret-here
 
 ## 42 Intra OAuth Configuration
 
-1. Create a new API application on the **42 Intranet**
+1. Create a new API application on the **42 Intranet**:  
+   https://profile.intra.42.fr/oauth/applications/new
 2. Set **Redirect URI**:
    ```
    http://localhost:8080/oauth/callback
@@ -139,35 +141,101 @@ SMTP_USE_TLS=true
 
 ---
 
-## Database Migrations
+## Google Calendar Configuration (Optional - Staff Feature)
 
-Run migrations:
+Google Calendar integration allows staff bookings to automatically sync with Google Calendar.
+
+### 1. Create Google Cloud Project
+
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a new project or select an existing one
+3. Enable the **Google Calendar API**
+
+### 2. Create Service Account
+
+1. Navigate to **IAM & Admin** → **Service Accounts**
+2. Click **Create Service Account**
+3. Give it a name (e.g., "book-me-calendar")
+4. Grant it the **Editor** role
+5. Click **Done**
+
+### 3. Generate Service Account Key
+
+1. Click on the created service account
+2. Go to **Keys** tab
+3. Click **Add Key** → **Create new key**
+4. Select **JSON** format
+5. Download the JSON file
+6. Save it as `assets/book-me-service-account.json`
+
+### 4. Share Calendar with Service Account
+
+1. Open Google Calendar
+2. Go to calendar settings
+3. Under **Share with specific people**, add the service account email
+4. Grant **Make changes to events** permission
+5. Copy the **Calendar ID** (found in calendar settings)
+
+### 5. Configure Environment Variables
+
+Add to `.env`:
 
 ```bash
-goose postgres "postgres://{username}:{password}b@localhost:5432/bookme" up
+GOOGLE_CREDENTIALS_FILE=assets/book-me-service-account.json
+GOOGLE_CALENDAR_SCOPE=https://www.googleapis.com/auth/calendar
+GOOGLE_CALENDAR_ID=your-calendar-id@group.calendar.google.com
 ```
 
-Or manually apply SQL files from:
+---
+
+## Database Migrations
+
+Run migrations using goose:
+
+```bash
+goose -dir sql/schema postgres "postgres://username:password@localhost:5432/bookme?sslmode=disable" up
+```
+
+Or manually apply SQL files in order from:
 
 ```
 sql/schema/
+  001_users.sql
+  002_rooms.sql
+  003_reservations.sql
+  004_populate_rooms.sql
 ```
 ---
 
 ## Run the Application ▶️
 
 ```bash
-go run .
+make run
 ```
 
 Or:
 
 ```bash
-go run cmd/api/main.go
+go run cmd/server/main.go
 ```
 
 The server will start at:
 
 ```
 http://localhost:8080
+```
+
+---
+
+## Available Make Commands
+
+```bash
+make run            # Run the application
+make build          # Build the binary to bin/book-me
+make test           # Run all tests
+make test-coverage  # Run tests with coverage report
+make clean          # Clean build artifacts
+make sqlc           # Generate SQLC code from SQL queries
+make fmt            # Format code
+make deps           # Install and tidy dependencies
 ```
