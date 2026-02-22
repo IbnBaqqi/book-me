@@ -58,8 +58,8 @@ func (h *Handler) CreateReservation(w http.ResponseWriter, r *http.Request) {
 	respondWithJSON(w, http.StatusCreated, dto.ReservationDto{
 		ID:        reservation.ID,
 		RoomID:    reservation.RoomID,
-		StartTime: reservation.StartTime,
-		EndTime:   reservation.EndTime,
+		StartTime: reservation.StartTime.UTC(),
+		EndTime:   reservation.EndTime.UTC(),
 		CreatedBy: dto.UserDto{
 			ID:   currentUser.ID,
 			Name: currentUser.Name,
