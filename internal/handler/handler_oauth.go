@@ -11,7 +11,7 @@ import (
 // Login handles user login / sign-in
 func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 
-	// Initiate oauth2 flow (login)
+	// Initiate oauth2 flow
 	url, err := h.oauth.InitiateLogin(w, r)
 	if err != nil {
 		handleError(w, err)
