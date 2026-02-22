@@ -251,8 +251,8 @@ func (s *ReservationService) GetReservations(
 
 			slots = append(slots, dto.ReservedSlotDto{
 				ID:        res.ID,
-				StartTime: res.StartTime,
-				EndTime:   res.EndTime,
+				StartTime: res.StartTime.UTC(),
+				EndTime:   res.EndTime.UTC(),
 				BookedBy:  bookedBy,
 			})
 		}

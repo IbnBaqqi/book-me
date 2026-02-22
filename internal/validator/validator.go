@@ -27,7 +27,10 @@ func init() {
 	_ = validate.RegisterValidation("futureTime", validateFutureTime)
 	_ = validate.RegisterValidation("schoolHours", validateSchoolHours)
 	_ = validate.RegisterValidation("maxDateRange", validateMaxDateRange)
+	_ = validate.RegisterValidation("utc", validateUTC)
 }
+
+var helsinkiTZ, _ = time.LoadLocation("Europe/Helsinki")
 
 // Validate validates a struct and returns ValidationError if validation fails
 func Validate(s interface{}) error {
@@ -59,6 +62,15 @@ func validateFutureTime(fl validator.FieldLevel) bool {
 	return t.After(time.Now())
 }
 
+func validateUTC(fl validator.FieldLevel) bool {
+    t, ok := fl.Field().Interface().(time.Time)
+    if !ok {
+        return false
+    }
+    _, offset := t.Zone()
+    return offset == 0
+}
+
 // validateSchoolHours checks if time is within school operating hours
 func validateSchoolHours(fl validator.FieldLevel) bool {
 	t, ok := fl.Field().Interface().(time.Time)
@@ -66,7 +78,7 @@ func validateSchoolHours(fl validator.FieldLevel) bool {
 		return false
 	}
 
-	hour := t.Hour()
+	hour := t.In(helsinkiTZ).Hour()
 	return hour >= schoolOpenHour && hour < schoolCloseHour
 }
 
@@ -123,6 +135,8 @@ func formatFieldError(err validator.FieldError) string {
 		return "Time must be between 6:00 AM and 8:00 PM"
 	case "maxDateRange":
 		return "Date range cannot exceed 60 days"
+	case "utc":
+        return "Time must be in UTC format (e.g. 2026-02-23T06:00:00Z)"
 	default:
 		return fmt.Sprintf("Validation failed on '%s'", err.Tag())
 	}
