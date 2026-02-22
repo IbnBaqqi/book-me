@@ -32,7 +32,7 @@ func SetupRoutes(cfg *API) *http.ServeMux {
 	authenticate := middleware.Authenticate(cfg.Auth)
 
 	// Health check
-	mux.HandleFunc("GET api/v1/health", h.Health)
+	mux.HandleFunc("GET /api/v1/health", h.Health)
 
 	// Authentication routes
 	mux.Handle("GET /oauth/login", oauthLimiter.Limit(http.HandlerFunc(h.Login)))
