@@ -11,7 +11,7 @@ import (
 )
 
 // SetupRoutes configures all HTTP routes and middleware
-func SetupRoutes(cfg *API) *http.ServeMux {
+func SetupRoutes(cfg *API) http.Handler {
 	mux := http.NewServeMux()
 
 	// Create handlers with injected dependencies
@@ -35,8 +35,8 @@ func SetupRoutes(cfg *API) *http.ServeMux {
 	mux.HandleFunc("GET /api/v1/health", h.Health)
 
 	// Authentication routes
-	mux.Handle("GET /oauth/login", oauthLimiter.Limit(http.HandlerFunc(h.Login)))
-	mux.Handle("GET /oauth/callback", oauthLimiter.Limit(http.HandlerFunc(h.Callback)))
+	mux.Handle("GET /auth/42/login", oauthLimiter.Limit(http.HandlerFunc(h.Login)))
+	mux.Handle("GET /auth/42/callback", oauthLimiter.Limit(http.HandlerFunc(h.Callback)))
 
 	// Reservation routes
 	mux.Handle(
@@ -60,5 +60,5 @@ func SetupRoutes(cfg *API) *http.ServeMux {
 				middleware.RequireAuth(
 					http.HandlerFunc(h.CancelReservation)))))
 
-	return mux
+	return middleware.Cors(mux)
 }
