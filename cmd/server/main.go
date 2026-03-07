@@ -55,11 +55,11 @@ func run() error {
 		return fmt.Errorf("failed to initialize api services: %w", err)
 	}
 
-	mux := api.SetupRoutes(apiCfg)
+	handler := api.SetupRoutes(apiCfg)
 
 	server := &http.Server{
 		Addr:         ":" + cfg.Server.Port,
-		Handler:      mux,
+		Handler:      handler,
 		ReadTimeout:  cfg.Server.ReadTimeout,
 		WriteTimeout: cfg.Server.WriteTimeout,
 		IdleTimeout:  cfg.Server.IdleTimeout,
