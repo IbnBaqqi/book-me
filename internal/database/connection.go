@@ -33,8 +33,9 @@ func Connect(ctx context.Context, cfg *config.AppConfig) (*DB, error) {
 	}
 
 	if err := dbConn.PingContext(ctx); err != nil {
-		if err = dbConn.Close(); err != nil {
-			slog.Error("failed to close database connection", "error", err)
+		closeErr := dbConn.Close()
+		if closeErr != nil {
+			slog.Error("failed to close database connection", "error", closeErr)
 		}
 		slog.Error("failed to ping database", "error", err)
 		return nil, fmt.Errorf("failed to ping database: %w", err)
