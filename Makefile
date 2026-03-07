@@ -1,3 +1,6 @@
+include .env
+export
+
 .PHONY: run build test clean dev
 
 # Run the application
@@ -11,7 +14,7 @@ dev:
 # Build the application
 build:
 	@echo "Building..."
-	@go build -o bin/book-me ./cmd/api
+	@go build -o bin/book-me ./cmd/server
 	@echo "✓ Binary built: bin/book-me"
 
 # Run tests
@@ -44,3 +47,13 @@ deps:
 	@go mod download
 	@go mod tidy
 	@echo "✓ Dependencies updated"
+
+# Migrations
+migrate-up:
+	@goose -dir sql/schema postgres "$(DB_URL)" up
+
+migrate-down:
+	@goose -dir sql/schema postgres "$(DB_URL)" down
+
+migrate-status:
+	@goose -dir sql/schema postgres "$(DB_URL)" status
