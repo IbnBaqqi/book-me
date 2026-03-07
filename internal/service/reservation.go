@@ -212,7 +212,7 @@ func (s *ReservationService) GetReservations(
 	startDateTime := input.StartDate
 	endDateTime := input.EndDate.AddDate(0, 0, 1)
 
-	isStaff := input.UserRole == RoleStaff
+	// isStaff := input.UserRole == RoleStaff
 
 	// Fetch all reservations between dates
 	reservations, err := s.db.GetAllBetweenDates(ctx, database.GetAllBetweenDatesParams{
@@ -242,18 +242,18 @@ func (s *ReservationService) GetReservations(
 		// Map reservations to slots
 		slots := make([]dto.ReservedSlotDto, 0, len(roomReservations))
 		for _, res := range roomReservations {
-			var bookedBy *string
+			// var bookedBy *string
 
 			// Show bookedBy only if user is staff or is the owner
-			if isStaff || res.CreatedByID == input.UserID {
-				bookedBy = &res.CreatedByName
-			}
+			// if isStaff || res.CreatedByID == input.UserID {
+			// 	bookedBy = &res.CreatedByName
+			// }
 
 			slots = append(slots, dto.ReservedSlotDto{
 				ID:        res.ID,
 				StartTime: res.StartTime.UTC(),
 				EndTime:   res.EndTime.UTC(),
-				BookedBy:  bookedBy,
+				BookedBy:  &res.CreatedByName,
 			})
 		}
 
