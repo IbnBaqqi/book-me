@@ -1,10 +1,9 @@
-
 ## Prerequisites
 
-- Go **1.22** or higher  
-- PostgreSQL **14+**  
-- SMTP server access (Gmail, SendGrid, etc.)  
-- **42 Intra OAuth** credentials  
+- Go **1.22** or higher
+- PostgreSQL **14+**
+- SMTP server access (Gmail, SendGrid, etc.)
+- **42 Intra OAuth** credentials
 
 ---
 
@@ -52,6 +51,7 @@ cp .env.example .env
 ### 2. Configure Environment Variables
 
 #### Server Configuration
+
 ```bash
 PORT=8080
 SERVER_READ_TIMEOUT=15s
@@ -61,6 +61,7 @@ LOG_LEVEL=info
 ```
 
 #### App Configuration
+
 ```bash
 ENV=dev
 ```
@@ -68,7 +69,7 @@ ENV=dev
 #### Database
 
 ```bash
-DB_URL=postgres://username:password@localhost:5432/bookme?sslmode=disable
+DATABASE_URL=postgres://username:password@localhost:5432/bookme?sslmode=disable
 ```
 
 #### JWT & Session Secrets
@@ -121,7 +122,7 @@ USER_INFO_URL=https://api.intra.42.fr/v2/me
 
 1. Enable **2-Factor Authentication**
 2. Generate an **App Password**  
-   https://myaccount.google.com/apppasswords  
+   https://myaccount.google.com/apppasswords
 3. Select **Mail** and your device
 4. Copy the generated password
 
@@ -205,6 +206,7 @@ sql/schema/
   003_reservations.sql
   004_populate_rooms.sql
 ```
+
 ---
 
 ## Run the Application ▶️

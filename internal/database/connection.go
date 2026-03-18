@@ -27,7 +27,7 @@ type Tx struct {
 // Connect establishes a connection to the database
 func Connect(ctx context.Context, cfg *config.AppConfig) (*DB, error) {
 	// Initialize database
-	dbConn, err := sql.Open("postgres", cfg.DBURL)
+	dbConn, err := sql.Open("postgres", cfg.DATABASE_URL)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open database: %w", err)
 	}
@@ -40,7 +40,7 @@ func Connect(ctx context.Context, cfg *config.AppConfig) (*DB, error) {
 		slog.Error("failed to ping database", "error", err)
 		return nil, fmt.Errorf("failed to ping database: %w", err)
 	}
-	
+
 	dbConn.SetMaxOpenConns(25)
 	dbConn.SetMaxIdleConns(5)
 	dbConn.SetConnMaxLifetime(5 * time.Minute)

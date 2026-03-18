@@ -35,7 +35,7 @@ type LoggerConfig struct {
 // AppConfig holds application-specific configuration
 type AppConfig struct {
 	Env              string
-	DBURL            string
+	DATABASE_URL     string
 	SessionSecret    string
 	ClientID         string
 	ClientSecret     string
@@ -83,7 +83,7 @@ func Load() (*Config, error) {
 		},
 		App: AppConfig{
 			Env:              getEnv("ENV", "dev"),
-			DBURL:            mustGetEnv("DB_URL"),
+			DATABASE_URL:     mustGetEnv("DATABASE_URL"),
 			SessionSecret:    mustGetEnv("SESSION_SECRET"),
 			ClientID:         mustGetEnv("CLIENT_ID"),
 			ClientSecret:     mustGetEnv("SECRET"),
