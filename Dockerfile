@@ -23,7 +23,7 @@ WORKDIR /app
 
 COPY --from=builder /app/bin/bookme /usr/local/bin/bookme
 COPY --from=builder /go/bin/goose /usr/local/bin/goose
-COPY --from=builder /app/assets/book-me-service-account.json ./assets/
+# COPY --from=builder /app/assets/book-me-service-account.json ./assets/
 COPY --from=builder /app/sql/schema ./sql/migrations
 
 COPY /scripts/docker-entrypoint.sh .
