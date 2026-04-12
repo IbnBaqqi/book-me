@@ -11,30 +11,30 @@ import (
 	"time"
 
 	"github.com/IbnBaqqi/book-me/internal/database"
+	"github.com/gorilla/sessions"
 )
 
 // Service orchestrates the OAuth authentication flow.
 type Service struct {
-	provider *Provider42
+	provider42  *Provider42
+	providerKey *ProviderKeycloak
 }
 
-// NewService creates a new OAuth service for a provider.
-func NewService(provider *Provider42) *Service {
-
+// NewService creates a new OAuth service.
+func NewService(provider42 *Provider42, providerKey *ProviderKeycloak) *Service {
 	return &Service{
-		provider: provider,
+		provider42:  provider42,
+		providerKey: providerKey,
 	}
 }
 
 const sessionName = "bookme-session"
 
-// InitiateLogin generates a state token and returns the OAuth authorization URL.
-func (s *Service) InitiateLogin(w http.ResponseWriter, r *http.Request) (string, error) {
-
+// Initiate42Login generates a state token and returns the 42 OAuth authorization URL.
+func (s *Service) Initiate42Login(w http.ResponseWriter, r *http.Request) (string, error) {
 	state := generateRandomState()
 
-	// Store state in session to prevent CSRF
-	session, err := s.provider.session.Get(r, sessionName)
+	session, err := s.provider42.session.Get(r, sessionName)
 	if err != nil {
 		return "", ErrOAuthSessionFailed
 	}
@@ -44,16 +44,12 @@ func (s *Service) InitiateLogin(w http.ResponseWriter, r *http.Request) (string,
 		return "", ErrFailedToSaveSession
 	}
 
-	url := s.provider.config.AuthCodeURL(state)
-
-	return url, nil
+	return s.provider42.config.AuthCodeURL(state), nil
 }
 
-// HandleCallback is a service layer function that handles Oauth callback.
-func (s *Service) HandleCallback(r *http.Request) (database.User, error) {
-
-	// Exchange authorization code for token
-	token, err := s.provider.ExchangeCode(r)
+// Handle42Callback handles the 42 OAuth callback.
+func (s *Service) Handle42Callback(r *http.Request) (database.User, error) {
+	token, err := s.provider42.ExchangeCode(r)
 	if err != nil {
 		slog.Error("oauth code exchange failed", "error", err)
 		return database.User{}, ErrOAuthExchangeFailed
@@ -62,7 +58,7 @@ func (s *Service) HandleCallback(r *http.Request) (database.User, error) {
 	ctx, cancel := context.WithTimeout(r.Context(), 15*time.Second)
 	defer cancel()
 
-	user42, err := s.provider.Fetch42UserData(ctx, s.provider.config, token)
+	user42, err := s.provider42.Fetch42UserData(ctx, s.provider42.config, token)
 	if err != nil {
 		if errors.Is(err, context.DeadlineExceeded) {
 			return database.User{}, ErrOAuthTimeout
@@ -83,8 +79,7 @@ func (s *Service) HandleCallback(r *http.Request) (database.User, error) {
 		return database.User{}, ErrInvalidCampus
 	}
 
-	// Find or create user - might use redis later for this TODO
-	user, err := s.provider.FindOrCreateUser(r.Context(), user42)
+	user, err := s.provider42.FindOrCreateUser(r.Context(), user42)
 	if err != nil {
 		slog.Error("unable to find or create user", "error", err)
 		return database.User{}, ErrFailedToFindorCreateUser
@@ -93,32 +88,83 @@ func (s *Service) HandleCallback(r *http.Request) (database.User, error) {
 	return user, nil
 }
 
-// ValidateState checks CSRF protection state.
-func (s *Service) ValidateState(w http.ResponseWriter, r *http.Request) error {
-	session, _ := s.provider.session.Get(r, sessionName)
+// InitiateKeycloakLogin generates a state token and returns the Keycloak authorization URL.
+func (s *Service) InitiateKeycloakLogin(w http.ResponseWriter, r *http.Request) (string, error) {
+	state := generateRandomState()
 
-	// get saved state and compare with incoming state
-	expectedState, ok := session.Values["oauth_state"].(string)
-	if !ok || expectedState != r.URL.Query().Get("state") {
-		slog.Error("invalid or missing state")
-		return ErrInvalidOrMissingState
+	session, err := s.providerKey.session.Get(r, sessionName)
+	if err != nil {
+		return "", ErrOAuthSessionFailed
 	}
-
-	delete(session.Values, "oauth_state")
+	session.Values["oauth_state"] = state
 	if err := session.Save(r, w); err != nil {
 		slog.Error("failed to save session", "error", err)
-		return ErrFailedToSaveSession
+		return "", ErrFailedToSaveSession
 	}
 
-	return nil
+	return s.providerKey.config.AuthCodeURL(state), nil
+}
+
+// HandleKeycloakCallback handles the Keycloak OIDC callback.
+func (s *Service) HandleKeycloakCallback(r *http.Request) (database.User, error) {
+	token, err := s.providerKey.ExchangeCode(r)
+	if err != nil {
+		slog.Error("keycloak code exchange failed", "error", err)
+		return database.User{}, ErrOAuthExchangeFailed
+	}
+
+	ctx, cancel := context.WithTimeout(r.Context(), 15*time.Second)
+	defer cancel()
+
+	claims, err := s.providerKey.FetchUserInfo(ctx, token)
+	if err != nil {
+		slog.Error("failed to fetch keycloak user info", "error", err)
+		return database.User{}, ErrOAuthUserInfoFailed
+	}
+
+	user, err := s.providerKey.FindOrCreateUser(r.Context(), claims)
+	if err != nil {
+		slog.Error("unable to find or create keycloak user", "error", err)
+		return database.User{}, ErrFailedToFindorCreateUser
+	}
+
+	return user, nil
+}
+
+// ValidateState checks CSRF protection state.
+// It checks both provider sessions since only one will have the state set.
+func (s *Service) ValidateState(w http.ResponseWriter, r *http.Request) error {
+	// Try 42 session first, then Keycloak
+	for _, store := range []*sessions.CookieStore{s.provider42.session, s.providerKey.session} {
+		session, err := store.Get(r, sessionName)
+		if err != nil {
+			continue
+		}
+		expectedState, ok := session.Values["oauth_state"].(string)
+		if !ok || expectedState == "" {
+			continue
+		}
+		if expectedState != r.URL.Query().Get("state") {
+			return ErrInvalidOrMissingState
+		}
+		delete(session.Values, "oauth_state")
+		if err := session.Save(r, w); err != nil {
+			slog.Error("failed to save session", "error", err)
+			return ErrFailedToSaveSession
+		}
+		return nil
+	}
+
+	slog.Error("invalid or missing state")
+	return ErrInvalidOrMissingState
 }
 
 // GetRedirectTokenURL returns the OAuth provider redirect URL.
 func (s *Service) GetRedirectTokenURL() string {
-	return s.provider.redirectTokenURL
+	return s.provider42.redirectTokenURL
 }
 
-// generateRandomState generates a cryptograph secure random state token.
+// generateRandomState generates a cryptographically secure random state token.
 func generateRandomState() string {
 	b := make([]byte, 32)
 	_, _ = rand.Read(b)
