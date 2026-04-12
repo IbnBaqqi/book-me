@@ -45,6 +45,13 @@ type AppConfig struct {
 	JWTSecret        string
 	OAuthAuthURI     string
 	OAuthTokenURI    string
+	// Keycloak
+	KeycloakClientID     string
+	KeycloakClientSecret string
+	KeycloakRedirectURI  string
+	KeycloakAuthURI      string
+	KeycloakTokenURI     string
+	KeycloakUserInfoURL  string
 }
 
 // GoogleConfig holds Google Calendar configuration.
@@ -93,6 +100,13 @@ func Load() (*Config, error) {
 			JWTSecret:        mustGetEnv("JWT_SECRET"),
 			OAuthAuthURI:     mustGetEnv("OAUTH_AUTH_URI"),
 			OAuthTokenURI:    mustGetEnv("OAUTH_TOKEN_URI"),
+			// Keycloak
+			KeycloakClientID:     mustGetEnv("KEYCLOAK_CLIENT_ID"),
+			KeycloakClientSecret: mustGetEnv("KEYCLOAK_CLIENT_SECRET"),
+			KeycloakRedirectURI:  mustGetEnv("KEYCLOAK_REDIRECT_URI"),
+			KeycloakAuthURI:      mustGetEnv("KEYCLOAK_AUTH_URI"),
+			KeycloakTokenURI:     mustGetEnv("KEYCLOAK_TOKEN_URI"),
+			KeycloakUserInfoURL:  mustGetEnv("KEYCLOAK_USERINFO_URL"),
 		},
 		Google: GoogleConfig{
 			CredentialsFile: mustGetEnv("GOOGLE_CREDENTIALS_FILE"),

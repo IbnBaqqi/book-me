@@ -65,9 +65,22 @@ func New(cfg *config.Config, db *database.DB) (*API, error) {
 		},
 	}
 
+	// Initialize Keycloak OIDC config
+	keycloakConfig := &oauth2.Config{
+		ClientID:     cfg.App.KeycloakClientID,
+		ClientSecret: cfg.App.KeycloakClientSecret,
+		RedirectURL:  cfg.App.KeycloakRedirectURI,
+		Scopes:       []string{"openid", "email", "profile"},
+		Endpoint: oauth2.Endpoint{
+			AuthURL:  cfg.App.KeycloakAuthURI,
+			TokenURL: cfg.App.KeycloakTokenURI,
+		},
+	}
+
 	// Initialize 42 oauth provider & service
 	oauth42 := oauth.NewProvider42(db, oauthConfig, cfg.App.SessionSecret, cfg.App.RedirectTokenURI, cfg.App.User42InfoURL)
-	oauthService := oauth.NewService(oauth42)
+	oauthKeycloak := oauth.NewProviderKeycloak(db, keycloakConfig, cfg.App.SessionSecret, cfg.App.RedirectTokenURI, cfg.App.KeycloakUserInfoURL)
+	oauthService := oauth.NewService(oauth42, oauthKeycloak)
 
 	// Initialize auth service for app (JWT)
 	authService := auth.NewService(cfg.App.JWTSecret)
