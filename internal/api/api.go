@@ -29,7 +29,7 @@ func New(cfg *config.Config, db *database.DB) (*API, error) {
 
 	// Initialize Google Calendar service
 	calendarService, err := google.NewCalendarService(
-		cfg.Google.CredentialsFile,
+		cfg.Google.CredentialsBase64,
 		cfg.Google.CalendarScope,
 		cfg.Google.CalendarID,
 	)
