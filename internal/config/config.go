@@ -56,9 +56,9 @@ type AppConfig struct {
 
 // GoogleConfig holds Google Calendar configuration.
 type GoogleConfig struct {
-	CredentialsFile string
-	CalendarScope   string
-	CalendarID      string
+	CredentialsBase64 string
+	CalendarScope     string
+	CalendarID        string
 }
 
 // EmailConfig holds email service configuration.
@@ -109,9 +109,9 @@ func Load() (*Config, error) {
 			KeycloakUserInfoURL:  mustGetEnv("KEYCLOAK_USERINFO_URL"),
 		},
 		Google: GoogleConfig{
-			CredentialsFile: mustGetEnv("GOOGLE_CREDENTIALS_FILE"),
-			CalendarScope:   mustGetEnv("GOOGLE_CALENDAR_SCOPE"),
-			CalendarID:      mustGetEnv("GOOGLE_CALENDAR_ID"),
+			CredentialsBase64: mustGetEnv("GOOGLE_CREDENTIALS_BASE64"),
+			CalendarScope:     getEnv("GOOGLE_CALENDAR_SCOPE", "https://www.googleapis.com/auth/calendar"),
+			CalendarID:        mustGetEnv("GOOGLE_CALENDAR_ID"),
 		},
 		Email: EmailConfig{
 			SMTPHost:     mustGetEnv("SMTP_HOST"),

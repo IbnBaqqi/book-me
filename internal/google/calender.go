@@ -3,9 +3,9 @@ package google
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 	"log/slog"
-	"os"
 	"time"
 
 	"github.com/IbnBaqqi/book-me/internal/logger"
@@ -30,16 +30,22 @@ type CalendarService struct {
 }
 
 // NewCalendarService creates a new calendar service
-func NewCalendarService(credentialsFile, calendarScope, calendarID string) (*CalendarService, error) {
+func NewCalendarService(credentialsBase64, calendarScope, calendarID string) (*CalendarService, error) {
 
 	ctx := context.Background()
 
 	// Read the entire service account JSON file
-	credentialsJSON, err := os.ReadFile(credentialsFile) //nolint:gosec // file path comes from config, not user input
-	if err != nil {
-		return nil, fmt.Errorf("failed to read credentials file: %w", err)
-	}
+	// credentialsJSON, err := os.ReadFile(credentialsFile) //nolint:gosec // file path comes from config, not user input
+	// if err != nil {
+	// 	return nil, fmt.Errorf("failed to read credentials file: %w", err)
+	// }
 
+	// Decode credentials in Base64 yo json
+	credentialsJSON, err := base64.StdEncoding.DecodeString(credentialsBase64)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decode credential: %w", err)
+	}
+	
 	// Create JWT config from credentials
 	config, err := google.JWTConfigFromJSON(credentialsJSON, calendarScope)
 	if err != nil {
