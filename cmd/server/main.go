@@ -11,6 +11,7 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
+	_ "time/tzdata"
 
 	"github.com/IbnBaqqi/book-me/internal/api"
 	"github.com/IbnBaqqi/book-me/internal/config"
