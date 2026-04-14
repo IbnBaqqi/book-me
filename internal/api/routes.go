@@ -38,8 +38,7 @@ func SetupRoutes(cfg *API) http.Handler {
 	mux.Handle("GET /auth/42/login", oauthLimiter.Limit(http.HandlerFunc(h.Login42)))
 	mux.Handle("GET /auth/42/callback", oauthLimiter.Limit(http.HandlerFunc(h.Callback42)))
 	mux.Handle("GET /auth/keycloak/login", oauthLimiter.Limit(http.HandlerFunc(h.LoginKeycloak)))
-	// mux.Handle("GET /auth/keycloak/callback", oauthLimiter.Limit(http.HandlerFunc(h.CallbackKeycloak)))
-	mux.Handle("GET /oauth/callback", oauthLimiter.Limit(http.HandlerFunc(h.CallbackKeycloak)))
+	mux.Handle("GET /auth/keycloak/callback", oauthLimiter.Limit(http.HandlerFunc(h.CallbackKeycloak)))
 
 	// Reservation routes
 	mux.Handle(
