@@ -45,7 +45,7 @@ func NewCalendarService(credentialsBase64, calendarScope, calendarID string) (*C
 	if err != nil {
 		return nil, fmt.Errorf("failed to decode credential: %w", err)
 	}
-	
+
 	// Create JWT config from credentials
 	config, err := google.JWTConfigFromJSON(credentialsJSON, calendarScope)
 	if err != nil {
