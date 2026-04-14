@@ -63,12 +63,12 @@ func validateFutureTime(fl validator.FieldLevel) bool {
 }
 
 func validateUTC(fl validator.FieldLevel) bool {
-    t, ok := fl.Field().Interface().(time.Time)
-    if !ok {
-        return false
-    }
-    _, offset := t.Zone()
-    return offset == 0
+	t, ok := fl.Field().Interface().(time.Time)
+	if !ok {
+		return false
+	}
+	_, offset := t.Zone()
+	return offset == 0
 }
 
 // validateSchoolHours checks if time is within school operating hours
@@ -136,7 +136,7 @@ func formatFieldError(err validator.FieldError) string {
 	case "maxDateRange":
 		return "Date range cannot exceed 60 days"
 	case "utc":
-        return "Time must be in UTC format (e.g. 2026-02-23T06:00:00Z)"
+		return "Time must be in UTC format (e.g. 2026-02-23T06:00:00Z)"
 	default:
 		return fmt.Sprintf("Validation failed on '%s'", err.Tag())
 	}

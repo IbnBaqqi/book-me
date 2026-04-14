@@ -10,38 +10,38 @@ import (
 
 // TestValidate_Success tests successful validation scenarios
 func TestValidate_Success(t *testing.T) {
-    tomorrow := time.Now().Add(24 * time.Hour)
-    y, m, d := tomorrow.Date()
+	tomorrow := time.Now().Add(24 * time.Hour)
+	y, m, d := tomorrow.Date()
 
-    tests := []struct {
-        name  string
-        input interface{}
-    }{
-        {
-            name: "valid reservation",
-            input: dto.CreateReservationRequest{
-                RoomID:    1,
-                StartTime: helsinkiTime(t, y, m, d, 10, 0),
-                EndTime:   helsinkiTime(t, y, m, d, 12, 0),
-            },
-        },
-        {
-            name: "reservation at school start time (6 AM Helsinki)",
-            input: dto.CreateReservationRequest{
-                RoomID:    5,
-                StartTime: helsinkiTime(t, y, m, d, 6, 0),
-                EndTime:   helsinkiTime(t, y, m, d, 8, 0),
-            },
-        },
-        {
-            name: "reservation just before school end (7:59 PM Helsinki)",
-            input: dto.CreateReservationRequest{
-                RoomID:    3,
-                StartTime: helsinkiTime(t, y, m, d, 18, 0),
-                EndTime:   helsinkiTime(t, y, m, d, 19, 59),
-            },
-        },
-    }
+	tests := []struct {
+		name  string
+		input interface{}
+	}{
+		{
+			name: "valid reservation",
+			input: dto.CreateReservationRequest{
+				RoomID:    1,
+				StartTime: helsinkiTime(t, y, m, d, 10, 0),
+				EndTime:   helsinkiTime(t, y, m, d, 12, 0),
+			},
+		},
+		{
+			name: "reservation at school start time (6 AM Helsinki)",
+			input: dto.CreateReservationRequest{
+				RoomID:    5,
+				StartTime: helsinkiTime(t, y, m, d, 6, 0),
+				EndTime:   helsinkiTime(t, y, m, d, 8, 0),
+			},
+		},
+		{
+			name: "reservation just before school end (7:59 PM Helsinki)",
+			input: dto.CreateReservationRequest{
+				RoomID:    3,
+				StartTime: helsinkiTime(t, y, m, d, 18, 0),
+				EndTime:   helsinkiTime(t, y, m, d, 19, 59),
+			},
+		},
+	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -231,49 +231,49 @@ func TestValidate_GtField(t *testing.T) {
 
 // TestValidate_SchoolHours tests schoolHours custom validator
 func TestValidate_SchoolHours(t *testing.T) {
-    tomorrow := time.Now().Add(24 * time.Hour)
-    y, m, d := tomorrow.Date()
+	tomorrow := time.Now().Add(24 * time.Hour)
+	y, m, d := tomorrow.Date()
 
-    tests := []struct {
-        name      string
-        startTime time.Time
-        endTime   time.Time
-        wantErr   bool
-        errField  string
-    }{
-        {
-            name:      "start time too early (5:59 AM Helsinki)",
-            startTime: helsinkiTime(t, y, m, d, 5, 59), // 03:59 UTC
-            endTime:   helsinkiTime(t, y, m, d, 8, 0),
-            wantErr:   true,
-            errField:  "StartTime",
-        },
-        {
-            name:      "end time too late (8 PM Helsinki)",
-            startTime: helsinkiTime(t, y, m, d, 18, 0),
-            endTime:   helsinkiTime(t, y, m, d, 20, 0), // 18:00 UTC
-            wantErr:   true,
-            errField:  "EndTime",
-        },
-        {
-            name:      "valid - both during school hours",
-            startTime: helsinkiTime(t, y, m, d, 10, 0), // 08:00 UTC
-            endTime:   helsinkiTime(t, y, m, d, 12, 0), // 10:00 UTC
-            wantErr:   false,
-        },
-        {
-            name:      "boundary - start at 6 AM Helsinki",
-            startTime: helsinkiTime(t, y, m, d, 6, 0),  // 04:00 UTC
-            endTime:   helsinkiTime(t, y, m, d, 8, 0),
-            wantErr:   false,
-        },
-        {
-            name:      "boundary - end at 7:59 PM Helsinki",
-            startTime: helsinkiTime(t, y, m, d, 18, 0),
-            endTime:   helsinkiTime(t, y, m, d, 19, 59), // 17:59 UTC
-            wantErr:   false,
-        },
-    }
+	tests := []struct {
+		name      string
+		startTime time.Time
+		endTime   time.Time
+		wantErr   bool
+		errField  string
+	}{
+		{
+			name:      "start time too early (5:59 AM Helsinki)",
+			startTime: helsinkiTime(t, y, m, d, 5, 59), // 03:59 UTC
+			endTime:   helsinkiTime(t, y, m, d, 8, 0),
+			wantErr:   true,
+			errField:  "StartTime",
+		},
+		{
+			name:      "end time too late (8 PM Helsinki)",
+			startTime: helsinkiTime(t, y, m, d, 18, 0),
+			endTime:   helsinkiTime(t, y, m, d, 20, 0), // 18:00 UTC
+			wantErr:   true,
+			errField:  "EndTime",
+		},
+		{
+			name:      "valid - both during school hours",
+			startTime: helsinkiTime(t, y, m, d, 10, 0), // 08:00 UTC
+			endTime:   helsinkiTime(t, y, m, d, 12, 0), // 10:00 UTC
+			wantErr:   false,
+		},
+		{
+			name:      "boundary - start at 6 AM Helsinki",
+			startTime: helsinkiTime(t, y, m, d, 6, 0), // 04:00 UTC
+			endTime:   helsinkiTime(t, y, m, d, 8, 0),
+			wantErr:   false,
+		},
+		{
+			name:      "boundary - end at 7:59 PM Helsinki",
+			startTime: helsinkiTime(t, y, m, d, 18, 0),
+			endTime:   helsinkiTime(t, y, m, d, 19, 59), // 17:59 UTC
+			wantErr:   false,
+		},
+	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -591,52 +591,52 @@ func TestFormatValidationErrors(t *testing.T) {
 }
 
 func TestValidate_UTC(t *testing.T) {
-    tomorrow := time.Now().Add(24 * time.Hour)
-    y, m, d := tomorrow.Date()
+	tomorrow := time.Now().Add(24 * time.Hour)
+	y, m, d := tomorrow.Date()
 
-    tests := []struct {
-        name      string
-        startTime time.Time
-        wantErr   bool
-    }{
-        {
-            name:      "UTC time accepted",
-            startTime: time.Date(y, m, d, 8, 0, 0, 0, time.UTC),
-            wantErr:   false,
-        },
-        {
-            name:      "Helsinki offset rejected",
-            startTime: time.Date(y, m, d, 10, 0, 0, 0, helsinkiTZ),
-            wantErr:   true,
-        },
-        {
-            name:      "arbitrary offset rejected",
-            startTime: time.Date(y, m, d, 10, 0, 0, 0, time.FixedZone("UTC+4", 4*60*60)),
-            wantErr:   true,
-        },
-    }
+	tests := []struct {
+		name      string
+		startTime time.Time
+		wantErr   bool
+	}{
+		{
+			name:      "UTC time accepted",
+			startTime: time.Date(y, m, d, 8, 0, 0, 0, time.UTC),
+			wantErr:   false,
+		},
+		{
+			name:      "Helsinki offset rejected",
+			startTime: time.Date(y, m, d, 10, 0, 0, 0, helsinkiTZ),
+			wantErr:   true,
+		},
+		{
+			name:      "arbitrary offset rejected",
+			startTime: time.Date(y, m, d, 10, 0, 0, 0, time.FixedZone("UTC+4", 4*60*60)),
+			wantErr:   true,
+		},
+	}
 
-    for _, tt := range tests {
-        t.Run(tt.name, func(t *testing.T) {
-            req := dto.CreateReservationRequest{
-                RoomID:    1,
-                StartTime: tt.startTime,
-                EndTime:   tt.startTime.Add(2 * time.Hour),
-            }
-            err := Validate(req)
-            if tt.wantErr {
-                var valErr *ValidationError
-                if !errors.As(err, &valErr) {
-                    t.Fatalf("expected ValidationError, got: %v", err)
-                }
-                if _, exists := valErr.Fields["StartTime"]; !exists {
-                    t.Errorf("expected UTC error for StartTime, got fields: %v", valErr.Fields)
-                }
-            } else if err != nil {
-                t.Errorf("expected no error, got: %v", err)
-            }
-        })
-    }
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req := dto.CreateReservationRequest{
+				RoomID:    1,
+				StartTime: tt.startTime,
+				EndTime:   tt.startTime.Add(2 * time.Hour),
+			}
+			err := Validate(req)
+			if tt.wantErr {
+				var valErr *ValidationError
+				if !errors.As(err, &valErr) {
+					t.Fatalf("expected ValidationError, got: %v", err)
+				}
+				if _, exists := valErr.Fields["StartTime"]; !exists {
+					t.Errorf("expected UTC error for StartTime, got fields: %v", valErr.Fields)
+				}
+			} else if err != nil {
+				t.Errorf("expected no error, got: %v", err)
+			}
+		})
+	}
 }
 
 // TestValidationError_Error tests ValidationError.Error() method
@@ -658,9 +658,9 @@ func TestValidationError_Error(t *testing.T) {
 
 // helper to create time in Helsinki then convert to UTC for submission
 func helsinkiTime(t *testing.T, year int, month time.Month, day, hour, min int) time.Time {
-    loc, err := time.LoadLocation("Europe/Helsinki")
-    if err != nil {
-        t.Fatal(err)
-    }
-    return time.Date(year, month, day, hour, min, 0, 0, loc).UTC()
+	loc, err := time.LoadLocation("Europe/Helsinki")
+	if err != nil {
+		t.Fatal(err)
+	}
+	return time.Date(year, month, day, hour, min, 0, 0, loc).UTC()
 }
