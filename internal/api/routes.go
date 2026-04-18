@@ -25,8 +25,8 @@ func SetupRoutes(cfg *API) http.Handler {
 	)
 
 	// Create rate limiters
-	oauthLimiter := middleware.NewRateLimiter(rate.Every(12*time.Second), 5, false)
-	apiLimiter := middleware.NewRateLimiter(rate.Every(2*time.Second), 30, false)
+	oauthLimiter := middleware.NewRateLimiter(rate.Every(1*time.Second), 20, false)
+	apiLimiter := middleware.NewRateLimiter(rate.Every(1*time.Second), 100, false)
 
 	// Create auth middleware
 	authenticate := middleware.Authenticate(cfg.Auth)
