@@ -22,6 +22,16 @@ const (
 	RoleStaff   = "STAFF"
 )
 
+var helsinki *time.Location
+
+func init() {
+	var err error
+	helsinki, err = time.LoadLocation("Europe/Helsinki")
+	if err != nil {
+		panic("failed to load Europe/Helsinki timezone: " + err.Error())
+	}
+}
+
 // ReservationService handles reservation business logic.
 type ReservationService struct {
 	db       *database.DB
@@ -191,8 +201,8 @@ func (s *ReservationService) CreateReservation(
 			emailCtx,
 			dbUser.Email,
 			room.Name,
-			reservation.StartTime.Format("Monday, January 2, 2006 at 3:04 PM"),
-			reservation.EndTime.Format("Monday, January 2, 2006 at 3:04 PM"),
+			reservation.StartTime.In(helsinki).Format("Monday, January 2, 2006 at 3:04 PM"),
+			reservation.EndTime.In(helsinki).Format("Monday, January 2, 2006 at 3:04 PM"),
 		); err != nil {
 			slog.Error("failed to send confirmation email", "error", err)
 		}
