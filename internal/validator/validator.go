@@ -79,7 +79,8 @@ func validateSchoolHours(fl validator.FieldLevel) bool {
 	}
 
 	hour := t.In(helsinkiTZ).Hour()
-	return hour >= schoolOpenHour && hour < schoolCloseHour
+	minute := t.In(helsinkiTZ).Minute()
+	return hour >= schoolOpenHour && (hour < schoolCloseHour || (hour == schoolCloseHour && minute == 0))
 }
 
 // validateMaxDateRange ensures date range doesn't exceed a maximum (e.g 60 days)

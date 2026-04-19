@@ -41,6 +41,14 @@ func TestValidate_Success(t *testing.T) {
 				EndTime:   helsinkiTime(t, y, m, d, 19, 59),
 			},
 		},
+		{
+			name: "reservation ends exactly as school ends (8:00 PM Helsinki)",
+			input: dto.CreateReservationRequest{
+				RoomID:    3,
+				StartTime: helsinkiTime(t, y, m, d, 18, 0),
+				EndTime:   helsinkiTime(t, y, m, d, 20, 0),
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -249,9 +257,9 @@ func TestValidate_SchoolHours(t *testing.T) {
 			errField:  "StartTime",
 		},
 		{
-			name:      "end time too late (8 PM Helsinki)",
+			name:      "end time too late (8:01 PM Helsinki)",
 			startTime: helsinkiTime(t, y, m, d, 18, 0),
-			endTime:   helsinkiTime(t, y, m, d, 20, 0), // 18:00 UTC
+			endTime:   helsinkiTime(t, y, m, d, 20, 1), // 18:01 UTC
 			wantErr:   true,
 			errField:  "EndTime",
 		},
@@ -271,6 +279,12 @@ func TestValidate_SchoolHours(t *testing.T) {
 			name:      "boundary - end at 7:59 PM Helsinki",
 			startTime: helsinkiTime(t, y, m, d, 18, 0),
 			endTime:   helsinkiTime(t, y, m, d, 19, 59), // 17:59 UTC
+			wantErr:   false,
+		},
+		{
+			name:      "boundary - end at 8:00 PM Helsinki",
+			startTime: helsinkiTime(t, y, m, d, 18, 0),
+			endTime:   helsinkiTime(t, y, m, d, 20, 0), // 18:00 UTC
 			wantErr:   false,
 		},
 	}
