@@ -69,7 +69,7 @@ func UserFromContext(ctx context.Context) (User, bool) {
 func NewService(secret string) *Service {
 	return &Service{
 		JwtSecret:      secret,
-		AccessTokenTTL: time.Hour,
+		AccessTokenTTL: 7 * 24 * time.Hour,
 	}
 }
 
