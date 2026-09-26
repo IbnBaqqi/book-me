@@ -274,7 +274,7 @@ func TestNewService(t *testing.T) {
 		t.Errorf("expected secret %s, got %s", secret, service.JwtSecret)
 	}
 
-	if service.AccessTokenTTL != time.Hour {
-		t.Errorf("expected TTL 1 hour, got %v", service.AccessTokenTTL)
+	if service.AccessTokenTTL != 7*24*time.Hour {
+		t.Errorf("expected TTL 1 week, got %v", service.AccessTokenTTL)
 	}
 }
