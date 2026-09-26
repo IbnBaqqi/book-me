@@ -20,6 +20,7 @@ func (h *Handler) Login42(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// redirect to oauth2 authorization server
+	// #nosec G710 -- target is the OAuth provider auth URL built from config (AuthCodeURL), not user input
 	http.Redirect(w, r, url, http.StatusFound)
 }
 
@@ -68,6 +69,7 @@ func (h *Handler) LoginKeycloak(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// redirect to oauth2 authorization server
+	// #nosec G710 -- target is the OAuth provider auth URL built from config (AuthCodeURL), not user input
 	http.Redirect(w, r, url, http.StatusFound)
 }
 

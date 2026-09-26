@@ -4,7 +4,6 @@ package config
 import (
 	"log/slog"
 	"os"
-	"strconv"
 	"time"
 
 	"github.com/joho/godotenv"
@@ -136,25 +135,6 @@ func mustGetEnv(key string) string {
 			"key", key,
 		)
 		os.Exit(1)
-	}
-	return value
-}
-
-//nolint:unused // kept for future use
-func getEnvAsInt64(key string, defaultValue int64) int64 {
-	valueStr := os.Getenv(key)
-	if valueStr == "" {
-		return defaultValue
-	}
-	value, err := strconv.ParseInt(valueStr, 10, 64)
-	if err != nil {
-		slog.Warn("invalid int environment variable, using default",
-			"key", key,
-			"value", valueStr,
-			"default", defaultValue,
-			"error", err,
-		)
-		return defaultValue
 	}
 	return value
 }

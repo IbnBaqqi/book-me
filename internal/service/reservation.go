@@ -164,7 +164,7 @@ func (s *ReservationService) CreateReservation(
 
 	// Create Google Calendar event
 	go func() {
-		ctx, cancel := context.WithTimeout(context.Background(), 40*time.Second)
+		ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 40*time.Second)
 		defer cancel()
 
 		calendarReservation := &google.Reservation{
@@ -194,7 +194,7 @@ func (s *ReservationService) CreateReservation(
 
 	// Send confirmation email
 	go func() {
-		emailCtx, cancel := context.WithTimeout(context.Background(), 40*time.Second)
+		emailCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 40*time.Second)
 		defer cancel()
 
 		if err := s.email.SendConfirmation(
@@ -308,7 +308,7 @@ func (s *ReservationService) CancelReservation(
 
 	// Delete google calender event
 	go func() {
-		ctx, cancel := context.WithTimeout(context.Background(), 40*time.Second)
+		ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 40*time.Second)
 		defer cancel()
 		if err := s.calendar.DeleteGoogleEvent(ctx, reservation.GcalEventID.String); err != nil {
 			slog.Error("failed to delete google calendar event", "error", err)
