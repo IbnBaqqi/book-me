@@ -48,7 +48,7 @@ BookMe is a backend API for managing meeting room reservations at Hive Helsinki.
   - Students can only see availability and cancel their own bookings
 - **Calendar API**: Fetches unavailable time slots for specific date ranges
 - **Secure JWT Authentication**: Stateless session management using JSON Web Tokens
-- **Email Notifications**: Sends confirmations and updates to users via SMTP
+- **Email Notifications**: Sends confirmations and updates to users via SendGrid
 - **Google Calendar Integration**: Allows staff to sync bookings with Google Calendar
 
 ---
@@ -110,12 +110,9 @@ book-me/
 │   │   └── users.sql.go
 │   ├── dto/                        # Data transfer objects
 │   │   └── reservation.go
-│   ├── email/                      # Email service & templates
+│   ├── email/                      # SendGrid-backed email service
 │   │   ├── email_service.go
 │   │   ├── email_service_test.go
-│   │   └── templates/
-│   │       ├── confirmation_email_v1.html
-│   │       └── confirmation_email_v2.html
 │   ├── google/                     # Google Calendar integration
 │   │   ├── calender.go
 │   │   └── calendar_test.go

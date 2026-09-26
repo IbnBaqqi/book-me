@@ -63,13 +63,9 @@ type GoogleConfig struct {
 
 // EmailConfig holds email service configuration.
 type EmailConfig struct {
-	SMTPHost     string
-	SMTPPort     int
-	SMTPUsername string
-	SMTPPassword string
-	FromEmail    string
-	FromName     string
-	UseTLS       bool
+	SendGridAPIKey                      string
+	SendGridTemplateBookingConfirmation string
+	SendGridForceSend                   bool
 }
 
 // Load loads configuration from environment variables
@@ -114,13 +110,9 @@ func Load() (*Config, error) {
 			CalendarID:        mustGetEnv("GOOGLE_CALENDAR_ID"),
 		},
 		Email: EmailConfig{
-			SMTPHost:     mustGetEnv("SMTP_HOST"),
-			SMTPPort:     getEnvAsInt("SMTP_PORT", 587),
-			SMTPUsername: mustGetEnv("SMTP_USERNAME"),
-			SMTPPassword: mustGetEnv("SMTP_PASSWORD"),
-			FromEmail:    mustGetEnv("FROM_EMAIL"),
-			FromName:     getEnv("FROM_NAME", "BookMe"),
-			UseTLS:       getEnv("SMTP_USE_TLS", "true") == "true",
+			SendGridAPIKey:                      getEnv("SENDGRID_API_KEY", ""),
+			SendGridTemplateBookingConfirmation: getEnv("SENDGRID_TEMPLATE_BOOKING_CONFIRMATION", ""),
+			SendGridForceSend:                   getEnv("SENDGRID_FORCE_SEND", "false") == "true",
 		},
 		Logger: LoggerConfig{
 			Level: getEnv("LOG_LEVEL", "info"),
@@ -144,24 +136,6 @@ func mustGetEnv(key string) string {
 			"key", key,
 		)
 		os.Exit(1)
-	}
-	return value
-}
-
-func getEnvAsInt(key string, defaultValue int) int {
-	valueStr := os.Getenv(key)
-	if valueStr == "" {
-		return defaultValue
-	}
-	value, err := strconv.Atoi(valueStr)
-	if err != nil {
-		slog.Warn("invalid int environment variable, using default",
-			"key", key,
-			"value", valueStr,
-			"default", defaultValue,
-			"error", err,
-		)
-		return defaultValue
 	}
 	return value
 }

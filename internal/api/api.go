@@ -3,6 +3,7 @@ package api
 
 import (
 	"fmt"
+	"log/slog"
 
 	"github.com/IbnBaqqi/book-me/internal/auth"
 	"github.com/IbnBaqqi/book-me/internal/config"
@@ -38,20 +39,12 @@ func New(cfg *config.Config, db *database.DB) (*API, error) {
 	}
 
 	// Initialize email service
-	emailCfg := email.Config{
-		SMTPHost:     cfg.Email.SMTPHost,
-		SMTPPort:     cfg.Email.SMTPPort,
-		SMTPUsername: cfg.Email.SMTPUsername,
-		SMTPPassword: cfg.Email.SMTPPassword,
-		FromEmail:    cfg.Email.FromEmail,
-		FromName:     cfg.Email.FromName,
-		UseTLS:       cfg.Email.UseTLS,
-	}
-
-	emailService, err := email.NewService(emailCfg)
-	if err != nil {
-		return nil, fmt.Errorf("failed to initialize email service: %w", err)
-	}
+	emailService := email.NewService(slog.Default(), email.Config{
+		APIKey:                      cfg.Email.SendGridAPIKey,
+		TemplateBookingConfirmation: cfg.Email.SendGridTemplateBookingConfirmation,
+		ForceSend:                   cfg.Email.SendGridForceSend,
+		Production:                  cfg.App.Env != "dev",
+	})
 
 	// Initialize OAuth2 config for 42 auth
 	oauthConfig := &oauth2.Config{

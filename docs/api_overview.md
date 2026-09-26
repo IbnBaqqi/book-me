@@ -200,18 +200,11 @@ The system automatically sends emails for:
 - ✅ **Booking Confirmation** – sent immediately after a successful reservation
 - 🚫 **Cancellation Notice** – sent when a reservation is cancelled
 
-### Gmail SMTP Setup
+### SendGrid Setup
 
-1. Enable **2-Factor Authentication** on your Google account
-2. Generate an **App Password**  
-   https://myaccount.google.com/apppasswords  
-3. Select **Mail** and your device
-4. Copy the generated 16-character password
-5. Use this password as:
-
-```bash
-SMTP_PASSWORD=your-gmail-app-password
-```
+Create a **Dynamic Template** in the SendGrid editor for booking confirmations,
+then set `SENDGRID_API_KEY` and `SENDGRID_TEMPLATE_BOOKING_CONFIRMATION` in your
+`.env`. The template receives `room_name`, `start_time`, and `end_time`.
 
 ---
 

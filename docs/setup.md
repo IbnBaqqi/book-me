@@ -2,7 +2,7 @@
 
 - Go **1.22** or higher
 - PostgreSQL **14+**
-- SMTP server access (Gmail, SendGrid, etc.)
+- A SendGrid account with a Dynamic Template for booking confirmations
 - **42 Intra OAuth** credentials
 
 ---
@@ -116,29 +116,22 @@ USER_INFO_URL=https://api.intra.42.fr/v2/me
 
 ---
 
-## Email Configuration (SMTP)
+## Email Configuration (SendGrid)
 
-### Gmail Setup
-
-1. Enable **2-Factor Authentication**
-2. Generate an **App Password**  
-   https://myaccount.google.com/apppasswords
-3. Select **Mail** and your device
-4. Copy the generated password
-
-Add to `.env`:
+1. Create a **Dynamic Template** in the SendGrid editor for booking confirmations.
+2. The template must reference `room_name`, `start_time`, and `end_time`
+   (it may mirror the old confirmation layout).
+3. Copy the template ID and add it to `.env`:
 
 ```bash
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
-SMTP_USERNAME=your-email@gmail.com
-SMTP_PASSWORD=your-gmail-app-password
-
-FROM_EMAIL=noreply@bookme.com
-FROM_NAME=BookMe
-
-SMTP_USE_TLS=true
+SENDGRID_API_KEY=
+SENDGRID_TEMPLATE_BOOKING_CONFIRMATION=
+SENDGRID_FORCE_SEND=false
 ```
+
+Leave `SENDGRID_API_KEY` empty to disable email sending (methods no-op).
+Local dev (`ENV=dev`) only logs the would-be email and does not send unless
+`SENDGRID_FORCE_SEND=true`.
 
 ---
 

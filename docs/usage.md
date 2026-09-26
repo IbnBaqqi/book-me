@@ -92,14 +92,11 @@ go get github.com/joho/godotenv
 ### Email
 
 ```bash
-go get github.com/wneessen/go-mail
+go get github.com/sendgrid/sendgrid-go
 ```
 
-- SMTP client library
-- Used for sending:
-  - Booking confirmation emails
-  - Cancellation notifications
-- Supports TLS and modern SMTP features
+- SendGrid transactional email client
+- Used for: booking confirmation emails via SendGrid Dynamic Templates
 
 ---
 
@@ -138,14 +135,6 @@ go get github.com/hashicorp/go-retryablehttp
 - Used for external API calls (42 Intra OAuth)
 - Handles transient failures gracefully
 
-```bash
-go get github.com/avast/retry-go/v5
-```
-
-- Retry mechanism for operations
-- Used for database operations and external service calls
-- Configurable backoff strategies
-
 ---
 
 ## go.mod Overview 
@@ -156,7 +145,6 @@ module github.com/IbnBaqqi/book-me
 go 1.25.7
 
 require (
-	github.com/avast/retry-go/v5 v5.0.0
 	github.com/go-playground/validator/v10 v10.30.1
 	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/google/uuid v1.6.0
@@ -164,7 +152,8 @@ require (
 	github.com/hashicorp/go-retryablehttp v0.7.8
 	github.com/joho/godotenv v1.5.1
 	github.com/lib/pq v1.11.1
-	github.com/wneessen/go-mail v0.7.2
+	github.com/sendgrid/rest v2.6.9+incompatible
+	github.com/sendgrid/sendgrid-go v3.16.1+incompatible
 	golang.org/x/oauth2 v0.35.0
 	golang.org/x/time v0.14.0
 	google.golang.org/api v0.265.0
